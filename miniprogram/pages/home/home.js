@@ -60,6 +60,15 @@ Page({
   },
 
   /**
+   * 导航到个人中心
+   */
+  navigateToUser() {
+    wx.navigateTo({
+      url: '/pages/gerenzhongxin/gerenzhongxin'
+    })
+  },
+
+  /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {

@@ -7,6 +7,9 @@
         <text class="title">湘韵遗珍</text>
         <text class="subtitle">探寻湖南非遗之美</text>
       </view>
+      <view class="user-entry" bindtap="navigateToUser">
+        <van-icon name="user-circle-o" size="28" color="#ffffff" />
+      </view>
     </view>
   </view>
 
@@ -52,6 +55,23 @@
         <view class="banner-text">
           <text class="banner-title">探索非遗生活方式</text>
           <text class="banner-desc">分享 · 交流 · 发现</text>
+        </view>
+      </view>
+      <van-icon name="arrow" size="20" color="#ffffff" />
+    </view>
+  </view>
+
+  <!-- 个人中心入口 -->
+  <view class="nav-section user-section">
+    <view class="section-title">个人中心</view>
+    <view class="user-banner" bindtap="navigateToUser">
+      <view class="banner-content">
+        <view class="banner-icon user-icon">
+          <van-icon name="user-o" size="40" color="#ffffff" />
+        </view>
+        <view class="banner-text">
+          <text class="banner-title">我的非遗之旅</text>
+          <text class="banner-desc">订单 · 收藏 · 足迹</text>
         </view>
       </view>
       <van-icon name="arrow" size="20" color="#ffffff" />

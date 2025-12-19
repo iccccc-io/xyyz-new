@@ -49,6 +49,16 @@ page {
   flex-direction: column;
 }
 
+.user-entry {
+  width: 72rpx;
+  height: 72rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .title {
   font-size: 56rpx;
   font-weight: bold;
@@ -171,6 +181,25 @@ page {
 .banner-desc {
   font-size: 24rpx;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* 个人中心入口 */
+.user-section {
+  margin-top: 30rpx;
+}
+
+.user-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-top: 20rpx;
+}
+
+.user-icon {
+  background: rgba(182, 59, 54, 0.3);
 }
 
 /* 预留区域 */
