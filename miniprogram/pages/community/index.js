@@ -82,6 +82,15 @@ Page({
   },
 
   /**
+   * 跳转到发布页
+   */
+  goToPost() {
+    wx.navigateTo({
+      url: '/pages/community/post'
+    })
+  },
+
+  /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {

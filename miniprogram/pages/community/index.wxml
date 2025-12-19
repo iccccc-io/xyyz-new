@@ -127,5 +127,10 @@
   <view class="loading-state" wx:if="{{loading}}">
     <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
   </view>
+
+  <!-- 悬浮发布按钮 -->
+  <view class="fab-button" bindtap="goToPost">
+    <van-icon name="plus" size="28" color="#b63b36" />
+  </view>
 </view>
 

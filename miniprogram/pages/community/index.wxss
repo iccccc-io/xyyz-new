@@ -188,7 +188,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40rpx 0 60rpx;
+  padding: 40rpx 0 120rpx;
   gap: 20rpx;
 }
 
@@ -201,5 +201,27 @@ page {
 .end-text {
   font-size: 24rpx;
   color: #bbbbbb;
+}
+
+/* 悬浮发布按钮 */
+.fab-button {
+  position: fixed;
+  right: 40rpx;
+  bottom: calc(60rpx + env(safe-area-inset-bottom));
+  width: 110rpx;
+  height: 110rpx;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 30rpx rgba(182, 59, 54, 0.3);
+  z-index: 100;
+  transition: all 0.2s ease;
+}
+
+.fab-button:active {
+  transform: scale(0.9);
+  box-shadow: 0 4rpx 15rpx rgba(182, 59, 54, 0.4);
 }
 

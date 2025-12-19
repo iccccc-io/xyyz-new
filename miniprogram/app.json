@@ -8,6 +8,7 @@
     "pages/venue/detail",
     "pages/community/index",
     "pages/community/detail",
+    "pages/community/post",
     "pages/index/index",
     "pages/example/index"
   ],
