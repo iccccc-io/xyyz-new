@@ -1,0 +1,104 @@
+<!--pages/community/post.wxml-->
+<view class="post-container">
+  <!-- 图片选择器 -->
+  <view class="uploader-section">
+    <van-uploader
+      file-list="{{ fileList }}"
+      max-count="16"
+      accept="image"
+      bind:after-read="afterRead"
+      bind:delete="deleteImage"
+      preview-size="200rpx"
+    />
+  </view>
+
+  <!-- 内容输入区 -->
+  <view class="content-section">
+    <input 
+      class="title-input"
+      placeholder="添加标题"
+      placeholder-class="placeholder-title"
+      value="{{title}}"
+      bindinput="onTitleInput"
+      maxlength="50"
+    />
+    <textarea 
+      class="content-textarea"
+      placeholder="添加正文"
+      placeholder-class="placeholder-content"
+      value="{{content}}"
+      bindinput="onContentInput"
+      auto-height
+      maxlength="2000"
+    />
+  </view>
+
+  <!-- 话题标签区 -->
+  <view class="tags-section">
+    <view class="tags-row">
+      <view 
+        class="recommend-tag {{selectedTags.includes(item) ? 'selected' : ''}}"
+        wx:for="{{recommendTags}}"
+        wx:key="index"
+        bindtap="toggleTag"
+        data-tag="{{item}}"
+      >
+        #{{item}}
+      </view>
+      <view class="add-tag-btn" bindtap="addCustomTag">
+        <van-icon name="plus" size="14" color="#999" />
+        <text>话题</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 选项列表 -->
+  <view class="options-section">
+    <van-cell-group>
+      <van-cell 
+        title="关联非遗项目" 
+        is-link 
+        value="{{selectedProject || '选填'}}"
+        bind:click="showProjectPicker"
+        title-style="color: #333"
+      />
+      <van-cell 
+        title="标记地点" 
+        is-link 
+        value="{{location.name || '必填'}}"
+        bind:click="chooseLocation"
+        title-style="color: #333"
+        icon="location-o"
+      />
+    </van-cell-group>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar">
+    <view class="draft-btn" bindtap="saveDraft">
+      <text>存草稿</text>
+    </view>
+    <view class="publish-btn" bindtap="publishPost">
+      <text>发布笔记</text>
+    </view>
+  </view>
+
+  <!-- 非遗项目选择器 -->
+  <van-popup 
+    show="{{ showPicker }}" 
+    position="bottom"
+    bind:close="hideProjectPicker"
+    round
+  >
+    <van-picker
+      columns="{{ projectOptions }}"
+      bind:confirm="onProjectConfirm"
+      bind:cancel="hideProjectPicker"
+      show-toolbar
+      title="选择非遗项目"
+      confirm-button-text="确定"
+      cancel-button-text="取消"
+    />
+  </van-popup>
+</view>
+

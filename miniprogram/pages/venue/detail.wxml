@@ -1,0 +1,116 @@
+<!--pages/venue/detail.wxml-->
+<view class="venue-detail-container">
+  <block wx:if="{{venueData}}">
+    <!-- 顶部轮播图 -->
+    <view class="swiper-wrapper">
+      <swiper 
+        wx:if="{{venueData.media_list && venueData.media_list.length > 0}}"
+        class="venue-swiper" 
+        indicator-dots 
+        indicator-color="rgba(255, 255, 255, 0.5)"
+        indicator-active-color="#b63b36"
+        autoplay
+        interval="5000"
+        circular
+      >
+        <swiper-item 
+          wx:for="{{venueData.media_list}}" 
+          wx:key="index"
+          wx:if="{{item.type === 'image'}}"
+        >
+          <image class="swiper-image" src="{{item.url}}" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
+      
+      <!-- 无图片占位 -->
+      <view wx:else class="swiper-placeholder">
+        <van-icon name="photo-o" size="100" color="#d0d0d0" />
+        <text class="placeholder-text">暂无图片</text>
+      </view>
+    </view>
+
+    <!-- 基本信息卡片 -->
+    <view class="info-card">
+      <!-- 名称 -->
+      <view class="venue-title">{{venueData.name}}</view>
+
+      <!-- 地址栏 -->
+      <view class="info-row address-row">
+        <view class="info-label">
+          <van-icon name="location-o" size="18" color="#b63b36" />
+          <text class="label-text">地址</text>
+        </view>
+        <view class="info-value address-value">{{venueData.address}}</view>
+        <view class="nav-btn" bindtap="openMap">
+          <van-icon name="guide-o" size="18" color="#b63b36" />
+          <text class="nav-text">导航</text>
+        </view>
+      </view>
+
+      <!-- 分隔线 -->
+      <view class="divider"></view>
+
+      <!-- 开放时间 -->
+      <view class="info-row" wx:if="{{venueData.open_time}}">
+        <view class="info-label">
+          <van-icon name="clock-o" size="18" color="#8b6f47" />
+          <text class="label-text">开放时间</text>
+        </view>
+        <view class="info-value">{{venueData.open_time}}</view>
+      </view>
+
+      <!-- 联系电话 -->
+      <view class="info-row phone-row" wx:if="{{venueData.phone}}" bindtap="makePhoneCall">
+        <view class="info-label">
+          <van-icon name="phone-o" size="18" color="#8b6f47" />
+          <text class="label-text">联系电话</text>
+        </view>
+        <view class="info-value phone-value">{{venueData.phone}}</view>
+        <van-icon name="arrow" size="16" color="#999" />
+      </view>
+    </view>
+
+    <!-- 简介卡片 -->
+    <view class="detail-card">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>场所简介</text>
+      </view>
+      <view class="intro-content">{{venueData.intro}}</view>
+    </view>
+
+    <!-- 相关资讯 -->
+    <view class="detail-card" wx:if="{{newsList && newsList.length > 0}}">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>相关资讯</text>
+      </view>
+      <view class="news-list">
+        <view 
+          class="news-item"
+          wx:for="{{newsList}}"
+          wx:key="_id"
+          bindtap="goToNews"
+          data-id="{{item._id}}"
+        >
+          <view class="news-content">
+            <view class="news-title">{{item.title}}</view>
+            <view class="news-date">{{item.publish_date}}</view>
+          </view>
+          <image class="news-cover" src="{{item.cover_img}}" mode="aspectFill" />
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrapper" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrapper" wx:if="{{!loading && !venueData}}">
+    <van-empty description="场所不存在" />
+  </view>
+</view>
+

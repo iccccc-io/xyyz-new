@@ -1,0 +1,147 @@
+/* pages/community/post.wxss */
+page {
+  background-color: #ffffff;
+  padding-bottom: 160rpx;
+}
+
+.post-container {
+  min-height: 100vh;
+}
+
+/* 图片选择器 */
+.uploader-section {
+  padding: 30rpx;
+  background: #ffffff;
+}
+
+/* 内容输入区 */
+.content-section {
+  padding: 0 30rpx;
+  background: #ffffff;
+}
+
+.title-input {
+  width: 100%;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.placeholder-title {
+  color: #cccccc;
+  font-weight: bold;
+}
+
+.content-textarea {
+  width: 100%;
+  font-size: 30rpx;
+  color: #333333;
+  padding: 20rpx 0;
+  min-height: 200rpx;
+  line-height: 1.8;
+}
+
+.placeholder-content {
+  color: #cccccc;
+}
+
+/* 话题标签区 */
+.tags-section {
+  padding: 20rpx 30rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.recommend-tag {
+  font-size: 26rpx;
+  color: #666666;
+  background: #f5f5f5;
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+  transition: all 0.2s ease;
+}
+
+.recommend-tag.selected {
+  background: rgba(182, 59, 54, 0.1);
+  color: #b63b36;
+}
+
+.add-tag-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 26rpx;
+  color: #999999;
+  background: #f5f5f5;
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+  border: 2rpx dashed #d0d0d0;
+}
+
+/* 选项列表 */
+.options-section {
+  margin-top: 20rpx;
+  background: #ffffff;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 30rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.draft-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  background: #f5f5f5;
+  border-radius: 40rpx;
+}
+
+.draft-btn text {
+  font-size: 30rpx;
+  color: #666666;
+  font-weight: 500;
+}
+
+.publish-btn {
+  flex: 2;
+  text-align: center;
+  padding: 24rpx 0;
+  background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
+  border-radius: 40rpx;
+}
+
+.publish-btn text {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.draft-btn:active {
+  opacity: 0.8;
+}
+
+.publish-btn:active {
+  opacity: 0.8;
+}
+

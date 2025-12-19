@@ -1,0 +1,76 @@
+<!--pages/resource/inheritor-detail.wxml-->
+<view class="inheritor-detail-container">
+  <block wx:if="{{inheritorData}}">
+    <!-- 个人档案卡片 -->
+    <view class="profile-card">
+      <view class="profile-header">
+        <image class="profile-photo" src="{{inheritorData.photo}}" mode="aspectFill" />
+        <view class="profile-info">
+          <view class="profile-name">{{inheritorData.name}}</view>
+          <view class="profile-detail">性别：{{inheritorData.gender}}</view>
+          <view class="profile-detail">民族：{{inheritorData.ethnicity}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 代表性项目 -->
+    <view class="detail-card">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>代表性项目</text>
+      </view>
+      <van-cell-group>
+        <van-cell 
+          title="代表性项目" 
+          value="{{inheritorData.project_name}}" 
+          is-link
+          bindtap="goToProject"
+        />
+        <van-cell 
+          title="申报地区" 
+          value="{{inheritorData.region}}" 
+        />
+      </van-cell-group>
+    </view>
+
+    <!-- 相关资料 -->
+    <view class="detail-card" wx:if="{{inheritorData.media_list && inheritorData.media_list.length > 0}}">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>相关资料</text>
+      </view>
+      <view class="media-list">
+        <block wx:for="{{inheritorData.media_list}}" wx:key="index">
+          <!-- 视频 -->
+          <video 
+            wx:if="{{item.type === 'video'}}"
+            class="media-video"
+            src="{{item.url}}"
+            controls
+            show-center-play-btn
+          />
+          <!-- 图片 -->
+          <image 
+            wx:if="{{item.type === 'image'}}"
+            class="media-image"
+            src="{{item.url}}"
+            mode="aspectFill"
+            bindtap="previewImage"
+            data-url="{{item.url}}"
+          />
+        </block>
+      </view>
+    </view>
+  </block>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrapper" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrapper" wx:if="{{!loading && !inheritorData}}">
+    <van-empty description="传承人不存在" />
+  </view>
+</view>
+

@@ -1,0 +1,14 @@
+{
+  "usingComponents": {
+    "van-tag": "@vant/weapp/tag/index",
+    "van-cell": "@vant/weapp/cell/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index"
+  },
+  "navigationBarTitleText": "项目详情",
+  "navigationBarBackgroundColor": "#b63b36",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#f7f5f1"
+}
+

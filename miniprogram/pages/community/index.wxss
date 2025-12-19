@@ -1,0 +1,205 @@
+/* pages/community/index.wxss */
+page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.community-container {
+  padding: 20rpx;
+  padding-bottom: 40rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  padding: 30rpx 20rpx 40rpx;
+  text-align: center;
+}
+
+.header-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #333333;
+  letter-spacing: 4rpx;
+}
+
+.header-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: #999999;
+  margin-top: 12rpx;
+  letter-spacing: 2rpx;
+}
+
+/* 瀑布流容器 */
+.waterfall-container {
+  display: flex;
+  gap: 20rpx;
+}
+
+.waterfall-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 帖子卡片 */
+.post-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.post-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 封面图区域 */
+.card-cover {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.cover-image {
+  width: 100%;
+  display: block;
+}
+
+/* 多图标识 */
+.image-count {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+.count-text {
+  font-size: 22rpx;
+  color: #ffffff;
+}
+
+/* 内容区域 */
+.card-content {
+  padding: 20rpx;
+}
+
+/* 标题行 */
+.title-row {
+  margin-bottom: 16rpx;
+  line-height: 1.6;
+}
+
+.project-tag {
+  display: inline;
+  font-size: 22rpx;
+  color: #b63b36;
+  background: rgba(182, 59, 54, 0.1);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  margin-right: 8rpx;
+  vertical-align: middle;
+}
+
+.post-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 底部信息 */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 作者信息 */
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex: 1;
+  overflow: hidden;
+}
+
+.author-avatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.author-name {
+  font-size: 24rpx;
+  color: #666666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140rpx;
+  line-height: 36rpx;
+}
+
+.author-name.certified {
+  color: #b63b36;
+  font-weight: 500;
+}
+
+/* 点赞信息 */
+.like-info {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+}
+
+.like-count {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 空状态和加载状态 */
+.empty-state,
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 200rpx 0;
+}
+
+/* 到底提示 */
+.end-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0 60rpx;
+  gap: 20rpx;
+}
+
+.end-line {
+  width: 80rpx;
+  height: 2rpx;
+  background: #e0e0e0;
+}
+
+.end-text {
+  font-size: 24rpx;
+  color: #bbbbbb;
+}
+

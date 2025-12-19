@@ -1,0 +1,106 @@
+<!--pages/resource/project-detail.wxml-->
+<view class="project-detail-container">
+  <block wx:if="{{projectData}}">
+    <!-- 顶部头图 -->
+    <view class="cover-image-wrapper">
+      <image class="cover-image" src="{{projectData.cover_img}}" mode="aspectFill" />
+      <view class="cover-overlay"></view>
+    </view>
+
+    <!-- 核心信息区 -->
+    <view class="info-card">
+      <!-- 标题 -->
+      <view class="project-title">{{projectData.title}}</view>
+      
+      <!-- 标签组 -->
+      <view class="tags-group">
+        <van-tag type="danger" size="large" plain>{{projectData.level}}</van-tag>
+        <van-tag color="#8b6f47" size="large" plain>{{projectData.category}}</van-tag>
+      </view>
+
+      <!-- 基本属性 -->
+      <van-cell-group>
+        <van-cell title="公布批次" value="{{projectData.batch}}" />
+        <van-cell 
+          wx:if="{{inheritorData}}"
+          title="关联传承人" 
+          value="{{inheritorData.name}}" 
+          is-link
+          bindtap="goToInheritor"
+        />
+      </van-cell-group>
+    </view>
+
+    <!-- 项目简介 -->
+    <view class="detail-card">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>项目简介</text>
+      </view>
+      <view class="intro-content">{{projectData.intro}}</view>
+    </view>
+
+    <!-- 相关资料 -->
+    <view class="detail-card" wx:if="{{projectData.media_list && projectData.media_list.length > 0}}">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>相关资料</text>
+      </view>
+      <view class="media-list">
+        <block wx:for="{{projectData.media_list}}" wx:key="index">
+          <!-- 视频 -->
+          <video 
+            wx:if="{{item.type === 'video'}}"
+            class="media-video"
+            src="{{item.url}}"
+            controls
+            show-center-play-btn
+          />
+          <!-- 图片 -->
+          <image 
+            wx:if="{{item.type === 'image'}}"
+            class="media-image"
+            src="{{item.url}}"
+            mode="aspectFill"
+            bindtap="previewImage"
+            data-url="{{item.url}}"
+          />
+        </block>
+      </view>
+    </view>
+
+    <!-- 相关资讯 -->
+    <view class="detail-card" wx:if="{{newsList && newsList.length > 0}}">
+      <view class="card-title">
+        <view class="title-icon"></view>
+        <text>相关资讯</text>
+      </view>
+      <view class="news-list">
+        <view 
+          class="news-item"
+          wx:for="{{newsList}}"
+          wx:key="_id"
+          bindtap="goToNews"
+          data-id="{{item._id}}"
+        >
+          <view class="news-content">
+            <view class="news-title">{{item.title}}</view>
+            <view class="news-date">{{item.publish_date}}</view>
+          </view>
+          <image class="news-cover" src="{{item.cover_img}}" mode="aspectFill" />
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrapper" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrapper" wx:if="{{!loading && !projectData}}">
+    <van-empty description="项目不存在" />
+  </view>
+</view>
+

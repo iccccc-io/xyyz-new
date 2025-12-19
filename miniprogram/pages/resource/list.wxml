@@ -1,0 +1,186 @@
+<!--pages/resource/list.wxml-->
+<view class="resource-container">
+  <!-- 顶部固定导航区 -->
+  <view class="fixed-header">
+    <!-- Tab 切换 -->
+    <view class="tabs-bar">
+      <view 
+        class="tab-item {{currentTab === 'project' ? 'active' : ''}}" 
+        bindtap="switchTab" 
+        data-tab="project"
+      >
+        非遗项目
+      </view>
+      <view 
+        class="tab-item {{currentTab === 'inheritor' ? 'active' : ''}}" 
+        bindtap="switchTab" 
+        data-tab="inheritor"
+      >
+        非遗传承人
+      </view>
+    </view>
+
+    <!-- 搜索与筛选栏 -->
+    <view class="search-bar">
+      <van-search
+        value="{{ searchKeyword }}"
+        placeholder="请输入关键字进行搜索"
+        bind:change="onSearchChange"
+        bind:search="onSearch"
+        shape="round"
+        background="#f7f5f1"
+      />
+      <view class="filter-icon" bindtap="openFilter">
+        <van-icon name="filter-o" size="20" color="#8b6f47" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表内容区 -->
+  <view class="list-content" style="padding-top: {{headerHeight}}px;">
+    <block wx:if="{{dataList.length > 0}}">
+      <!-- 非遗项目列表 -->
+      <block wx:if="{{currentTab === 'project'}}">
+        <view 
+          class="list-item" 
+          wx:for="{{dataList}}" 
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-type="project"
+        >
+          <view class="item-title">{{item.title}}</view>
+          <view class="item-info">类型：{{item.category}}</view>
+          <view class="item-info">项目级别：{{item.level}}</view>
+        </view>
+      </block>
+
+      <!-- 非遗传承人列表 -->
+      <block wx:if="{{currentTab === 'inheritor'}}">
+        <view 
+          class="list-item" 
+          wx:for="{{dataList}}" 
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-type="inheritor"
+        >
+          <view class="item-title">{{item.name}}</view>
+          <view class="item-info">性别：{{item.gender}}</view>
+          <view class="item-info">类型：{{item.project_name}}</view>
+          <view class="item-info">申报地区：{{item.region}}</view>
+        </view>
+      </block>
+    </block>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{dataList.length === 0 && !loading}}">
+      <van-empty description="暂无数据" />
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+    </view>
+  </view>
+
+  <!-- 筛选弹窗 -->
+  <van-popup 
+    show="{{ showFilter }}" 
+    position="right" 
+    custom-style="width: 75%; height: 100%;"
+    bind:close="closeFilter"
+  >
+    <view class="filter-popup">
+      <!-- 筛选标题 -->
+      <view class="filter-header">
+        <text class="filter-title">筛选</text>
+        <van-icon name="cross" size="20" bindtap="closeFilter" />
+      </view>
+
+      <scroll-view class="filter-body" scroll-y>
+        <!-- 地区筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">地区</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterData.region === '' ? 'active' : ''}}"
+              bindtap="selectFilter"
+              data-type="region"
+              data-value=""
+            >
+              全部
+            </view>
+            <view 
+              class="filter-option {{filterData.region === item ? 'active' : ''}}"
+              wx:for="{{regionOptions}}"
+              wx:key="index"
+              bindtap="selectFilter"
+              data-type="region"
+              data-value="{{item}}"
+            >
+              {{item}}
+            </view>
+          </view>
+        </view>
+
+        <!-- 类别筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">类别</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterData.category === '' ? 'active' : ''}}"
+              bindtap="selectFilter"
+              data-type="category"
+              data-value=""
+            >
+              全部
+            </view>
+            <view 
+              class="filter-option {{filterData.category === item ? 'active' : ''}}"
+              wx:for="{{categoryOptions}}"
+              wx:key="index"
+              bindtap="selectFilter"
+              data-type="category"
+              data-value="{{item}}"
+            >
+              {{item}}
+            </view>
+          </view>
+        </view>
+
+        <!-- 级别筛选 -->
+        <view class="filter-section">
+          <view class="filter-section-title">级别&批次</view>
+          <view class="filter-options">
+            <view 
+              class="filter-option {{filterData.level === '' ? 'active' : ''}}"
+              bindtap="selectFilter"
+              data-type="level"
+              data-value=""
+            >
+              全部
+            </view>
+            <view 
+              class="filter-option {{filterData.level === item ? 'active' : ''}}"
+              wx:for="{{levelOptions}}"
+              wx:key="index"
+              bindtap="selectFilter"
+              data-type="level"
+              data-value="{{item}}"
+            >
+              {{item}}
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 底部操作栏 -->
+      <view class="filter-footer">
+        <view class="filter-btn reset-btn" bindtap="resetFilter">重置</view>
+        <view class="filter-btn confirm-btn" bindtap="confirmFilter">确定</view>
+      </view>
+    </view>
+  </van-popup>
+</view>
+

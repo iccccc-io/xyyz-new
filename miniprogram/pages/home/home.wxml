@@ -1,0 +1,66 @@
+<!--pages/home/home.wxml-->
+<view class="home-container">
+  <!-- 顶部标题区 -->
+  <view class="header">
+    <view class="header-content">
+      <view class="title-group">
+        <text class="title">湘韵遗珍</text>
+        <text class="subtitle">探寻湖南非遗之美</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 导航入口区 -->
+  <view class="nav-section">
+    <view class="section-title">非遗百科</view>
+    <van-grid column-num="4" border="{{ false }}" gutter="{{ 10 }}">
+      <van-grid-item 
+        icon="todo-list" 
+        text="非遗资源" 
+        icon-color="#b63b36"
+        bind:click="navigateToResource"
+      />
+      <van-grid-item 
+        icon="shop-o" 
+        text="非遗展馆" 
+        icon-color="#b63b36"
+        bind:click="navigateToHall"
+      />
+      <van-grid-item 
+        icon="hotel-o" 
+        text="非遗工坊" 
+        icon-color="#b63b36"
+        bind:click="navigateToWorkshop"
+      />
+      <van-grid-item 
+        icon="location-o" 
+        text="非遗街区" 
+        icon-color="#b63b36"
+        bind:click="navigateToStreet"
+      />
+    </van-grid>
+  </view>
+
+  <!-- 非遗社区入口 -->
+  <view class="nav-section community-section">
+    <view class="section-title">非遗社区</view>
+    <view class="community-banner" bindtap="navigateToCommunity">
+      <view class="banner-content">
+        <view class="banner-icon">
+          <van-icon name="friends-o" size="40" color="#ffffff" />
+        </view>
+        <view class="banner-text">
+          <text class="banner-title">探索非遗生活方式</text>
+          <text class="banner-desc">分享 · 交流 · 发现</text>
+        </view>
+      </view>
+      <van-icon name="arrow" size="20" color="#ffffff" />
+    </view>
+  </view>
+
+  <!-- 其他模块入口预留区 -->
+  <view class="placeholder">
+    <text class="placeholder-text">更多模块即将上线...</text>
+  </view>
+</view>
+

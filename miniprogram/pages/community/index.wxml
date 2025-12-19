@@ -1,0 +1,131 @@
+<!--pages/community/index.wxml-->
+<view class="community-container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="header-title">非遗社区</text>
+    <text class="header-subtitle">分享非遗生活方式</text>
+  </view>
+
+  <!-- 瀑布流列表 -->
+  <view class="waterfall-container" wx:if="{{postList.length > 0}}">
+    <!-- 左列 -->
+    <view class="waterfall-column left-column">
+      <view 
+        class="post-card"
+        wx:for="{{leftColumn}}"
+        wx:key="_id"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <!-- 封面图区域 -->
+        <view class="card-cover">
+          <image 
+            class="cover-image" 
+            src="{{item.images[0]}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 多图标识 -->
+          <view class="image-count" wx:if="{{item.images.length > 1}}">
+            <van-icon name="photo-o" size="12" color="#fff" />
+            <text class="count-text">{{item.images.length}}</text>
+          </view>
+        </view>
+
+        <!-- 内容区域 -->
+        <view class="card-content">
+          <!-- 标题行 -->
+          <view class="title-row">
+            <text 
+              class="project-tag" 
+              wx:if="{{item.related_projects && item.related_projects.length > 0}}"
+            >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+          </view>
+
+          <!-- 底部信息 -->
+          <view class="card-footer">
+            <!-- 作者信息 -->
+            <view class="author-info">
+              <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+              <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+            </view>
+            <!-- 点赞 -->
+            <view class="like-info">
+              <van-icon name="like-o" size="14" color="#999" />
+              <text class="like-count">{{item.likes}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 右列 -->
+    <view class="waterfall-column right-column">
+      <view 
+        class="post-card"
+        wx:for="{{rightColumn}}"
+        wx:key="_id"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <!-- 封面图区域 -->
+        <view class="card-cover">
+          <image 
+            class="cover-image" 
+            src="{{item.images[0]}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 多图标识 -->
+          <view class="image-count" wx:if="{{item.images.length > 1}}">
+            <van-icon name="photo-o" size="12" color="#fff" />
+            <text class="count-text">{{item.images.length}}</text>
+          </view>
+        </view>
+
+        <!-- 内容区域 -->
+        <view class="card-content">
+          <!-- 标题行 -->
+          <view class="title-row">
+            <text 
+              class="project-tag" 
+              wx:if="{{item.related_projects && item.related_projects.length > 0}}"
+            >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+          </view>
+
+          <!-- 底部信息 -->
+          <view class="card-footer">
+            <!-- 作者信息 -->
+            <view class="author-info">
+              <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+              <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+            </view>
+            <!-- 点赞 -->
+            <view class="like-info">
+              <van-icon name="like-o" size="14" color="#999" />
+              <text class="like-count">{{item.likes}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 到底提示 -->
+  <view class="end-tip" wx:if="{{postList.length > 0 && !loading}}">
+    <view class="end-line"></view>
+    <text class="end-text">已经到底啦~</text>
+    <view class="end-line"></view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{postList.length === 0 && !loading}}">
+    <van-empty description="暂无帖子" />
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+  </view>
+</view>
+

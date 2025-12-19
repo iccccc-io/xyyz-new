@@ -1,0 +1,118 @@
+/* pages/resource/inheritor-detail.wxss */
+page {
+  background-color: #f7f5f1;
+  min-height: 100vh;
+}
+
+.inheritor-detail-container {
+  padding: 30rpx;
+  padding-bottom: 60rpx;
+}
+
+/* 个人档案卡片 */
+.profile-card {
+  background: linear-gradient(135deg, #b63b36 0%, #8b2e2a 100%);
+  border-radius: 20rpx;
+  padding: 50rpx 40rpx;
+  box-shadow: 0 8rpx 30rpx rgba(182, 59, 54, 0.3);
+  margin-bottom: 30rpx;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+}
+
+.profile-photo {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  border: 6rpx solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.2);
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 20rpx;
+  letter-spacing: 2rpx;
+}
+
+.profile-detail {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 2;
+  letter-spacing: 1rpx;
+}
+
+/* 详情卡片通用样式 */
+.detail-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 30rpx;
+}
+
+.card-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 30rpx;
+  display: flex;
+  align-items: center;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.title-icon {
+  width: 8rpx;
+  height: 32rpx;
+  background: linear-gradient(to bottom, #b63b36, #8b2e2a);
+  border-radius: 4rpx;
+  margin-right: 16rpx;
+}
+
+/* Van Cell 自定义 */
+.van-cell-group {
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+/* 相关资料 */
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.media-video {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.media-image {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+/* 加载和空状态 */
+.loading-wrapper,
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 200rpx 0;
+}
+

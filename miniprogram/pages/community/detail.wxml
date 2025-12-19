@@ -1,0 +1,166 @@
+<!--pages/community/detail.wxml-->
+<view class="detail-container">
+  <block wx:if="{{postData}}">
+    <!-- 顶部作者栏 -->
+    <view class="author-bar">
+      <view class="author-left">
+        <image class="author-avatar" src="{{postData.author_info.avatar_file_id}}" />
+        <view class="author-text">
+          <text class="author-name {{postData.author_info.is_certified ? 'certified' : ''}}">{{postData.author_info.nickname}}</text>
+          <text class="author-title">{{postData.author_info.is_certified ? (authorData.certified_title || '非遗传承人') : '非遗爱好者'}}</text>
+        </view>
+      </view>
+      <view class="follow-btn {{isFollowing ? 'following' : ''}}">
+        <text>{{isFollowing ? '已关注' : '+ 关注'}}</text>
+      </view>
+    </view>
+
+    <!-- 图片展示 -->
+    <view class="images-wrapper">
+      <!-- 单图展示 -->
+      <view wx:if="{{postData.images.length === 1}}" class="single-image-wrapper">
+        <image 
+          class="single-image" 
+          src="{{postData.images[0]}}" 
+          mode="widthFix"
+          bindtap="previewImage"
+          data-url="{{postData.images[0]}}"
+        />
+      </view>
+      
+      <!-- 多图轮播 -->
+      <swiper 
+        wx:if="{{postData.images.length > 1}}"
+        class="image-swiper"
+        style="height: {{swiperHeight}}px;"
+        indicator-dots
+        indicator-color="rgba(255, 255, 255, 0.5)"
+        indicator-active-color="#b63b36"
+        circular
+        current="{{currentImageIndex}}"
+        bindchange="onSwiperChange"
+      >
+        <swiper-item wx:for="{{postData.images}}" wx:key="index">
+          <view class="swiper-item-wrapper">
+            <image 
+              class="swiper-image" 
+              src="{{item}}" 
+              mode="widthFix"
+              bindtap="previewImage"
+              data-url="{{item}}"
+              bindload="onImageLoad"
+              data-index="{{index}}"
+            />
+          </view>
+        </swiper-item>
+      </swiper>
+      
+      <!-- 图片计数 -->
+      <view class="image-indicator" wx:if="{{postData.images.length > 1}}">
+        <text>{{currentImageIndex + 1}} / {{postData.images.length}}</text>
+      </view>
+    </view>
+
+    <!-- 内容区域 -->
+    <view class="content-section">
+      <!-- 标题 -->
+      <view class="post-title">{{postData.title}}</view>
+      
+      <!-- 正文 -->
+      <view class="post-content">{{postData.content}}</view>
+
+      <!-- 非遗标签 -->
+      <view class="project-tags" wx:if="{{postData.related_projects && postData.related_projects.length > 0}}">
+        <view 
+          class="project-tag-item"
+          wx:for="{{postData.related_projects}}"
+          wx:key="id"
+          bindtap="goToProject"
+          data-id="{{item.id}}"
+        >
+          <text class="tag-icon">🏷️</text>
+          <text class="tag-name">{{item.name}}</text>
+        </view>
+      </view>
+
+      <!-- 普通标签 -->
+      <view class="normal-tags" wx:if="{{postData.tags && postData.tags.length > 0}}">
+        <view class="normal-tag" wx:for="{{postData.tags}}" wx:key="index">#{{item}}</view>
+      </view>
+
+      <!-- 位置和时间信息 -->
+      <view class="meta-info">
+        <view class="location-info" wx:if="{{postData.location && postData.location.name}}" bindtap="openLocation">
+          <van-icon name="location-o" size="14" color="#999" />
+          <text class="location-text">{{postData.location.name}}</text>
+        </view>
+        <view class="time-info">
+          <text class="time-text">{{formatTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 分隔线 -->
+    <view class="divider-line"></view>
+
+    <!-- 评论区 -->
+    <view class="comment-section">
+      <view class="comment-header">
+        <text class="comment-title">共 {{postData.comments ? postData.comments.length : 0}} 条评论</text>
+      </view>
+
+      <!-- 评论列表 -->
+      <view class="comment-list" wx:if="{{postData.comments && postData.comments.length > 0}}">
+        <view class="comment-item" wx:for="{{postData.comments}}" wx:key="_id">
+          <image class="comment-avatar" src="{{item.user_info.avatar_file_id}}" />
+          <view class="comment-content">
+            <view class="comment-user">{{item.user_info.nickname}}</view>
+            <view class="comment-text">{{item.content}}</view>
+            <view class="comment-time">{{item.create_time}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无评论 -->
+      <view class="no-comment" wx:if="{{!postData.comments || postData.comments.length === 0}}">
+        <text class="no-comment-text">暂无评论，快来抢沙发~</text>
+      </view>
+    </view>
+
+    <!-- 底部互动栏 -->
+    <view class="action-bar">
+      <view class="action-input">
+        <input 
+          class="comment-input" 
+          placeholder="说点什么..." 
+          disabled
+        />
+      </view>
+      <view class="action-icons">
+        <view class="action-icon-item">
+          <van-icon name="like-o" size="22" color="#333" />
+          <text class="action-count">{{likesFormatted}}</text>
+        </view>
+        <view class="action-icon-item">
+          <van-icon name="star-o" size="22" color="#333" />
+          <text class="action-count">0</text>
+        </view>
+        <view class="action-icon-item">
+          <van-icon name="chat-o" size="22" color="#333" />
+          <text class="action-count">{{commentsFormatted}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrapper" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrapper" wx:if="{{!loading && !postData}}">
+    <van-empty description="帖子不存在" />
+  </view>
+</view>
+
