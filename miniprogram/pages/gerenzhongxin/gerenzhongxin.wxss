@@ -375,3 +375,104 @@
   padding: 80rpx 0;
   background: linear-gradient(180deg, rgba(248, 245, 245, 0.5) 0%, rgba(245, 245, 245, 0.8) 100%);
 }
+
+/* 游客标签 */
+.guest-tag {
+  display: inline-block;
+  padding: 8rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* 退出登录按钮样式 */
+.logout-cell-title {
+  color: #999999 !important;
+}
+
+/* ========== 游客蒙版 ========== */
+.guest-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8rpx);
+  -webkit-backdrop-filter: blur(8rpx);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-content {
+  width: 600rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 60rpx 50rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.2);
+}
+
+.overlay-icon {
+  width: 160rpx;
+  height: 160rpx;
+  background: linear-gradient(135deg, rgba(139,46,42,0.1) 0%, rgba(182,59,54,0.05) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30rpx;
+}
+
+.overlay-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 16rpx;
+}
+
+.overlay-desc {
+  font-size: 26rpx;
+  color: #999999;
+  margin-bottom: 50rpx;
+}
+
+.overlay-login-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 8rpx 32rpx rgba(139,46,42,0.3);
+  margin-bottom: 24rpx;
+}
+
+.overlay-login-btn::after {
+  display: none;
+}
+
+.overlay-login-btn text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+}
+
+.overlay-skip {
+  padding: 16rpx 0;
+}
+
+.overlay-skip text {
+  font-size: 26rpx;
+  color: #8B2E2A;
+}

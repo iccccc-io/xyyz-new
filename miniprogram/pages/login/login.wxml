@@ -1,0 +1,79 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+  <!-- 顶部装饰 -->
+  <view class="header-decoration">
+    <view class="deco-circle deco-1"></view>
+    <view class="deco-circle deco-2"></view>
+  </view>
+
+  <!-- Logo 和标题 -->
+  <view class="header-section">
+    <view class="logo-wrap">
+      <text class="logo-text">湘韵遗珍</text>
+    </view>
+    <text class="header-subtitle">探寻湖南非遗之美</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="form-section">
+    <!-- 头像选择区 -->
+    <view class="form-item avatar-item">
+      <button 
+        class="avatar-button" 
+        open-type="chooseAvatar" 
+        bindchooseavatar="onChooseAvatar"
+      >
+        <image 
+          class="avatar-image {{avatarSelected ? 'selected' : ''}}" 
+          src="{{avatarUrl}}" 
+          mode="aspectFill"
+        />
+        <view class="avatar-edit-icon">
+          <van-icon name="photograph" size="16" color="#fff" />
+        </view>
+      </button>
+      <text class="avatar-tip">点击选择头像</text>
+    </view>
+
+    <!-- 昵称输入区 -->
+    <view class="form-item nickname-item">
+      <view class="input-wrap">
+        <van-icon name="user-o" size="20" color="#8B2E2A" custom-class="input-icon" />
+        <input 
+          class="nickname-input"
+          type="nickname"
+          placeholder="请输入昵称"
+          placeholder-class="input-placeholder"
+          value="{{nickname}}"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameBlur"
+        />
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="form-item submit-item">
+      <button 
+        class="submit-button {{submitting ? 'disabled' : ''}}"
+        bindtap="onSubmit"
+        disabled="{{submitting}}"
+      >
+        <text>{{submitting ? '登录中...' : '登录 / 注册'}}</text>
+      </button>
+    </view>
+
+    <!-- 跳过登录 -->
+    <view class="skip-wrap" bindtap="onSkip">
+      <text class="skip-text">暂不登录，随便逛逛</text>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer-section">
+    <text class="footer-tip">登录即表示同意</text>
+    <text class="footer-link">《用户协议》</text>
+    <text class="footer-tip">和</text>
+    <text class="footer-link">《隐私政策》</text>
+  </view>
+</view>
+

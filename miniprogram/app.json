@@ -13,6 +13,7 @@
     "pages/mall/detail",
     "pages/mall/category",
     "pages/mall/topic",
+    "pages/login/login",
     "pages/gerenzhongxin/gerenzhongxin",
     "pages/index/index",
     "pages/example/index"

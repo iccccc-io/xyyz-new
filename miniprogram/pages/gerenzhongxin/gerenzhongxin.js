@@ -1,4 +1,5 @@
 // pages/gerenzhongxin/gerenzhongxin.js
+const app = getApp()
 const db = wx.cloud.database()
 
 Page({
@@ -6,9 +7,12 @@ Page({
    * 页面的初始数据
    */
   data: {
+    // 是否已登录
+    isLoggedIn: false,
+    // 用户信息
     userInfo: {
       nickname: '',
-      avatar_file_id: '',
+      avatar_url: '',
       is_certified: false,
       certified_title: '',
       stats: {
@@ -29,59 +33,77 @@ Page({
     userPosts: [],
     leftPosts: [],
     rightPosts: [],
-    activeTab: 0,
-    currentUserId: 'user_master_001'
+    activeTab: 0
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    this.loadUserData()
+    this.checkLoginStatus()
   },
 
   /**
-   * 加载用户数据
+   * 生命周期函数--监听页面显示
    */
-  async loadUserData() {
-    try {
-      // 1. 获取用户信息
-      const userRes = await db.collection('users')
-        .doc(this.data.currentUserId)
-        .get()
+  onShow() {
+    // 每次显示页面时检查登录状态（可能从登录页返回）
+    this.checkLoginStatus()
+  },
 
-      if (userRes.data) {
-        const views = userRes.data.stats ? userRes.data.stats.views : 0
-        this.setData({
-          userInfo: userRes.data,
-          viewsFormatted: this.formatNumber(views)
-        })
-        console.log('用户信息:', userRes.data)
-      }
-
-      // 2. 获取订单统计
-      await this.loadOrderCounts()
-
-      // 3. 获取用户笔记
-      await this.loadUserPosts()
-
-    } catch (err) {
-      console.error('加载用户数据失败:', err)
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
+  /**
+   * 检查登录状态
+   */
+  checkLoginStatus() {
+    const userInfo = app.globalData.userInfo
+    
+    if (userInfo) {
+      // 已登录
+      this.setData({
+        isLoggedIn: true,
+        userInfo: {
+          ...this.data.userInfo,
+          ...userInfo,
+          stats: userInfo.stats || this.data.userInfo.stats
+        },
+        viewsFormatted: this.formatNumber(userInfo.stats ? userInfo.stats.views : 0)
       })
+      
+      // 加载用户相关数据
+      this.loadOrderCounts()
+      this.loadUserPosts()
+    } else {
+      // 未登录，显示游客蒙版
+      this.setData({
+        isLoggedIn: false
+      })
+      
+      // 设置回调，登录成功后刷新
+      app.userInfoReadyCallback = (userInfo) => {
+        this.checkLoginStatus()
+      }
     }
+  },
+
+  /**
+   * 跳转到登录页
+   */
+  goToLogin() {
+    wx.navigateTo({
+      url: '/pages/login/login'
+    })
   },
 
   /**
    * 加载订单统计
    */
   async loadOrderCounts() {
+    if (!app.globalData.openid) return
+    
     try {
       const ordersRes = await db.collection('orders')
         .where({
-          _openid: 'openid_master'
+          _openid: app.globalData.openid
         })
         .get()
 
@@ -107,10 +129,12 @@ Page({
    * 加载用户笔记
    */
   async loadUserPosts() {
+    if (!app.globalData.userInfo) return
+    
     try {
       const postsRes = await db.collection('community_posts')
         .where({
-          author_id: this.data.currentUserId
+          _openid: app.globalData.openid
         })
         .orderBy('create_time', 'desc')
         .get()
@@ -235,16 +259,50 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面初次渲染完成
+   * 退出登录
    */
-  onReady() {
-
+  onLogout() {
+    wx.showModal({
+      title: '提示',
+      content: '确定要退出登录吗？',
+      confirmColor: '#8B2E2A',
+      success: (res) => {
+        if (res.confirm) {
+          app.logout()
+          this.setData({
+            isLoggedIn: false,
+            userInfo: {
+              nickname: '',
+              avatar_url: '',
+              is_certified: false,
+              certified_title: '',
+              stats: {
+                following: 0,
+                followers: 0,
+                likes: 0,
+                views: 0
+              }
+            },
+            orderCounts: {
+              pending: 0,
+              toShip: 0,
+              toReceive: 0,
+              completed: 0,
+              refund: 0
+            },
+            userPosts: [],
+            leftPosts: [],
+            rightPosts: []
+          })
+        }
+      }
+    })
   },
 
   /**
-   * 生命周期函数--监听页面显示
+   * 生命周期函数--监听页面初次渲染完成
    */
-  onShow() {
+  onReady() {
 
   },
 
@@ -266,9 +324,8 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh() {
-    this.loadUserData().then(() => {
-      wx.stopPullDownRefresh()
-    })
+    this.checkLoginStatus()
+    wx.stopPullDownRefresh()
   },
 
   /**
@@ -285,4 +342,3 @@ Page({
 
   }
 })
-

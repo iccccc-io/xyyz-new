@@ -1,4 +1,5 @@
 // pages/community/index.js
+const app = getApp()
 const db = wx.cloud.database()
 
 Page({
@@ -82,9 +83,13 @@ Page({
   },
 
   /**
-   * 跳转到发布页
+   * 跳转到发布页（需要登录）
    */
   goToPost() {
+    // 检查登录状态
+    if (!app.requireLogin('/pages/community/post')) {
+      return
+    }
     wx.navigateTo({
       url: '/pages/community/post'
     })

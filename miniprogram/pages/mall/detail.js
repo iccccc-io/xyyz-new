@@ -1,4 +1,5 @@
 // pages/mall/detail.js
+const app = getApp()
 const db = wx.cloud.database()
 
 Page({
@@ -141,9 +142,15 @@ Page({
   },
 
   /**
-   * 收藏/取消收藏
+   * 收藏/取消收藏（需要登录）
    */
   toggleFavorite() {
+    // 检查登录状态
+    if (!app.checkLogin()) {
+      app.requireLogin()
+      return
+    }
+    
     this.setData({
       isFavorite: !this.data.isFavorite
     })
@@ -154,9 +161,15 @@ Page({
   },
 
   /**
-   * 加入购物车
+   * 加入购物车（需要登录）
    */
   addToCart() {
+    // 检查登录状态
+    if (!app.checkLogin()) {
+      app.requireLogin()
+      return
+    }
+    
     const { product, quantity } = this.data
     
     // 获取本地购物车
@@ -189,9 +202,15 @@ Page({
   },
 
   /**
-   * 立即购买
+   * 立即购买（需要登录）
    */
   buyNow() {
+    // 检查登录状态
+    if (!app.checkLogin()) {
+      app.requireLogin()
+      return
+    }
+    
     const { product, quantity } = this.data
     
     // 检查库存

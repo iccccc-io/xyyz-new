@@ -4,22 +4,25 @@
   <view class="immersive-header">
     <!-- 用户信息 -->
     <view class="user-profile">
-      <image class="user-avatar" src="{{userInfo.avatar_file_id}}" />
+      <image class="user-avatar" src="{{isLoggedIn ? userInfo.avatar_url : '/images/icons/avatar.png'}}" />
       <view class="user-info">
         <view class="user-name-row">
-          <text class="user-nickname">{{userInfo.nickname}}</text>
+          <text class="user-nickname">{{isLoggedIn ? userInfo.nickname : '游客用户'}}</text>
           <van-icon 
-            wx:if="{{userInfo.is_certified}}" 
+            wx:if="{{isLoggedIn && userInfo.is_certified}}" 
             name="medal-o" 
             size="20" 
             color="#FFD700" 
           />
         </view>
-        <view class="certified-tag" wx:if="{{userInfo.is_certified && userInfo.certified_title}}">
+        <view class="certified-tag" wx:if="{{isLoggedIn && userInfo.is_certified && userInfo.certified_title}}">
           <text>{{userInfo.certified_title}}</text>
         </view>
-        <view class="normal-tag" wx:if="{{!userInfo.is_certified}}">
+        <view class="normal-tag" wx:if="{{isLoggedIn && !userInfo.is_certified}}">
           <text>非遗爱好者</text>
+        </view>
+        <view class="guest-tag" wx:if="{{!isLoggedIn}}">
+          <text>点击登录体验更多功能</text>
         </view>
       </view>
     </view>
@@ -126,6 +129,15 @@
           is-link
           bindtap="contactService"
         />
+        <!-- 退出登录（仅登录后显示） -->
+        <van-cell 
+          wx:if="{{isLoggedIn}}"
+          title="退出登录" 
+          icon="revoke" 
+          is-link
+          title-class="logout-cell-title"
+          bindtap="onLogout"
+        />
       </van-cell-group>
     </view>
 
@@ -201,16 +213,32 @@
             </view>
           </view>
           <view class="empty-posts" wx:if="{{userPosts.length === 0}}">
-            <van-empty description="还没有发布笔记" />
+            <van-empty description="{{isLoggedIn ? '还没有发布笔记' : '登录后查看您的笔记'}}" />
           </view>
         </van-tab>
         <van-tab title="我的收藏">
           <view class="empty-posts">
-            <van-empty description="暂无收藏内容" />
+            <van-empty description="{{isLoggedIn ? '暂无收藏内容' : '登录后查看您的收藏'}}" />
           </view>
         </van-tab>
       </van-tabs>
     </view>
   </view>
-</view>
 
+  <!-- 游客蒙版（未登录时显示） -->
+  <view class="guest-overlay" wx:if="{{!isLoggedIn}}">
+    <view class="overlay-content">
+      <view class="overlay-icon">
+        <van-icon name="user-circle-o" size="80" color="#8B2E2A" />
+      </view>
+      <text class="overlay-title">登录后体验更多功能</text>
+      <text class="overlay-desc">查看订单、发布笔记、收藏好物</text>
+      <button class="overlay-login-btn" bindtap="goToLogin">
+        <text>立即登录</text>
+      </button>
+      <view class="overlay-skip" bindtap="goToLogin">
+        <text>或 注册新账号</text>
+      </view>
+    </view>
+  </view>
+</view>
