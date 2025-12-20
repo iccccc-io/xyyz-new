@@ -9,15 +9,14 @@ Page({
     searchValue: '',
     // 每日推荐商品
     featuredProduct: null,
-    // 分类列表
-    categories: [
-      { id: 'all', name: '全部', icon: 'apps-o' },
-      { id: '手工体验', name: '手工体验', icon: 'gift-o' },
-      { id: '非遗摆件', name: '非遗摆件', icon: 'gem-o' },
-      { id: '地道风物', name: '地道风物', icon: 'shop-o' },
-      { id: '文房四宝', name: '文房雅器', icon: 'edit' }
+    // 快捷入口列表（跳转用，不再用于筛选）
+    quickEntries: [
+      { id: 'category', name: '全部分类', icon: 'apps-o', type: 'category' },
+      { id: '手工体验', name: '手工体验', icon: 'gift-o', type: 'topic' },
+      { id: '非遗摆件', name: '非遗摆件', icon: 'gem-o', type: 'topic' },
+      { id: '地道风物', name: '地道风物', icon: 'shop-o', type: 'topic' },
+      { id: '文房雅器', name: '文房雅器', icon: 'edit', type: 'topic' }
     ],
-    activeCategory: 'all',
     // 非遗工坊直供专区
     workshops: [],
     // 商品列表 - 双列瀑布流
@@ -112,7 +111,7 @@ Page({
   },
 
   /**
-   * 加载商品列表
+   * 加载商品列表（首页展示全部商品，不再按分类筛选）
    */
   async loadProducts(refresh = false) {
     if (this.data.loadingMore && !refresh) return
@@ -131,16 +130,9 @@ Page({
     }
 
     try {
-      const { activeCategory, page, pageSize, searchValue } = this.data
+      const { page, pageSize, searchValue } = this.data
       
       let query = db.collection('products')
-      
-      // 分类筛选
-      if (activeCategory !== 'all') {
-        query = query.where({
-          category: activeCategory
-        })
-      }
       
       // 搜索筛选
       if (searchValue) {
@@ -229,17 +221,22 @@ Page({
   },
 
   /**
-   * 切换分类
+   * 快捷入口点击 - 跳转到对应页面
    */
-  onCategoryTap(e) {
-    const { id } = e.currentTarget.dataset
-    if (id === this.data.activeCategory) return
+  onEntryTap(e) {
+    const { id, type } = e.currentTarget.dataset
     
-    this.setData({
-      activeCategory: id,
-      searchValue: ''
-    })
-    this.loadProducts(true)
+    if (type === 'category') {
+      // 跳转到全部分类页
+      wx.navigateTo({
+        url: '/pages/mall/category'
+      })
+    } else if (type === 'topic') {
+      // 跳转到专题页，传递关键字
+      wx.navigateTo({
+        url: `/pages/mall/topic?keyword=${encodeURIComponent(id)}`
+      })
+    }
   },
 
   /**

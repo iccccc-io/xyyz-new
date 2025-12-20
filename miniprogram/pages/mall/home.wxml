@@ -52,19 +52,20 @@
     </view>
   </view>
 
-  <!-- 风格化分类导航 -->
+  <!-- 快捷入口导航 -->
   <view class="category-section">
     <scroll-view scroll-x class="category-scroll" enhanced show-scrollbar="{{false}}">
       <view class="category-list">
         <view 
-          class="category-item {{activeCategory === item.id ? 'active' : ''}}"
-          wx:for="{{categories}}"
+          class="category-item"
+          wx:for="{{quickEntries}}"
           wx:key="id"
           data-id="{{item.id}}"
-          bindtap="onCategoryTap"
+          data-type="{{item.type}}"
+          bindtap="onEntryTap"
         >
           <view class="category-icon-wrap">
-            <van-icon name="{{item.icon}}" size="24" color="{{activeCategory === item.id ? '#ffffff' : '#8B2E2A'}}" />
+            <van-icon name="{{item.icon}}" size="24" color="#8B2E2A" />
           </view>
           <text class="category-name">{{item.name}}</text>
         </view>

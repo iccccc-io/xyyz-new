@@ -1,0 +1,89 @@
+<!--pages/mall/category.wxml-->
+<view class="category-container">
+  <!-- 左侧分类侧边栏 -->
+  <view class="sidebar-wrap">
+    <van-sidebar active-key="{{ activeIndex }}" bind:change="onCategoryChange">
+      <van-sidebar-item 
+        wx:for="{{categories}}" 
+        wx:key="id"
+        title="{{item.name}}"
+      />
+    </van-sidebar>
+  </view>
+
+  <!-- 右侧商品展示区 -->
+  <scroll-view 
+    class="content-wrap" 
+    scroll-y 
+    enhanced
+    bindscrolltolower="onReachBottom"
+  >
+    <!-- 分类标题 -->
+    <view class="content-header">
+      <text class="header-title">{{categories[activeIndex].name}}</text>
+      <text class="header-count">共{{products.length}}件商品</text>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+    </view>
+
+    <!-- 空状态 -->
+    <van-empty 
+      wx:elif="{{products.length === 0}}"
+      image="search"
+      description="该分类暂无商品"
+    />
+
+    <!-- 商品列表 (List View) -->
+    <view class="products-list" wx:else>
+      <view 
+        class="product-row"
+        wx:for="{{products}}"
+        wx:key="_id"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <!-- 左侧正方形图片 -->
+        <view class="row-image-wrap">
+          <image 
+            class="row-image" 
+            src="{{item.cover_img}}" 
+            mode="aspectFill"
+            lazy-load
+          />
+        </view>
+        <!-- 右侧信息区 -->
+        <view class="row-info">
+          <text class="row-title">{{item.title}}</text>
+          <!-- 标签行 -->
+          <view class="row-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="row-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+          </view>
+          <!-- 产地 -->
+          <view class="row-origin">
+            <text class="origin-icon">📍</text>
+            <text class="origin-text">{{item.origin || '湖南'}}</text>
+          </view>
+          <!-- 价格与销量 -->
+          <view class="row-footer">
+            <view class="row-price">
+              <text class="price-symbol">¥</text>
+              <text class="price-value">{{item.price}}</text>
+              <text class="price-original" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+            </view>
+            <text class="row-sales">已售{{item.sales || 0}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 / 没有更多 -->
+    <view class="list-footer" wx:if="{{products.length > 0}}">
+      <van-loading size="18px" color="#8B2E2A" wx:if="{{!noMore && !loading}}" />
+      <text class="footer-text" wx:elif="{{noMore}}">— 已展示全部 —</text>
+    </view>
+  </scroll-view>
+</view>
+

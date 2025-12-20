@@ -1,0 +1,129 @@
+<!--pages/mall/topic.wxml-->
+<view class="topic-container">
+  <!-- 专题头部 Banner -->
+  <view class="topic-header" wx:if="{{currentTopic}}" style="background: linear-gradient(135deg, {{currentTopic.color}} 0%, {{currentTopic.color}}dd 100%);">
+    <view class="header-content">
+      <view class="header-icon">
+        <van-icon name="{{currentTopic.icon}}" size="48" color="#ffffff" />
+      </view>
+      <view class="header-text">
+        <text class="header-title">{{currentTopic.title}}</text>
+        <text class="header-subtitle">{{currentTopic.subtitle}}</text>
+      </view>
+    </view>
+    <view class="header-decoration">
+      <view class="deco-circle deco-1"></view>
+      <view class="deco-circle deco-2"></view>
+      <view class="deco-circle deco-3"></view>
+    </view>
+  </view>
+
+  <!-- 商品数量统计 -->
+  <view class="stats-bar">
+    <text class="stats-text">共 {{leftColumn.length + rightColumn.length}} 件好物</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <van-empty 
+    wx:elif="{{leftColumn.length === 0 && rightColumn.length === 0}}"
+    image="search"
+    description="该专题暂无商品"
+  />
+
+  <!-- 商品瀑布流 -->
+  <view class="waterfall-container" wx:else>
+    <!-- 左列 -->
+    <view class="waterfall-column">
+      <view 
+        class="product-card"
+        wx:for="{{leftColumn}}"
+        wx:key="_id"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <view class="card-image-wrap">
+          <image 
+            class="card-image" 
+            src="{{item.cover_img}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 标签 -->
+          <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" wx:if="{{tag !== keyword}}">{{tag}}</text>
+          </view>
+        </view>
+        <view class="card-content">
+          <text class="card-title">{{item.title}}</text>
+          <view class="card-origin">
+            <text class="origin-icon">📍</text>
+            <text class="origin-text">{{item.origin || '湖南'}}</text>
+          </view>
+          <view class="card-footer">
+            <view class="price-wrap">
+              <text class="current-price">¥{{item.price}}</text>
+              <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+            </view>
+            <text class="sales-text">已售{{item.sales || 0}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 右列 -->
+    <view class="waterfall-column">
+      <view 
+        class="product-card"
+        wx:for="{{rightColumn}}"
+        wx:key="_id"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <view class="card-image-wrap">
+          <image 
+            class="card-image" 
+            src="{{item.cover_img}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 标签 -->
+          <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" wx:if="{{tag !== keyword}}">{{tag}}</text>
+          </view>
+        </view>
+        <view class="card-content">
+          <text class="card-title">{{item.title}}</text>
+          <view class="card-origin">
+            <text class="origin-icon">📍</text>
+            <text class="origin-text">{{item.origin || '湖南'}}</text>
+          </view>
+          <view class="card-footer">
+            <view class="price-wrap">
+              <text class="current-price">¥{{item.price}}</text>
+              <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+            </view>
+            <text class="sales-text">已售{{item.sales || 0}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="loading-more" wx:if="{{loadingMore}}">
+    <van-loading size="20px" color="#8B2E2A" />
+  </view>
+
+  <!-- 没有更多 -->
+  <view class="no-more" wx:if="{{noMore && (leftColumn.length > 0 || rightColumn.length > 0)}}">
+    <view class="no-more-line"></view>
+    <text class="no-more-text">已展示全部好物</text>
+    <view class="no-more-line"></view>
+  </view>
+</view>
+
