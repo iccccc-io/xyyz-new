@@ -6,16 +6,37 @@
     <view class="deco-circle deco-2"></view>
   </view>
 
-  <!-- Logo 和标题 -->
+  <!-- Logo 和标题 - 新中式极简风格 -->
   <view class="header-section">
-    <view class="logo-wrap">
-      <text class="logo-text">湘韵遗珍</text>
+    <view class="logo-area">
+      <view class="logo-title-row">
+        <text class="logo-text">湘韵遗珍</text>
+        <view class="logo-seal">湘</view>
+      </view>
+      <text class="logo-subtitle">探寻湖南非遗之美</text>
     </view>
-    <text class="header-subtitle">探寻湖南非遗之美</text>
   </view>
 
-  <!-- 登录表单 -->
-  <view class="form-section">
+  <!-- 加载状态 -->
+  <view class="loading-section" wx:if="{{pageState === 'loading'}}">
+    <van-loading size="40px" color="#8B2E2A" vertical>
+      正在检查登录状态...
+    </van-loading>
+  </view>
+
+  <!-- 自动登录成功状态 -->
+  <view class="done-section" wx:elif="{{pageState === 'done'}}">
+    <van-icon name="checked" size="60" color="#8B2E2A" />
+    <text class="done-text">登录成功，正在跳转...</text>
+  </view>
+
+  <!-- 注册表单（仅新用户显示） -->
+  <view class="form-section" wx:elif="{{pageState === 'form'}}">
+    <!-- 新用户提示 -->
+    <view class="new-user-tip">
+      <text>首次使用，请完善您的信息</text>
+    </view>
+
     <!-- 头像选择区 -->
     <view class="form-item avatar-item">
       <button 
@@ -58,7 +79,7 @@
         bindtap="onSubmit"
         disabled="{{submitting}}"
       >
-        <text>{{submitting ? '登录中...' : '登录 / 注册'}}</text>
+        <text>{{submitting ? '注册中...' : '立即注册'}}</text>
       </button>
     </view>
 
@@ -69,7 +90,7 @@
   </view>
 
   <!-- 底部提示 -->
-  <view class="footer-section">
+  <view class="footer-section" wx:if="{{pageState === 'form'}}">
     <text class="footer-tip">登录即表示同意</text>
     <text class="footer-link">《用户协议》</text>
     <text class="footer-tip">和</text>

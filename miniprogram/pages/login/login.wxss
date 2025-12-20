@@ -45,7 +45,7 @@ page {
   left: -80rpx;
 }
 
-/* ========== Logo 和标题 ========== */
+/* ========== Logo 和标题 - 新中式极简风格 ========== */
 .header-section {
   margin-top: 180rpx;
   text-align: center;
@@ -53,35 +53,108 @@ page {
   z-index: 1;
 }
 
-.logo-wrap {
-  display: inline-block;
-  padding: 20rpx 40rpx;
-  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
-  border-radius: 16rpx;
-  box-shadow: 0 8rpx 32rpx rgba(139,46,42,0.3);
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-title-row {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
 }
 
 .logo-text {
-  font-size: 48rpx;
+  font-size: 56rpx;
   font-weight: bold;
-  color: #ffffff;
+  color: #8B2E2A;
   letter-spacing: 8rpx;
-  font-family: "PingFang SC", "Noto Serif SC", serif;
+  font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  text-shadow: 0 2rpx 4rpx rgba(139,46,42,0.1);
 }
 
-.header-subtitle {
+/* 印章点缀 */
+.logo-seal {
+  width: 44rpx;
+  height: 44rpx;
+  background: linear-gradient(135deg, #C94843 0%, #8B2E2A 100%);
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12rpx;
+  margin-top: -4rpx;
+  box-shadow: 0 2rpx 8rpx rgba(139,46,42,0.3);
+  /* 印章倾斜效果 */
+  transform: rotate(8deg);
+}
+
+.logo-seal {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #ffffff;
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+}
+
+.logo-subtitle {
   display: block;
-  margin-top: 24rpx;
-  font-size: 28rpx;
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  color: #999999;
+  letter-spacing: 6rpx;
+  font-family: "PingFang SC", sans-serif;
+}
+
+/* ========== 加载状态 ========== */
+.loading-section {
+  margin-top: 120rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== 登录成功状态 ========== */
+.done-section {
+  margin-top: 120rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.done-text {
+  margin-top: 30rpx;
+  font-size: 30rpx;
   color: #8B2E2A;
-  letter-spacing: 4rpx;
+  font-weight: 500;
 }
 
 /* ========== 登录表单 ========== */
 .form-section {
-  margin-top: 80rpx;
+  margin-top: 60rpx;
   position: relative;
   z-index: 1;
+}
+
+/* 新用户提示 */
+.new-user-tip {
+  text-align: center;
+  margin-bottom: 40rpx;
+  padding: 20rpx 0;
+}
+
+.new-user-tip text {
+  font-size: 28rpx;
+  color: #666666;
+  background: linear-gradient(135deg, rgba(139,46,42,0.08) 0%, rgba(182,59,54,0.05) 100%);
+  padding: 16rpx 36rpx;
+  border-radius: 30rpx;
 }
 
 .form-item {

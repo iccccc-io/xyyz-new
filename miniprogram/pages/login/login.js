@@ -19,7 +19,11 @@ Page({
     // 是否正在提交
     submitting: false,
     // 登录成功后重定向的页面
-    redirectUrl: ''
+    redirectUrl: '',
+    // 页面状态：'loading' | 'form' | 'done'
+    pageState: 'loading',
+    // 是否是新用户（用于显示不同的提示文字）
+    isNewUser: true
   },
 
   /**
@@ -30,6 +34,94 @@ Page({
     if (options.redirect) {
       this.setData({
         redirectUrl: decodeURIComponent(options.redirect)
+      })
+    }
+    
+    // 检查用户是否已注册
+    this.checkExistingUser()
+  },
+
+  /**
+   * 检查用户是否已注册
+   * 如果已注册，直接自动登录
+   */
+  async checkExistingUser() {
+    try {
+      // 1. 获取 OpenID
+      let openid = app.globalData.openid
+      if (!openid) {
+        const res = await wx.cloud.callFunction({
+          name: 'login_get_openid'
+        })
+        openid = res.result.openid
+        app.globalData.openid = openid
+      }
+
+      if (!openid) {
+        // 无法获取 OpenID，显示注册表单
+        this.setData({ pageState: 'form', isNewUser: true })
+        return
+      }
+
+      // 2. 查询用户是否已存在
+      const userQuery = await db.collection('users')
+        .where({
+          _openid: openid
+        })
+        .get()
+
+      if (userQuery.data && userQuery.data.length > 0) {
+        // 用户已存在，直接自动登录
+        const existUser = userQuery.data[0]
+        app.globalData.userInfo = existUser
+        
+        console.log('用户已注册，自动登录成功:', existUser.nickname)
+        
+        wx.showToast({
+          title: `欢迎回来，${existUser.nickname}`,
+          icon: 'success'
+        })
+
+        // 直接返回
+        setTimeout(() => {
+          this.goBack()
+        }, 1000)
+        
+        this.setData({ pageState: 'done' })
+      } else {
+        // 新用户，显示注册表单
+        this.setData({ pageState: 'form', isNewUser: true })
+      }
+    } catch (err) {
+      console.error('检查用户失败:', err)
+      // 出错时也显示表单
+      this.setData({ pageState: 'form', isNewUser: true })
+    }
+  },
+
+  /**
+   * 返回上一页或跳转
+   */
+  goBack() {
+    if (this.data.redirectUrl) {
+      wx.redirectTo({
+        url: this.data.redirectUrl,
+        fail: () => {
+          wx.switchTab({
+            url: this.data.redirectUrl,
+            fail: () => {
+              wx.navigateBack()
+            }
+          })
+        }
+      })
+    } else {
+      wx.navigateBack({
+        fail: () => {
+          wx.switchTab({
+            url: '/pages/home/home'
+          })
+        }
       })
     }
   },
@@ -68,7 +160,7 @@ Page({
   },
 
   /**
-   * 提交登录/注册
+   * 提交注册（仅新用户会调用此方法）
    */
   async onSubmit() {
     const { avatarUrl, avatarSelected, nickname, submitting } = this.data
@@ -94,10 +186,10 @@ Page({
     }
     
     this.setData({ submitting: true })
-    wx.showLoading({ title: '登录中...' })
+    wx.showLoading({ title: '注册中...' })
     
     try {
-      // 1. 获取 OpenID
+      // 1. 获取 OpenID（应该在 checkExistingUser 时已获取）
       let openid = app.globalData.openid
       if (!openid) {
         const res = await wx.cloud.callFunction({
@@ -125,56 +217,10 @@ Page({
         console.log('头像上传成功:', avatarFileId)
       }
       
-      // 3. 查询用户是否已存在
-      const userQuery = await db.collection('users')
-        .where({
-          _openid: openid
-        })
-        .get()
-      
-      let userInfo
+      // 3. 创建新用户记录
       const now = new Date()
-      
-      if (userQuery.data && userQuery.data.length > 0) {
-        // 4a. 用户已存在，更新信息
-        const existUser = userQuery.data[0]
-        await db.collection('users').doc(existUser._id).update({
-          data: {
-            nickname: nickname.trim(),
-            avatar_url: avatarFileId,
-            update_time: now
-          }
-        })
-        
-        userInfo = {
-          ...existUser,
-          nickname: nickname.trim(),
-          avatar_url: avatarFileId,
-          update_time: now
-        }
-        console.log('用户信息更新成功')
-      } else {
-        // 4b. 新用户，创建记录
-        // 注意：_openid 是系统字段，会自动填充，不能手动指定
-        const addRes = await db.collection('users').add({
-          data: {
-            nickname: nickname.trim(),
-            avatar_url: avatarFileId,
-            is_certified: false,
-            create_time: now,
-            update_time: now,
-            stats: {
-              following: 0,
-              followers: 0,
-              likes: 0,
-              views: 0
-            }
-          }
-        })
-        
-        userInfo = {
-          _id: addRes._id,
-          _openid: openid,
+      const addRes = await db.collection('users').add({
+        data: {
           nickname: nickname.trim(),
           avatar_url: avatarFileId,
           is_certified: false,
@@ -187,54 +233,49 @@ Page({
             views: 0
           }
         }
-        console.log('新用户注册成功')
-      }
+      })
       
-      // 5. 保存到全局状态
+      const userInfo = {
+        _id: addRes._id,
+        _openid: openid,
+        nickname: nickname.trim(),
+        avatar_url: avatarFileId,
+        is_certified: false,
+        create_time: now,
+        update_time: now,
+        stats: {
+          following: 0,
+          followers: 0,
+          likes: 0,
+          views: 0
+        }
+      }
+      console.log('新用户注册成功')
+      
+      // 4. 保存到全局状态
       app.globalData.userInfo = userInfo
       
-      // 6. 触发回调（如果有页面在监听）
+      // 5. 触发回调（如果有页面在监听）
       if (app.userInfoReadyCallback) {
         app.userInfoReadyCallback(userInfo)
       }
       
       wx.hideLoading()
       wx.showToast({
-        title: '登录成功',
+        title: '注册成功',
         icon: 'success'
       })
       
-      // 7. 返回上一页或重定向
+      // 6. 返回上一页或重定向
       setTimeout(() => {
-        if (this.data.redirectUrl) {
-          wx.redirectTo({
-            url: this.data.redirectUrl,
-            fail: () => {
-              wx.switchTab({
-                url: this.data.redirectUrl,
-                fail: () => {
-                  wx.navigateBack()
-                }
-              })
-            }
-          })
-        } else {
-          wx.navigateBack({
-            fail: () => {
-              // 如果无法返回，跳转到首页
-              wx.switchTab({
-                url: '/pages/home/home'
-              })
-            }
-          })
-        }
+        this.goBack()
       }, 1500)
       
     } catch (err) {
-      console.error('登录失败:', err)
+      console.error('注册失败:', err)
       wx.hideLoading()
       wx.showToast({
-        title: '登录失败，请重试',
+        title: '注册失败，请重试',
         icon: 'none'
       })
     } finally {
