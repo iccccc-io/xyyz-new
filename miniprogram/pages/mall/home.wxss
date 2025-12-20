@@ -1,0 +1,595 @@
+/* pages/mall/home.wxss */
+page {
+  background: #f8f5f1;
+  min-height: 100vh;
+}
+
+.mall-container {
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  background: transparent;
+}
+
+/* ========== 沉浸式顶部 ========== */
+.header {
+  position: relative;
+  padding: 40rpx 30rpx 60rpx;
+  overflow: hidden;
+}
+
+.header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #8B2E2A 0%, #6B2320 50%, #5A1E1B 100%);
+  z-index: 0;
+}
+
+.header-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(255,215,160,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(139,46,42,0.3) 0%, transparent 50%);
+}
+
+.header-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -2rpx;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(to bottom, transparent, #f8f5f1);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+}
+
+.header-title {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.title-main {
+  display: block;
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 12rpx;
+  text-shadow: 0 4rpx 8rpx rgba(0,0,0,0.2);
+  font-family: "PingFang SC", "Noto Serif SC", serif;
+}
+
+.title-sub {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255,215,160,0.9);
+  margin-top: 12rpx;
+  letter-spacing: 4rpx;
+}
+
+/* 毛玻璃搜索条 */
+.search-bar {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border-radius: 44rpx;
+  overflow: hidden;
+  padding: 4rpx;
+}
+
+.search-bar .van-search {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.search-bar .van-search__content {
+  background: rgba(255,255,255,0.95) !important;
+  border-radius: 40rpx !important;
+}
+
+/* ========== 每日一物 Hero Card ========== */
+.hero-section {
+  margin: -30rpx 30rpx 30rpx;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-card {
+  display: flex;
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 16rpx 48rpx rgba(139,46,42,0.15);
+}
+
+.hero-label {
+  width: 80rpx;
+  background: linear-gradient(180deg, #8B2E2A 0%, #6B2320 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 0;
+  flex-shrink: 0;
+}
+
+.label-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  letter-spacing: 4rpx;
+  writing-mode: vertical-rl;
+  font-family: "PingFang SC", "Noto Serif SC", serif;
+  margin: 4rpx 0;
+}
+
+.label-divider {
+  width: 24rpx;
+  height: 2rpx;
+  background: rgba(255,215,160,0.6);
+  margin: 16rpx 0;
+}
+
+.hero-image-wrap {
+  flex: 1;
+  position: relative;
+  min-height: 280rpx;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  object-fit: cover;
+}
+
+.hero-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  padding: 60rpx 24rpx 24rpx;
+}
+
+.hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.hero-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #ffffff;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.hero-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-price {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FFD7A0;
+}
+
+.hero-origin {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ========== 分类导航 ========== */
+.category-section {
+  margin: 0 30rpx 30rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.05);
+  overflow: visible;
+}
+
+.category-scroll {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.category-list {
+  display: inline-flex;
+  gap: 30rpx;
+  padding: 8rpx 10rpx;
+}
+
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 100rpx;
+}
+
+.category-icon-wrap {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #FDF5F0;
+  border: 2rpx solid #E8D5CC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.category-item.active .category-icon-wrap {
+  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
+  border-color: #8B2E2A;
+  box-shadow: 0 8rpx 24rpx rgba(139,46,42,0.3);
+  transform: scale(1.08);
+}
+
+.category-name {
+  font-size: 24rpx;
+  color: #666666;
+  font-family: "PingFang SC", "Noto Serif SC", serif;
+  transition: all 0.3s ease;
+}
+
+.category-item.active .category-name {
+  color: #8B2E2A;
+  font-weight: bold;
+}
+
+/* ========== 非遗工坊直供专区 ========== */
+.workshop-section {
+  margin: 0 0 30rpx;
+  padding: 30rpx 0;
+  background: linear-gradient(135deg, #FDF8F5 0%, #F8F0EB 100%);
+}
+
+.workshop-section .section-header {
+  padding: 0 30rpx;
+}
+
+.workshop-scroll {
+  white-space: nowrap;
+  margin-top: 20rpx;
+}
+
+.workshop-list {
+  display: inline-flex;
+  gap: 24rpx;
+  padding: 10rpx 30rpx 20rpx;
+}
+
+.workshop-card {
+  width: 320rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(139,46,42,0.1);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.workshop-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(139,46,42,0.15);
+}
+
+.workshop-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 200rpx;
+  overflow: hidden;
+}
+
+.workshop-image {
+  width: 100%;
+  height: 100%;
+}
+
+.workshop-badge {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
+  padding: 6rpx 14rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(139,46,42,0.3);
+}
+
+.workshop-badge text {
+  font-size: 20rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.workshop-info {
+  padding: 20rpx;
+}
+
+.workshop-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "PingFang SC", "Noto Serif SC", serif;
+}
+
+.workshop-meta {
+  margin-bottom: 12rpx;
+}
+
+.workshop-origin {
+  font-size: 22rpx;
+  color: #8B2E2A;
+}
+
+.workshop-product {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+  overflow: hidden;
+}
+
+.product-label {
+  font-size: 22rpx;
+  color: #999999;
+  flex-shrink: 0;
+}
+
+.product-name {
+  font-size: 22rpx;
+  color: #666666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workshop-price {
+  display: flex;
+  align-items: baseline;
+}
+
+.price-symbol {
+  font-size: 24rpx;
+  color: #B63B36;
+  font-weight: bold;
+}
+
+.price-value {
+  font-size: 36rpx;
+  color: #B63B36;
+  font-weight: bold;
+  margin-right: 4rpx;
+}
+
+.price-suffix {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+/* ========== 好物市集 ========== */
+.products-section {
+  padding: 0 20rpx;
+  background: transparent;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.title-decoration {
+  width: 40rpx;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent, #8B2E2A);
+}
+
+.title-decoration:last-child {
+  background: linear-gradient(90deg, #8B2E2A, transparent);
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  letter-spacing: 6rpx;
+  font-family: "PingFang SC", "Noto Serif SC", serif;
+}
+
+.section-subtitle {
+  font-size: 24rpx;
+  color: #999999;
+  letter-spacing: 2rpx;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+/* 瀑布流容器 */
+.waterfall-container {
+  display: flex;
+  gap: 20rpx;
+}
+
+.waterfall-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 商品卡片 */
+.product-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+  transition: all 0.2s ease;
+}
+
+.product-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.08);
+}
+
+.card-image-wrap {
+  position: relative;
+  width: 100%;
+  background: #f5f5f5;
+}
+
+.card-image {
+  width: 100%;
+  display: block;
+}
+
+.card-tags {
+  position: absolute;
+  top: 12rpx;
+  left: 12rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.card-tag {
+  font-size: 20rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.card-content {
+  padding: 20rpx;
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.card-origin {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-bottom: 16rpx;
+}
+
+.origin-icon {
+  font-size: 22rpx;
+}
+
+.origin-text {
+  font-size: 22rpx;
+  color: #8B2E2A;
+  font-weight: 500;
+}
+
+.card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.current-price {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #B63B36;
+}
+
+.original-price {
+  font-size: 22rpx;
+  color: #bbbbbb;
+  text-decoration: line-through;
+}
+
+.sales-text {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+/* 加载更多 */
+.loading-more {
+  display: flex;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+/* 没有更多 */
+.no-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  padding: 50rpx 0 30rpx;
+  background: transparent;
+}
+
+.no-more-line {
+  width: 80rpx;
+  height: 2rpx;
+  background: linear-gradient(90deg, transparent, #d5ccc5);
+}
+
+.no-more-line:last-child {
+  background: linear-gradient(90deg, #d5ccc5, transparent);
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #a09080;
+  letter-spacing: 2rpx;
+}
+

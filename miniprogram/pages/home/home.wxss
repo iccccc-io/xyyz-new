@@ -198,23 +198,26 @@ page {
   margin-top: 20rpx;
 }
 
+/* 商城入口 */
+.mall-section {
+  margin-top: 30rpx;
+}
+
+.mall-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #b63b36 0%, #8b2e2a 100%);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-top: 20rpx;
+}
+
+.mall-icon {
+  background: rgba(255, 215, 160, 0.3);
+}
+
 .user-icon {
   background: rgba(182, 59, 54, 0.3);
-}
-
-/* 预留区域 */
-.placeholder {
-  margin: 60rpx 30rpx;
-  padding: 80rpx 40rpx;
-  background: #ffffff;
-  border-radius: 20rpx;
-  border: 2rpx dashed #e5e5e5;
-  text-align: center;
-}
-
-.placeholder-text {
-  font-size: 28rpx;
-  color: #999999;
-  letter-spacing: 2rpx;
 }
 

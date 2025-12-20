@@ -60,6 +60,15 @@ Page({
   },
 
   /**
+   * 导航到文创商城
+   */
+  navigateToMall() {
+    wx.navigateTo({
+      url: '/pages/mall/home'
+    })
+  },
+
+  /**
    * 导航到个人中心
    */
   navigateToUser() {

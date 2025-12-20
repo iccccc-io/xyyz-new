@@ -1,0 +1,247 @@
+<!--pages/mall/home.wxml-->
+<view class="mall-container">
+  <!-- 沉浸式顶部 -->
+  <view class="header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="header-title">
+        <text class="title-main">文创好物</text>
+        <text class="title-sub">匠心传承 · 非遗新生</text>
+      </view>
+      <!-- 毛玻璃搜索条 -->
+      <view class="search-bar">
+        <van-search
+          value="{{ searchValue }}"
+          placeholder="搜索非遗好物..."
+          shape="round"
+          background="transparent"
+          bind:change="onSearchInput"
+          bind:search="onSearch"
+          bind:clear="onSearchClear"
+        />
+      </view>
+    </view>
+  </view>
+
+  <!-- 每日一物 Hero Card -->
+  <view class="hero-section" wx:if="{{featuredProduct}}">
+    <view class="hero-card" bindtap="goToDetail" data-id="{{featuredProduct._id}}">
+      <view class="hero-label">
+        <text class="label-text">匠</text>
+        <text class="label-text">心</text>
+        <text class="label-divider"></text>
+        <text class="label-text">推</text>
+        <text class="label-text">荐</text>
+      </view>
+      <view class="hero-image-wrap">
+        <image 
+          class="hero-image" 
+          src="{{featuredProduct.cover_img}}" 
+          mode="aspectFill"
+        />
+        <view class="hero-overlay">
+          <view class="hero-info">
+            <text class="hero-title">{{featuredProduct.title}}</text>
+            <view class="hero-price-row">
+              <text class="hero-price">¥{{featuredProduct.price}}</text>
+              <text class="hero-origin">📍 {{featuredProduct.origin || '湖南'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 风格化分类导航 -->
+  <view class="category-section">
+    <scroll-view scroll-x class="category-scroll" enhanced show-scrollbar="{{false}}">
+      <view class="category-list">
+        <view 
+          class="category-item {{activeCategory === item.id ? 'active' : ''}}"
+          wx:for="{{categories}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="onCategoryTap"
+        >
+          <view class="category-icon-wrap">
+            <van-icon name="{{item.icon}}" size="24" color="{{activeCategory === item.id ? '#ffffff' : '#8B2E2A'}}" />
+          </view>
+          <text class="category-name">{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 特色专区 - 非遗工坊直供 -->
+  <view class="workshop-section" wx:if="{{workshops.length > 0}}">
+    <view class="section-header">
+      <view class="section-title-wrap">
+        <view class="title-decoration"></view>
+        <text class="section-title">非遗工坊直供</text>
+        <view class="title-decoration"></view>
+      </view>
+      <text class="section-subtitle">源头直采 · 匠人匠心</text>
+    </view>
+    
+    <scroll-view 
+      scroll-x 
+      class="workshop-scroll" 
+      enhanced 
+      show-scrollbar="{{false}}"
+    >
+      <view class="workshop-list">
+        <view 
+          class="workshop-card"
+          wx:for="{{workshops}}"
+          wx:key="id"
+          bindtap="goToDetail"
+          data-id="{{item.product._id}}"
+        >
+          <!-- 工坊图片（代表作） -->
+          <view class="workshop-image-wrap">
+            <image 
+              class="workshop-image" 
+              src="{{item.product.cover_img}}" 
+              mode="aspectFill"
+            />
+            <view class="workshop-badge">
+              <van-icon name="shop-o" size="12" color="#fff" />
+              <text>直供</text>
+            </view>
+          </view>
+          <!-- 工坊信息 -->
+          <view class="workshop-info">
+            <text class="workshop-name">{{item.name}}</text>
+            <view class="workshop-meta">
+              <text class="workshop-origin">📍 {{item.origin}}</text>
+            </view>
+            <view class="workshop-product">
+              <text class="product-label">代表作：</text>
+              <text class="product-name">{{item.product.title}}</text>
+            </view>
+            <view class="workshop-price">
+              <text class="price-symbol">¥</text>
+              <text class="price-value">{{item.product.price}}</text>
+              <text class="price-suffix">起</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 好物市集 - 瀑布流 -->
+  <view class="products-section">
+    <view class="section-header">
+      <view class="section-title-wrap">
+        <view class="title-decoration"></view>
+        <text class="section-title">好物市集</text>
+        <view class="title-decoration"></view>
+      </view>
+      <text class="section-subtitle">每一件都是非遗的温度</text>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+    </view>
+
+    <!-- 空状态 -->
+    <van-empty 
+      wx:elif="{{leftColumn.length === 0 && rightColumn.length === 0}}"
+      description="暂无商品"
+    />
+
+    <!-- 商品瀑布流 -->
+    <view class="waterfall-container" wx:else>
+      <!-- 左列 -->
+      <view class="waterfall-column">
+        <view 
+          class="product-card"
+          wx:for="{{leftColumn}}"
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+        >
+          <view class="card-image-wrap">
+            <image 
+              class="card-image" 
+              src="{{item.cover_img}}" 
+              mode="widthFix"
+              lazy-load
+            />
+            <!-- 标签 -->
+            <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+              <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+            </view>
+          </view>
+          <view class="card-content">
+            <text class="card-title">{{item.title}}</text>
+            <view class="card-origin">
+              <text class="origin-icon">📍</text>
+              <text class="origin-text">{{item.origin || '湖南'}}</text>
+            </view>
+            <view class="card-footer">
+              <view class="price-wrap">
+                <text class="current-price">¥{{item.price}}</text>
+                <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+              </view>
+              <text class="sales-text">已售{{item.sales || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 右列 -->
+      <view class="waterfall-column">
+        <view 
+          class="product-card"
+          wx:for="{{rightColumn}}"
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+        >
+          <view class="card-image-wrap">
+            <image 
+              class="card-image" 
+              src="{{item.cover_img}}" 
+              mode="widthFix"
+              lazy-load
+            />
+            <!-- 标签 -->
+            <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+              <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+            </view>
+          </view>
+          <view class="card-content">
+            <text class="card-title">{{item.title}}</text>
+            <view class="card-origin">
+              <text class="origin-icon">📍</text>
+              <text class="origin-text">{{item.origin || '湖南'}}</text>
+            </view>
+            <view class="card-footer">
+              <view class="price-wrap">
+                <text class="current-price">¥{{item.price}}</text>
+                <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+              </view>
+              <text class="sales-text">已售{{item.sales || 0}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="loading-more" wx:if="{{loadingMore}}">
+      <van-loading size="20px" color="#8B2E2A" />
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{noMore && (leftColumn.length > 0 || rightColumn.length > 0)}}">
+      <view class="no-more-line"></view>
+      <text class="no-more-text">已展示全部好物</text>
+      <view class="no-more-line"></view>
+    </view>
+  </view>
+</view>
+

@@ -61,6 +61,23 @@
     </view>
   </view>
 
+  <!-- 文创商城入口 -->
+  <view class="nav-section mall-section">
+    <view class="section-title">文创商城</view>
+    <view class="mall-banner" bindtap="navigateToMall">
+      <view class="banner-content">
+        <view class="banner-icon mall-icon">
+          <van-icon name="shopping-cart-o" size="40" color="#ffffff" />
+        </view>
+        <view class="banner-text">
+          <text class="banner-title">非遗好物精选</text>
+          <text class="banner-desc">匠心传承 · 文创新生</text>
+        </view>
+      </view>
+      <van-icon name="arrow" size="20" color="#ffffff" />
+    </view>
+  </view>
+
   <!-- 个人中心入口 -->
   <view class="nav-section user-section">
     <view class="section-title">个人中心</view>
@@ -76,11 +93,6 @@
       </view>
       <van-icon name="arrow" size="20" color="#ffffff" />
     </view>
-  </view>
-
-  <!-- 其他模块入口预留区 -->
-  <view class="placeholder">
-    <text class="placeholder-text">更多模块即将上线...</text>
   </view>
 </view>
 

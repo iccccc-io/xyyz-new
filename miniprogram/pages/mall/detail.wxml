@@ -1,0 +1,151 @@
+<!--pages/mall/detail.wxml-->
+<view class="detail-container" wx:if="{{!loading && product}}">
+  <!-- 首屏大图轮播 -->
+  <view class="image-section">
+    <swiper 
+      class="image-swiper"
+      indicator-dots="{{product.detail_imgs.length > 1}}"
+      indicator-color="rgba(255,255,255,0.5)"
+      indicator-active-color="#ffffff"
+      bindchange="onSwiperChange"
+    >
+      <swiper-item 
+        wx:for="{{product.detail_imgs}}" 
+        wx:key="*this"
+        bindtap="previewImage"
+      >
+        <image class="swiper-image" src="{{item}}" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+    <!-- 图片计数 -->
+    <view class="image-counter" wx:if="{{product.detail_imgs.length > 1}}">
+      <text>{{currentImageIndex + 1}}/{{product.detail_imgs.length}}</text>
+    </view>
+    <!-- 弧形遮罩 -->
+    <view class="curve-mask"></view>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content-section">
+    <!-- 价格与标题 -->
+    <view class="info-card">
+      <view class="price-row">
+        <view class="price-group">
+          <text class="currency">¥</text>
+          <text class="current-price">{{product.price}}</text>
+          <text class="original-price" wx:if="{{product.original_price}}">¥{{product.original_price}}</text>
+        </view>
+        <view class="sales-info">
+          <text class="sales-text">已售 {{product.sales || 0}}</text>
+        </view>
+      </view>
+      
+      <!-- 标签 -->
+      <view class="tags-row" wx:if="{{product.tags && product.tags.length > 0}}">
+        <van-tag 
+          wx:for="{{product.tags}}" 
+          wx:key="*this"
+          plain
+          color="#8B2E2A"
+          custom-class="product-tag"
+        >{{item}}</van-tag>
+      </view>
+      
+      <view class="title-row">
+        <text class="product-title">{{product.title}}</text>
+      </view>
+      
+      <view class="origin-row">
+        <text class="origin-icon">📍</text>
+        <text class="origin-text">{{product.origin || '湖南'}}</text>
+        <text class="stock-text">库存 {{product.stock}} 件</text>
+      </view>
+    </view>
+
+    <!-- 文化溯源卡片 -->
+    <view class="traceability-card" wx:if="{{product.related_project_name}}" bindtap="goToProject">
+      <view class="trace-left">
+        <view class="trace-icon">
+          <van-icon name="bookmark-o" size="24" color="#8B2E2A" />
+        </view>
+        <view class="trace-info">
+          <text class="trace-label">本商品源自非遗项目</text>
+          <text class="trace-name">{{product.related_project_name}}</text>
+        </view>
+      </view>
+      <view class="trace-right">
+        <text class="trace-link">去了解</text>
+        <van-icon name="arrow" size="14" color="#8B2E2A" />
+      </view>
+    </view>
+
+    <!-- 商品简介 -->
+    <view class="intro-card">
+      <view class="card-header">
+        <view class="header-line"></view>
+        <text class="header-title">商品简介</text>
+        <view class="header-line"></view>
+      </view>
+      <text class="intro-text">{{product.intro || '暂无简介'}}</text>
+    </view>
+
+    <!-- 购买数量 -->
+    <view class="quantity-card">
+      <text class="quantity-label">购买数量</text>
+      <view class="quantity-control">
+        <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
+          <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#ccc' : '#333'}}" />
+        </view>
+        <text class="qty-value">{{quantity}}</text>
+        <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
+          <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#ccc' : '#333'}}" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 详情图片 -->
+    <view class="detail-images" wx:if="{{product.detail_imgs && product.detail_imgs.length > 0}}">
+      <view class="card-header">
+        <view class="header-line"></view>
+        <text class="header-title">商品详情</text>
+        <view class="header-line"></view>
+      </view>
+      <image 
+        wx:for="{{product.detail_imgs}}" 
+        wx:key="*this"
+        class="detail-image"
+        src="{{item}}"
+        mode="widthFix"
+        lazy-load
+      />
+    </view>
+  </view>
+
+  <!-- 底部占位 -->
+  <view class="bottom-placeholder"></view>
+</view>
+
+<!-- 悬浮操作栏 (Apple Style) -->
+<view class="action-bar" style="padding-bottom: calc(30rpx + {{safeAreaBottom}}px);" wx:if="{{!loading && product}}">
+  <view class="action-bar-content">
+    <!-- 收藏按钮 -->
+    <view class="action-icon" bindtap="toggleFavorite">
+      <van-icon name="{{isFavorite ? 'star' : 'star-o'}}" size="24" color="{{isFavorite ? '#8B2E2A' : '#666'}}" />
+    </view>
+    <!-- 加入购物车 -->
+    <view class="action-btn cart-btn" bindtap="addToCart">
+      <van-icon name="cart-o" size="20" color="#8B2E2A" />
+      <text>加入购物车</text>
+    </view>
+    <!-- 立即购买 -->
+    <view class="action-btn buy-btn" bindtap="buyNow">
+      <text>立即购买</text>
+    </view>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view class="loading-state" wx:if="{{loading}}">
+  <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+</view>
+
