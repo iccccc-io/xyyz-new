@@ -32,7 +32,7 @@
     </view>
 
     <!-- 图片展示 -->
-    <view class="images-wrapper">
+    <view class="images-wrapper" wx:if="{{postData.images && postData.images.length > 0}}">
       <!-- 单图展示 -->
       <view wx:if="{{postData.images.length === 1}}" class="single-image-wrapper">
         <image 
@@ -122,48 +122,143 @@
     <!-- 评论区 -->
     <view class="comment-section">
       <view class="comment-header">
-        <text class="comment-title">共 {{postData.comments ? postData.comments.length : 0}} 条评论</text>
+        <text class="comment-title">共 {{commentCount}} 条评论</text>
+      </view>
+
+      <!-- 评论加载中 -->
+      <view class="comments-loading" wx:if="{{commentsLoading}}">
+        <van-loading type="spinner" color="#b63b36" size="24">加载评论中...</van-loading>
       </view>
 
       <!-- 评论列表 -->
-      <view class="comment-list" wx:if="{{postData.comments && postData.comments.length > 0}}">
-        <view class="comment-item" wx:for="{{postData.comments}}" wx:key="_id">
-          <image class="comment-avatar" src="{{item.user_info.avatar_file_id}}" />
-          <view class="comment-content">
-            <view class="comment-user">{{item.user_info.nickname}}</view>
-            <view class="comment-text">{{item.content}}</view>
-            <view class="comment-time">{{item.create_time}}</view>
+      <view class="comment-list" wx:if="{{!commentsLoading && commentList.length > 0}}">
+        <view class="comment-item-wrapper" wx:for="{{commentList}}" wx:key="_id" wx:for-index="commentIndex">
+          <!-- 一级评论 -->
+          <view class="comment-item level-1">
+            <image class="comment-avatar" src="{{item.user_info.avatar || '/images/icons/avatar.png'}}" />
+            <view class="comment-main">
+              <view class="comment-user-row">
+                <text class="comment-user">{{item.user_info.nickname}}</text>
+              </view>
+              <view class="comment-text" bindtap="onCommentTap" data-comment="{{item}}">{{item.content}}</view>
+              <view class="comment-footer">
+                <text class="comment-time">{{item.create_time_formatted}}</text>
+                <view class="comment-actions">
+                  <view class="comment-reply-btn" bindtap="onCommentTap" data-comment="{{item}}">
+                    <text>回复</text>
+                  </view>
+                  <view 
+                    class="comment-like-btn {{item.isLiked ? 'liked' : ''}}" 
+                    bindtap="onCommentLikeTap" 
+                    data-commentid="{{item._id}}" 
+                    data-index="{{commentIndex}}"
+                  >
+                    <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+                    <text wx:if="{{item.like_count > 0}}">{{item.like_count}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <!-- 二级评论区 -->
+              <view class="replies-section" wx:if="{{item.reply_count > 0}}">
+                <!-- 已加载的回复 -->
+                <view class="reply-item" wx:for="{{item.replies}}" wx:key="_id" wx:for-item="reply">
+                  <image class="reply-avatar" src="{{reply.user_info.avatar || '/images/icons/avatar.png'}}" />
+                  <view class="reply-main">
+                    <view class="reply-content" bindtap="onCommentTap" data-comment="{{reply}}">
+                      <text class="reply-user">{{reply.user_info.nickname}}</text>
+                      <text class="reply-to" wx:if="{{reply.reply_to}}"> 回复 <text class="reply-to-name">@{{reply.reply_to.nickname}}</text></text>
+                      <text class="reply-text">：{{reply.content}}</text>
+                    </view>
+                    <view class="reply-footer">
+                      <text class="reply-time">{{reply.create_time_formatted}}</text>
+                      <view class="reply-actions">
+                        <view class="reply-action" bindtap="onCommentTap" data-comment="{{reply}}">
+                          <text>回复</text>
+                        </view>
+                        <view 
+                          class="reply-like-btn {{reply.isLiked ? 'liked' : ''}}" 
+                          bindtap="onCommentLikeTap" 
+                          data-commentid="{{reply._id}}" 
+                          data-index="{{commentIndex}}"
+                          data-replyindex="{{index}}"
+                        >
+                          <van-icon name="{{reply.isLiked ? 'like' : 'like-o'}}" size="12" color="{{reply.isLiked ? '#b63b36' : '#999'}}" />
+                          <text wx:if="{{reply.like_count > 0}}">{{reply.like_count}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+
+                <!-- 展开更多回复 -->
+                <view 
+                  class="expand-replies" 
+                  wx:if="{{item.reply_count > 2 && !item.showAllReplies}}"
+                  bindtap="expandReplies"
+                  data-commentid="{{item._id}}"
+                  data-index="{{commentIndex}}"
+                >
+                  <text>展开 {{item.reply_count - 2}} 条回复</text>
+                  <van-icon name="arrow-down" size="12" color="#666" />
+                </view>
+
+                <!-- 收起回复 -->
+                <view 
+                  class="collapse-replies" 
+                  wx:if="{{item.reply_count > 2 && item.showAllReplies}}"
+                  bindtap="collapseReplies"
+                  data-index="{{commentIndex}}"
+                >
+                  <text>收起</text>
+                  <van-icon name="arrow-up" size="12" color="#666" />
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
 
       <!-- 无评论 -->
-      <view class="no-comment" wx:if="{{!postData.comments || postData.comments.length === 0}}">
+      <view class="no-comment" wx:if="{{!commentsLoading && commentList.length === 0}}">
         <text class="no-comment-text">暂无评论，快来抢沙发~</text>
       </view>
     </view>
 
     <!-- 底部互动栏 -->
     <view class="action-bar">
-      <view class="action-input">
+      <view class="action-input" bindtap="onInputAreaTap">
         <input 
           class="comment-input" 
-          placeholder="说点什么..." 
-          disabled
+          placeholder="{{inputPlaceholder}}"
+          value="{{inputValue}}"
+          focus="{{inputFocus}}"
+          bindinput="onInputChange"
+          bindblur="onInputBlur"
+          confirm-type="send"
+          bindconfirm="sendComment"
+          adjust-position="{{true}}"
         />
       </view>
-      <view class="action-icons">
-        <view class="action-icon-item">
-          <van-icon name="like-o" size="22" color="#333" />
-          <text class="action-count">{{likesFormatted}}</text>
+      <view class="action-right">
+        <!-- 发送按钮（输入时显示） -->
+        <view class="send-btn" wx:if="{{inputValue}}" bindtap="sendComment">
+          <text>发送</text>
         </view>
-        <view class="action-icon-item">
-          <van-icon name="star-o" size="22" color="#333" />
-          <text class="action-count">0</text>
-        </view>
-        <view class="action-icon-item">
-          <van-icon name="chat-o" size="22" color="#333" />
-          <text class="action-count">{{commentsFormatted}}</text>
+        <!-- 互动图标（非输入时显示） -->
+        <view class="action-icons" wx:else>
+          <view class="action-icon-item {{isLiked ? 'liked' : ''}}" bindtap="onLikeTap">
+            <van-icon name="{{isLiked ? 'like' : 'like-o'}}" size="22" color="{{isLiked ? '#b63b36' : '#333'}}" />
+            <text class="action-count {{isLiked ? 'liked' : ''}}">{{likesFormatted}}</text>
+          </view>
+          <view class="action-icon-item">
+            <van-icon name="star-o" size="22" color="#333" />
+            <text class="action-count">0</text>
+          </view>
+          <view class="action-icon-item">
+            <van-icon name="chat-o" size="22" color="#333" />
+            <text class="action-count">{{commentsFormatted}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -179,4 +274,3 @@
     <van-empty description="帖子不存在" />
   </view>
 </view>
-

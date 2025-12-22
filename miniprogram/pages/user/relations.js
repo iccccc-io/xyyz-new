@@ -212,18 +212,28 @@ Page({
         }
       })
 
-      // 更新双方的统计数据
+      // 调用云函数更新双方的统计数据
       await Promise.all([
         // 更新我的关注数 +1
-        db.collection('users').where({ _openid: myOpenid }).update({
+        wx.cloud.callFunction({
+          name: 'update_stats',
           data: {
-            'stats.following': _.inc(1)
+            collection: 'users',
+            whereField: '_openid',
+            whereValue: myOpenid,
+            field: 'stats.following',
+            amount: 1
           }
         }),
         // 更新对方的粉丝数 +1
-        db.collection('users').where({ _openid: targetOpenid }).update({
+        wx.cloud.callFunction({
+          name: 'update_stats',
           data: {
-            'stats.followers': _.inc(1)
+            collection: 'users',
+            whereField: '_openid',
+            whereValue: targetOpenid,
+            field: 'stats.followers',
+            amount: 1
           }
         })
       ])
@@ -327,18 +337,28 @@ Page({
         })
         .remove()
 
-      // 更新双方的统计数据
+      // 调用云函数更新双方的统计数据
       await Promise.all([
         // 更新我的关注数 -1
-        db.collection('users').where({ _openid: myOpenid }).update({
+        wx.cloud.callFunction({
+          name: 'update_stats',
           data: {
-            'stats.following': _.inc(-1)
+            collection: 'users',
+            whereField: '_openid',
+            whereValue: myOpenid,
+            field: 'stats.following',
+            amount: -1
           }
         }),
         // 更新对方的粉丝数 -1
-        db.collection('users').where({ _openid: targetOpenid }).update({
+        wx.cloud.callFunction({
+          name: 'update_stats',
           data: {
-            'stats.followers': _.inc(-1)
+            collection: 'users',
+            whereField: '_openid',
+            whereValue: targetOpenid,
+            field: 'stats.followers',
+            amount: -1
           }
         })
       ])
