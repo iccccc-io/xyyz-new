@@ -60,6 +60,11 @@ page {
   border: 2rpx solid #b63b36;
   border-radius: 30rpx;
   background: transparent;
+  transition: all 0.2s;
+}
+
+.follow-btn:active {
+  opacity: 0.7;
 }
 
 .follow-btn text {
@@ -68,13 +73,14 @@ page {
   font-weight: 500;
 }
 
+/* 已关注/互相关注 - 灰色边框样式 */
 .follow-btn.following {
-  background: #f5f5f5;
-  border-color: #e0e0e0;
+  border-color: #cccccc;
+  background: transparent;
 }
 
 .follow-btn.following text {
-  color: #999999;
+  color: #888888;
 }
 
 /* 图片展示区域 */

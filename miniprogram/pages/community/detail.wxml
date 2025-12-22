@@ -10,8 +10,14 @@
           <text class="author-title">{{postData.author_info.is_certified ? (authorData.certified_title || '非遗传承人') : '非遗爱好者'}}</text>
         </view>
       </view>
-      <view class="follow-btn {{isFollowing ? 'following' : ''}}">
-        <text>{{isFollowing ? '已关注' : '+ 关注'}}</text>
+      <view 
+        class="follow-btn {{isFollowing ? 'following' : ''}}" 
+        wx:if="{{!isSelf}}"
+        bindtap="onFollowTap"
+      >
+        <text wx:if="{{!isFollowing}}">+ 关注</text>
+        <text wx:elif="{{isMutual}}">互相关注</text>
+        <text wx:else>已关注</text>
       </view>
     </view>
 

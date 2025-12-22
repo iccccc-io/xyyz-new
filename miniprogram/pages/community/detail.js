@@ -1,5 +1,7 @@
 // pages/community/detail.js
+const app = getApp()
 const db = wx.cloud.database()
+const _ = db.command
 
 Page({
   /**
@@ -11,6 +13,8 @@ Page({
     authorData: null,
     loading: true,
     isFollowing: false,
+    isMutual: false, // 是否互相关注
+    isSelf: false, // 是否是自己的帖子
     currentImageIndex: 0,
     formatTime: '',
     swiperHeight: 400,
@@ -101,6 +105,15 @@ Page({
           console.warn('查询作者信息失败:', err)
         }
       }
+
+      // 检查是否是自己的帖子
+      const myOpenid = app.globalData.openid
+      if (myOpenid && postData._openid === myOpenid) {
+        this.setData({ isSelf: true })
+      }
+
+      // 检查关注状态
+      await this.checkFollowStatus(postData._openid)
 
       this.setData({ loading: false })
 
@@ -214,6 +227,215 @@ Page({
       name: location.name,
       scale: 15
     })
+  },
+
+  /**
+   * 检查关注状态（包括互关）
+   */
+  async checkFollowStatus(targetOpenid) {
+    const myOpenid = app.globalData.openid
+    if (!myOpenid || !targetOpenid || myOpenid === targetOpenid) {
+      return
+    }
+
+    try {
+      // 并行查询：我是否关注了对方 + 对方是否关注了我
+      const [iFollowRes, followMeRes] = await Promise.all([
+        db.collection('community_follows')
+          .where({
+            follower_id: myOpenid,
+            target_id: targetOpenid
+          })
+          .count(),
+        db.collection('community_follows')
+          .where({
+            follower_id: targetOpenid,
+            target_id: myOpenid
+          })
+          .count()
+      ])
+
+      const isFollowing = iFollowRes.total > 0
+      const isFollowedByTarget = followMeRes.total > 0
+
+      this.setData({
+        isFollowing: isFollowing,
+        isMutual: isFollowing && isFollowedByTarget
+      })
+    } catch (err) {
+      console.warn('检查关注状态失败:', err)
+    }
+  },
+
+  /**
+   * 关注/取消关注操作
+   */
+  async onFollowTap() {
+    const postData = this.data.postData
+    if (!postData) return
+
+    // 检查登录状态
+    if (!app.globalData.openid) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+
+    const myOpenid = app.globalData.openid
+    const targetOpenid = postData._openid
+
+    // 不能关注自己
+    if (myOpenid === targetOpenid) {
+      return
+    }
+
+    // 如果已关注，询问是否取消关注
+    if (this.data.isFollowing) {
+      const nickname = postData.author_info?.nickname || '该用户'
+      wx.showModal({
+        title: '取消关注',
+        content: `确定要取消关注「${nickname}」吗？`,
+        confirmColor: '#b63b36',
+        success: async (res) => {
+          if (res.confirm) {
+            await this.doUnfollow(targetOpenid)
+          }
+        }
+      })
+      return
+    }
+
+    // 执行关注
+    await this.doFollow(targetOpenid)
+  },
+
+  /**
+   * 执行关注
+   */
+  async doFollow(targetOpenid) {
+    const myOpenid = app.globalData.openid
+
+    wx.showLoading({ title: '处理中...' })
+
+    try {
+      // 添加关注记录
+      await db.collection('community_follows').add({
+        data: {
+          follower_id: myOpenid,
+          target_id: targetOpenid,
+          create_time: db.serverDate()
+        }
+      })
+
+      // 更新双方的统计数据
+      await Promise.all([
+        // 更新我的关注数 +1
+        db.collection('users').where({ _openid: myOpenid }).update({
+          data: {
+            'stats.following': _.inc(1)
+          }
+        }),
+        // 更新对方的粉丝数 +1
+        db.collection('users').where({ _openid: targetOpenid }).update({
+          data: {
+            'stats.followers': _.inc(1)
+          }
+        })
+      ])
+
+      // 更新本地全局数据
+      if (app.globalData.userInfo && app.globalData.userInfo.stats) {
+        app.globalData.userInfo.stats.following = (app.globalData.userInfo.stats.following || 0) + 1
+      }
+
+      wx.hideLoading()
+      wx.showToast({
+        title: '关注成功',
+        icon: 'success'
+      })
+
+      // 检查对方是否也关注了我（判断是否互关）
+      const followMeRes = await db.collection('community_follows')
+        .where({
+          follower_id: targetOpenid,
+          target_id: myOpenid
+        })
+        .count()
+
+      this.setData({
+        isFollowing: true,
+        isMutual: followMeRes.total > 0
+      })
+
+    } catch (err) {
+      console.error('关注失败:', err)
+      wx.hideLoading()
+      wx.showToast({
+        title: '操作失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  /**
+   * 执行取消关注
+   */
+  async doUnfollow(targetOpenid) {
+    const myOpenid = app.globalData.openid
+
+    wx.showLoading({ title: '处理中...' })
+
+    try {
+      // 删除关注记录
+      await db.collection('community_follows')
+        .where({
+          follower_id: myOpenid,
+          target_id: targetOpenid
+        })
+        .remove()
+
+      // 更新双方的统计数据
+      await Promise.all([
+        // 更新我的关注数 -1
+        db.collection('users').where({ _openid: myOpenid }).update({
+          data: {
+            'stats.following': _.inc(-1)
+          }
+        }),
+        // 更新对方的粉丝数 -1
+        db.collection('users').where({ _openid: targetOpenid }).update({
+          data: {
+            'stats.followers': _.inc(-1)
+          }
+        })
+      ])
+
+      // 更新本地全局数据
+      if (app.globalData.userInfo && app.globalData.userInfo.stats) {
+        app.globalData.userInfo.stats.following = Math.max(0, (app.globalData.userInfo.stats.following || 0) - 1)
+      }
+
+      wx.hideLoading()
+      wx.showToast({
+        title: '已取消关注',
+        icon: 'success'
+      })
+
+      this.setData({
+        isFollowing: false,
+        isMutual: false
+      })
+
+    } catch (err) {
+      console.error('取消关注失败:', err)
+      wx.hideLoading()
+      wx.showToast({
+        title: '操作失败',
+        icon: 'none'
+      })
+    }
   },
 
   /**

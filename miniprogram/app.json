@@ -15,6 +15,7 @@
     "pages/mall/topic",
     "pages/login/login",
     "pages/gerenzhongxin/gerenzhongxin",
+    "pages/user/relations",
     "pages/index/index",
     "pages/example/index"
   ],

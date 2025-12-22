@@ -1,0 +1,151 @@
+<!--pages/user/relations.wxml-->
+<view class="relations-container">
+  <!-- 顶部 Tab 栏 -->
+  <view class="tabs-header">
+    <view 
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="index"
+      data-index="{{index}}"
+      bindtap="onTabChange"
+    >
+      <text class="tab-text">{{item}}</text>
+      <view class="tab-indicator" wx:if="{{activeTab === index}}"></view>
+    </view>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content-wrapper">
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+    </view>
+
+    <!-- 关注列表 -->
+    <block wx:if="{{!loading && activeTab === 0}}">
+      <view class="user-list" wx:if="{{followingList.length > 0}}">
+        <view 
+          class="user-item" 
+          wx:for="{{followingList}}" 
+          wx:key="openid"
+        >
+          <view class="user-left" bindtap="goToUserProfile" data-openid="{{item.openid}}">
+            <image 
+              class="user-avatar" 
+              src="{{item.userInfo.avatar_url || '/images/icons/avatar.png'}}" 
+              mode="aspectFill"
+            />
+            <view class="user-info">
+              <text class="user-name {{item.userInfo.is_certified ? 'certified' : ''}}">{{item.userInfo.nickname || '用户'}}</text>
+              <text class="user-title" wx:if="{{item.userInfo.is_certified}}">{{item.userInfo.certified_title || '非遗传承人'}}</text>
+              <text class="user-title" wx:else>非遗爱好者</text>
+            </view>
+          </view>
+          <view class="user-action">
+            <view 
+              class="action-btn mutual" 
+              wx:if="{{item.isMutual}}"
+              data-openid="{{item.openid}}"
+              data-nickname="{{item.userInfo.nickname || '该用户'}}"
+              bindtap="onUnfollow"
+            >
+              互相关注
+            </view>
+            <view 
+              class="action-btn followed" 
+              wx:else
+              data-openid="{{item.openid}}"
+              data-nickname="{{item.userInfo.nickname || '该用户'}}"
+              bindtap="onUnfollow"
+            >
+              已关注
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="empty-state" wx:else>
+        <van-empty description="暂无关注的人" />
+      </view>
+    </block>
+
+    <!-- 粉丝列表 -->
+    <block wx:if="{{!loading && activeTab === 1}}">
+      <view class="user-list" wx:if="{{followersList.length > 0}}">
+        <view 
+          class="user-item" 
+          wx:for="{{followersList}}" 
+          wx:key="openid"
+        >
+          <view class="user-left" bindtap="goToUserProfile" data-openid="{{item.openid}}">
+            <image 
+              class="user-avatar" 
+              src="{{item.userInfo.avatar_url || '/images/icons/avatar.png'}}" 
+              mode="aspectFill"
+            />
+            <view class="user-info">
+              <text class="user-name {{item.userInfo.is_certified ? 'certified' : ''}}">{{item.userInfo.nickname || '用户'}}</text>
+              <text class="user-title" wx:if="{{item.userInfo.is_certified}}">{{item.userInfo.certified_title || '非遗传承人'}}</text>
+              <text class="user-title" wx:else>非遗爱好者</text>
+            </view>
+          </view>
+          <view class="user-action">
+            <view 
+              class="action-btn mutual" 
+              wx:if="{{item.isMutual}}"
+            >
+              互相关注
+            </view>
+            <view 
+              class="action-btn follow-back" 
+              wx:else
+              data-openid="{{item.openid}}"
+              bindtap="onFollowBack"
+            >
+              回关
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="empty-state" wx:else>
+        <van-empty description="暂无粉丝" />
+      </view>
+    </block>
+
+    <!-- 互相关注列表 -->
+    <block wx:if="{{!loading && activeTab === 2}}">
+      <view class="user-list" wx:if="{{mutualList.length > 0}}">
+        <view 
+          class="user-item" 
+          wx:for="{{mutualList}}" 
+          wx:key="openid"
+        >
+          <view class="user-left" bindtap="goToUserProfile" data-openid="{{item.openid}}">
+            <image 
+              class="user-avatar" 
+              src="{{item.userInfo.avatar_url || '/images/icons/avatar.png'}}" 
+              mode="aspectFill"
+            />
+            <view class="user-info">
+              <text class="user-name {{item.userInfo.is_certified ? 'certified' : ''}}">{{item.userInfo.nickname || '用户'}}</text>
+              <text class="user-title" wx:if="{{item.userInfo.is_certified}}">{{item.userInfo.certified_title || '非遗传承人'}}</text>
+              <text class="user-title" wx:else>非遗爱好者</text>
+            </view>
+          </view>
+          <view class="user-action">
+            <view 
+              class="action-btn chat" 
+              data-openid="{{item.openid}}"
+              bindtap="goToChat"
+            >
+              去聊天
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="empty-state" wx:else>
+        <van-empty description="暂无互相关注的人" />
+      </view>
+    </block>
+  </view>
+</view>
+

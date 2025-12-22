@@ -29,12 +29,12 @@
 
     <!-- 数据统计栏 (毛玻璃) -->
     <view class="stats-bar">
-      <view class="stat-item">
+      <view class="stat-item" bindtap="goToFollowing">
         <text class="stat-number">{{userInfo.stats.following || 0}}</text>
         <text class="stat-label">关注</text>
       </view>
       <view class="stat-divider"></view>
-      <view class="stat-item">
+      <view class="stat-item" bindtap="goToFollowers">
         <text class="stat-number">{{userInfo.stats.followers || 0}}</text>
         <text class="stat-label">粉丝</text>
       </view>

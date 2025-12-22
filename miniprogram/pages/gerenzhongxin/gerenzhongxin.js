@@ -198,6 +198,32 @@ Page({
   },
 
   /**
+   * 跳转到关注列表
+   */
+  goToFollowing() {
+    if (!this.data.isLoggedIn) {
+      this.goToLogin()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/relations?tab=0'
+    })
+  },
+
+  /**
+   * 跳转到粉丝列表
+   */
+  goToFollowers() {
+    if (!this.data.isLoggedIn) {
+      this.goToLogin()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/user/relations?tab=1'
+    })
+  },
+
+  /**
    * 跳转到订单列表
    */
   goToOrders(e) {
