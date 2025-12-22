@@ -29,6 +29,7 @@ Page({
     try {
       console.log('=== 加载社区帖子 ===')
 
+      // 1. 查询帖子列表
       const res = await db.collection('community_posts')
         .orderBy('create_time', 'desc')
         .limit(50)
@@ -36,9 +37,40 @@ Page({
 
       console.log('帖子数据:', res.data)
 
-      const postList = res.data
+      let postList = res.data
 
-      // 分配到左右两列（交替分配实现瀑布流效果）
+      // 2. 批量查询当前用户的点赞状态
+      const myOpenid = app.globalData.openid
+      if (myOpenid && postList.length > 0) {
+        const postIds = postList.map(item => item._id)
+        
+        // 查询我点赞过的帖子
+        const _ = db.command
+        const likedRes = await db.collection('community_post_likes')
+          .where({
+            target_id: _.in(postIds),
+            _openid: myOpenid
+          })
+          .field({ target_id: true })
+          .get()
+
+        const likedPostIds = (likedRes.data || []).map(item => item.target_id)
+        console.log('已点赞的帖子:', likedPostIds)
+
+        // 3. 合并点赞状态到帖子列表
+        postList = postList.map(item => ({
+          ...item,
+          isLiked: likedPostIds.includes(item._id)
+        }))
+      } else {
+        // 未登录时，所有帖子默认未点赞
+        postList = postList.map(item => ({
+          ...item,
+          isLiked: false
+        }))
+      }
+
+      // 4. 分配到左右两列（交替分配实现瀑布流效果）
       const leftColumn = []
       const rightColumn = []
 
@@ -77,9 +109,35 @@ Page({
    */
   goToDetail(e) {
     const id = e.currentTarget.dataset.id
+    const isLiked = e.currentTarget.dataset.isliked
     wx.navigateTo({
-      url: `/pages/community/detail?id=${id}`
+      url: `/pages/community/detail?id=${id}&isLiked=${isLiked}`
     })
+  },
+
+  /**
+   * 更新单个帖子的点赞状态（供详情页回调）
+   */
+  updatePostLikeStatus(postId, isLiked, likesCount) {
+    const postList = this.data.postList.map(item => {
+      if (item._id === postId) {
+        return { ...item, isLiked, likes: likesCount }
+      }
+      return item
+    })
+
+    // 重新分配左右列
+    const leftColumn = []
+    const rightColumn = []
+    postList.forEach((item, index) => {
+      if (index % 2 === 0) {
+        leftColumn.push(item)
+      } else {
+        rightColumn.push(item)
+      }
+    })
+
+    this.setData({ postList, leftColumn, rightColumn })
   },
 
   /**

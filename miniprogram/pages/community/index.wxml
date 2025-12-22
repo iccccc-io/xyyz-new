@@ -16,6 +16,7 @@
         wx:key="_id"
         bindtap="goToDetail"
         data-id="{{item._id}}"
+        data-isliked="{{item.isLiked}}"
       >
         <!-- 封面图区域 -->
         <view class="card-cover">
@@ -51,8 +52,8 @@
             </view>
             <!-- 点赞 -->
             <view class="like-info">
-              <van-icon name="like-o" size="14" color="#999" />
-              <text class="like-count">{{item.likes}}</text>
+              <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+              <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
             </view>
           </view>
         </view>
@@ -67,6 +68,7 @@
         wx:key="_id"
         bindtap="goToDetail"
         data-id="{{item._id}}"
+        data-isliked="{{item.isLiked}}"
       >
         <!-- 封面图区域 -->
         <view class="card-cover">
@@ -102,8 +104,8 @@
             </view>
             <!-- 点赞 -->
             <view class="like-info">
-              <van-icon name="like-o" size="14" color="#999" />
-              <text class="like-count">{{item.likes}}</text>
+              <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+              <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
             </view>
           </view>
         </view>

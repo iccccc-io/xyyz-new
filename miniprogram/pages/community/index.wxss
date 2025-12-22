@@ -174,6 +174,10 @@ page {
   color: #999999;
 }
 
+.like-count.liked {
+  color: #b63b36;
+}
+
 /* 空状态和加载状态 */
 .empty-state,
 .loading-state {

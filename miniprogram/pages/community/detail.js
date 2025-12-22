@@ -58,9 +58,13 @@ Page({
       return
     }
 
+    // 接收列表页传来的点赞初始状态，避免闪烁
+    const initialIsLiked = options.isLiked === 'true'
+
     this.setData({
       postId: options.id,
-      currentOpenid: app.globalData.openid || ''
+      currentOpenid: app.globalData.openid || '',
+      isLiked: initialIsLiked  // 预设点赞状态
     })
 
     await this.loadPostDetail()
@@ -298,17 +302,17 @@ Page({
   },
 
   /**
-   * 检查点赞状态
+   * 检查点赞状态（若列表页未传递状态时使用）
    */
   async checkLikeStatus() {
     const myOpenid = app.globalData.openid
     if (!myOpenid) return
 
     try {
-      const res = await db.collection('community_likes')
+      const res = await db.collection('community_post_likes')
         .where({
-          post_id: this.data.postId,
-          user_id: myOpenid
+          target_id: this.data.postId,
+          _openid: myOpenid
         })
         .count()
 
@@ -335,14 +339,27 @@ Page({
 
     const myOpenid = app.globalData.openid
     const isLiked = this.data.isLiked
+    const postId = this.data.postId
+
+    // 乐观更新 UI（立即响应）
+    const newIsLiked = !isLiked
+    const newLikesCount = newIsLiked 
+      ? this.data.likesCount + 1 
+      : Math.max(0, this.data.likesCount - 1)
+
+    this.setData({
+      isLiked: newIsLiked,
+      likesCount: newLikesCount,
+      likesFormatted: this.formatCount(newLikesCount)
+    })
 
     try {
       if (isLiked) {
         // 取消点赞
-        await db.collection('community_likes')
+        await db.collection('community_post_likes')
           .where({
-            post_id: this.data.postId,
-            user_id: myOpenid
+            target_id: postId,
+            _openid: myOpenid
           })
           .remove()
 
@@ -351,24 +368,17 @@ Page({
           name: 'update_stats',
           data: {
             collection: 'community_posts',
-            docId: this.data.postId,
+            docId: postId,
             field: 'likes',
             amount: -1
           }
         })
 
-        this.setData({
-          isLiked: false,
-          likesCount: Math.max(0, this.data.likesCount - 1),
-          likesFormatted: this.formatCount(Math.max(0, this.data.likesCount - 1))
-        })
-
       } else {
         // 点赞
-        await db.collection('community_likes').add({
+        await db.collection('community_post_likes').add({
           data: {
-            post_id: this.data.postId,
-            user_id: myOpenid,
+            target_id: postId,
             create_time: db.serverDate()
           }
         })
@@ -378,16 +388,10 @@ Page({
           name: 'update_stats',
           data: {
             collection: 'community_posts',
-            docId: this.data.postId,
+            docId: postId,
             field: 'likes',
             amount: 1
           }
-        })
-
-        this.setData({
-          isLiked: true,
-          likesCount: this.data.likesCount + 1,
-          likesFormatted: this.formatCount(this.data.likesCount + 1)
         })
 
         wx.showToast({
@@ -396,12 +400,34 @@ Page({
           duration: 1000
         })
       }
+
+      // 同步更新列表页数据
+      this.syncListPageLikeStatus(newIsLiked, newLikesCount)
+
     } catch (err) {
       console.error('点赞操作失败:', err)
+      // 回滚 UI 状态
+      this.setData({
+        isLiked: isLiked,
+        likesCount: this.data.likesCount + (isLiked ? 1 : -1),
+        likesFormatted: this.formatCount(this.data.likesCount + (isLiked ? 1 : -1))
+      })
       wx.showToast({
         title: '操作失败',
         icon: 'none'
       })
+    }
+  },
+
+  /**
+   * 同步列表页的点赞状态
+   */
+  syncListPageLikeStatus(isLiked, likesCount) {
+    const pages = getCurrentPages()
+    // 找到列表页
+    const listPage = pages.find(p => p.route === 'pages/community/index')
+    if (listPage && listPage.updatePostLikeStatus) {
+      listPage.updatePostLikeStatus(this.data.postId, isLiked, likesCount)
     }
   },
 
