@@ -44,6 +44,11 @@ Page({
     // 点赞相关
     isLiked: false,            // 是否已点赞
     likesCount: 0,             // 点赞数
+    
+    // 收藏相关
+    isCollected: false,        // 是否已收藏
+    collectionCount: 0,        // 收藏数
+    collectionFormatted: '0',  // 格式化的收藏数
   },
 
   /**
@@ -109,12 +114,17 @@ Page({
 
       console.log('帖子详情:', postData)
 
-      // 并行加载：关注状态 + 作者信息 + 点赞状态，全部完成后再显示页面
+      // 并行加载：关注状态 + 作者信息 + 点赞状态 + 收藏状态，全部完成后再显示页面
       await Promise.all([
         this.checkFollowStatus(postData._openid),
         this.loadAuthorData(postData.author_id),
-        this.checkLikeStatus()
+        this.checkLikeStatus(),
+        this.checkCollectionStatus()
       ])
+
+      // 收藏数
+      const collectionCount = postData.collection_count || 0
+      const collectionFormatted = this.formatCount(collectionCount)
 
       // 所有数据加载完成后，一次性更新页面
       this.setData({
@@ -123,6 +133,9 @@ Page({
         likesCount,
         likesFormatted,
         isLiked: this.data.isLiked,
+        collectionCount,
+        collectionFormatted,
+        isCollected: this.data.isCollected,
         commentCount,
         commentsFormatted,
         imageHeights: new Array(postData.images ? postData.images.length : 0).fill(0),
@@ -321,6 +334,121 @@ Page({
       })
     } catch (err) {
       console.warn('检查点赞状态失败:', err)
+    }
+  },
+
+  /**
+   * 检查收藏状态
+   */
+  async checkCollectionStatus() {
+    const myOpenid = app.globalData.openid
+    if (!myOpenid) return
+
+    try {
+      const res = await db.collection('community_collections')
+        .where({
+          post_id: this.data.postId,
+          _openid: myOpenid
+        })
+        .count()
+
+      this.setData({
+        isCollected: res.total > 0
+      })
+    } catch (err) {
+      console.warn('检查收藏状态失败:', err)
+    }
+  },
+
+  /**
+   * 收藏/取消收藏
+   */
+  async onCollectionTap() {
+    // 检查登录状态
+    if (!app.globalData.openid) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+
+    const myOpenid = app.globalData.openid
+    const isCollected = this.data.isCollected
+    const postId = this.data.postId
+
+    // 乐观更新 UI（立即响应）
+    const newIsCollected = !isCollected
+    const newCollectionCount = newIsCollected 
+      ? this.data.collectionCount + 1 
+      : Math.max(0, this.data.collectionCount - 1)
+
+    this.setData({
+      isCollected: newIsCollected,
+      collectionCount: newCollectionCount,
+      collectionFormatted: this.formatCount(newCollectionCount)
+    })
+
+    try {
+      if (isCollected) {
+        // 取消收藏
+        await db.collection('community_collections')
+          .where({
+            post_id: postId,
+            _openid: myOpenid
+          })
+          .remove()
+
+        // 调用云函数原子更新帖子收藏数 -1
+        await wx.cloud.callFunction({
+          name: 'update_stats',
+          data: {
+            collection: 'community_posts',
+            docId: postId,
+            field: 'collection_count',
+            amount: -1
+          }
+        })
+
+      } else {
+        // 收藏
+        await db.collection('community_collections').add({
+          data: {
+            post_id: postId,
+            create_time: db.serverDate()
+          }
+        })
+
+        // 调用云函数原子更新帖子收藏数 +1
+        await wx.cloud.callFunction({
+          name: 'update_stats',
+          data: {
+            collection: 'community_posts',
+            docId: postId,
+            field: 'collection_count',
+            amount: 1
+          }
+        })
+
+        wx.showToast({
+          title: '已收藏',
+          icon: 'none',
+          duration: 1000
+        })
+      }
+
+    } catch (err) {
+      console.error('收藏操作失败:', err)
+      // 回滚 UI 状态
+      this.setData({
+        isCollected: isCollected,
+        collectionCount: this.data.collectionCount + (isCollected ? 1 : -1),
+        collectionFormatted: this.formatCount(this.data.collectionCount + (isCollected ? 1 : -1))
+      })
+      wx.showToast({
+        title: '操作失败',
+        icon: 'none'
+      })
     }
   },
 

@@ -217,7 +217,83 @@
           </view>
         </van-tab>
         <van-tab title="我的收藏">
-          <view class="empty-posts">
+          <!-- 加载中 -->
+          <view class="loading-posts" wx:if="{{collectionsLoading}}">
+            <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+          </view>
+          
+          <!-- 收藏列表 -->
+          <view class="waterfall-container" wx:if="{{!collectionsLoading && collectedPosts.length > 0}}">
+            <!-- 左列 -->
+            <view class="waterfall-column">
+              <view 
+                class="post-card"
+                wx:for="{{leftCollectedPosts}}"
+                wx:key="_id"
+                bindtap="goToPostDetail"
+                data-id="{{item._id}}"
+              >
+                <view class="card-cover">
+                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+                  <view class="image-count" wx:if="{{item.images.length > 1}}">
+                    <van-icon name="photo-o" size="12" color="#fff" />
+                    <text>{{item.images.length}}</text>
+                  </view>
+                </view>
+                <view class="card-content">
+                  <view class="title-row">
+                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+                  </view>
+                  <view class="card-footer">
+                    <view class="author-info">
+                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                      <text class="author-name">{{item.author_info.nickname}}</text>
+                    </view>
+                    <view class="like-info">
+                      <van-icon name="like-o" size="14" color="#999" />
+                      <text class="like-count">{{item.likes || 0}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <!-- 右列 -->
+            <view class="waterfall-column">
+              <view 
+                class="post-card"
+                wx:for="{{rightCollectedPosts}}"
+                wx:key="_id"
+                bindtap="goToPostDetail"
+                data-id="{{item._id}}"
+              >
+                <view class="card-cover">
+                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+                  <view class="image-count" wx:if="{{item.images.length > 1}}">
+                    <van-icon name="photo-o" size="12" color="#fff" />
+                    <text>{{item.images.length}}</text>
+                  </view>
+                </view>
+                <view class="card-content">
+                  <view class="title-row">
+                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+                  </view>
+                  <view class="card-footer">
+                    <view class="author-info">
+                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                      <text class="author-name">{{item.author_info.nickname}}</text>
+                    </view>
+                    <view class="like-info">
+                      <van-icon name="like-o" size="14" color="#999" />
+                      <text class="like-count">{{item.likes || 0}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          
+          <!-- 空状态 -->
+          <view class="empty-posts" wx:if="{{!collectionsLoading && collectedPosts.length === 0}}">
             <van-empty description="{{isLoggedIn ? '暂无收藏内容' : '登录后查看您的收藏'}}" />
           </view>
         </van-tab>

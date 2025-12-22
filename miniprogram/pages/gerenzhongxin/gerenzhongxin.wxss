@@ -360,7 +360,7 @@
 
 .card-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -379,6 +379,37 @@
 .empty-posts {
   padding: 80rpx 0;
   background: linear-gradient(180deg, rgba(248, 245, 245, 0.5) 0%, rgba(245, 245, 245, 0.8) 100%);
+}
+
+/* 加载状态 */
+.loading-posts {
+  padding: 80rpx 0;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(248, 245, 245, 0.5) 0%, rgba(245, 245, 245, 0.8) 100%);
+}
+
+/* 收藏卡片作者信息 */
+.author-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.author-avatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  margin-right: 8rpx;
+}
+
+.author-name {
+  font-size: 22rpx;
+  color: #666;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 游客标签 */

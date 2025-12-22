@@ -11,7 +11,7 @@ const _ = db.command
 // ========== 安全白名单配置 ==========
 // 定义允许更新的集合和字段
 const ALLOW_LIST = {
-  'community_posts': ['comment_count', 'likes', 'views'],
+  'community_posts': ['comment_count', 'likes', 'views', 'collection_count'],
   'community_comments': ['reply_count', 'like_count'],
   'users': ['stats.followers', 'stats.following', 'stats.likes']
 }

@@ -623,6 +623,10 @@ page {
   color: #b63b36;
 }
 
+.action-count.collected {
+  color: #FFC83D;
+}
+
 /* 加载和空状态 */
 .loading-wrapper,
 .empty-wrapper {

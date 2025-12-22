@@ -33,7 +33,14 @@ Page({
     userPosts: [],
     leftPosts: [],
     rightPosts: [],
-    activeTab: 0
+    activeTab: 0,
+    
+    // 收藏相关
+    collectedPosts: [],
+    leftCollectedPosts: [],
+    rightCollectedPosts: [],
+    collectionsLoading: false,
+    collectionsLoaded: false
   },
 
   /**
@@ -49,6 +56,12 @@ Page({
   onShow() {
     // 每次显示页面时检查登录状态（可能从登录页返回）
     this.checkLoginStatus()
+    
+    // 如果当前在收藏 Tab，刷新收藏列表（可能在详情页取消了收藏）
+    if (this.data.activeTab === 1 && this.data.collectionsLoaded) {
+      this.setData({ collectionsLoaded: false })
+      this.loadUserCollections()
+    }
   },
 
   /**
@@ -166,6 +179,88 @@ Page({
   },
 
   /**
+   * 加载用户收藏
+   */
+  async loadUserCollections() {
+    if (!app.globalData.openid) return
+    if (this.data.collectionsLoaded) return // 避免重复加载
+    
+    this.setData({ collectionsLoading: true })
+    
+    try {
+      const _ = db.command
+      
+      // 1. 查询收藏关系表，获取所有收藏的帖子 ID
+      const collectionsRes = await db.collection('community_collections')
+        .where({
+          _openid: app.globalData.openid
+        })
+        .orderBy('create_time', 'desc')
+        .limit(100)
+        .get()
+
+      const collections = collectionsRes.data || []
+      
+      if (collections.length === 0) {
+        this.setData({
+          collectedPosts: [],
+          leftCollectedPosts: [],
+          rightCollectedPosts: [],
+          collectionsLoading: false,
+          collectionsLoaded: true
+        })
+        return
+      }
+
+      // 2. 获取所有帖子 ID
+      const postIds = collections.map(c => c.post_id)
+      
+      // 3. 批量查询帖子详情
+      const postsRes = await db.collection('community_posts')
+        .where({
+          _id: _.in(postIds)
+        })
+        .get()
+
+      // 4. 按收藏时间排序（保持原有顺序）
+      const postsMap = {}
+      postsRes.data.forEach(post => {
+        postsMap[post._id] = post
+      })
+      
+      const collectedPosts = postIds
+        .map(id => postsMap[id])
+        .filter(Boolean) // 过滤掉已被删除的帖子
+      
+      // 5. 分配到左右两列
+      const leftCollectedPosts = []
+      const rightCollectedPosts = []
+      
+      collectedPosts.forEach((item, index) => {
+        if (index % 2 === 0) {
+          leftCollectedPosts.push(item)
+        } else {
+          rightCollectedPosts.push(item)
+        }
+      })
+
+      this.setData({
+        collectedPosts,
+        leftCollectedPosts,
+        rightCollectedPosts,
+        collectionsLoading: false,
+        collectionsLoaded: true
+      })
+
+      console.log('用户收藏:', collectedPosts)
+
+    } catch (err) {
+      console.error('加载用户收藏失败:', err)
+      this.setData({ collectionsLoading: false })
+    }
+  },
+
+  /**
    * 格式化大数字
    */
   formatNumber(num) {
@@ -182,9 +277,15 @@ Page({
    * Tab 切换
    */
   onTabChange(e) {
+    const index = e.detail.index
     this.setData({
-      activeTab: e.detail.index
+      activeTab: index
     })
+    
+    // 切换到"我的收藏" Tab 时加载收藏数据
+    if (index === 1 && !this.data.collectionsLoaded) {
+      this.loadUserCollections()
+    }
   },
 
   /**
@@ -318,7 +419,11 @@ Page({
             },
             userPosts: [],
             leftPosts: [],
-            rightPosts: []
+            rightPosts: [],
+            collectedPosts: [],
+            leftCollectedPosts: [],
+            rightCollectedPosts: [],
+            collectionsLoaded: false
           })
         }
       }
