@@ -156,36 +156,60 @@
                     <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
                     <text wx:if="{{item.like_count > 0}}">{{item.like_count}}</text>
                   </view>
+                  <!-- 删除按钮（仅自己的评论可见） -->
+                  <view 
+                    class="comment-delete-btn" 
+                    wx:if="{{item.from_uid === currentOpenid}}"
+                    bindtap="onDeleteComment" 
+                    data-commentid="{{item._id}}" 
+                    data-index="{{commentIndex}}"
+                  >
+                    <text>删除</text>
+                  </view>
                 </view>
               </view>
 
               <!-- 二级评论区 -->
               <view class="replies-section" wx:if="{{item.reply_count > 0}}">
                 <!-- 已加载的回复 -->
-                <view class="reply-item" wx:for="{{item.replies}}" wx:key="_id" wx:for-item="reply">
+                <view class="reply-item {{reply.status === 'deleted' ? 'deleted' : ''}}" wx:for="{{item.replies}}" wx:key="_id" wx:for-item="reply">
                   <image class="reply-avatar" src="{{reply.user_info.avatar || '/images/icons/avatar.png'}}" />
                   <view class="reply-main">
-                    <view class="reply-content" bindtap="onCommentTap" data-comment="{{reply}}">
+                    <view class="reply-content" bindtap="{{reply.status !== 'deleted' ? 'onCommentTap' : ''}}" data-comment="{{reply}}">
                       <text class="reply-user">{{reply.user_info.nickname}}</text>
-                      <text class="reply-to" wx:if="{{reply.reply_to}}"> 回复 <text class="reply-to-name">@{{reply.reply_to.nickname}}</text></text>
-                      <text class="reply-text">：{{reply.content}}</text>
+                      <text class="reply-to" wx:if="{{reply.reply_to && reply.status !== 'deleted'}}"> 回复 <text class="reply-to-name">@{{reply.reply_to.nickname}}</text></text>
+                      <text class="reply-text {{reply.status === 'deleted' ? 'deleted-text' : ''}}">：{{reply.content}}</text>
                     </view>
                     <view class="reply-footer">
                       <text class="reply-time">{{reply.create_time_formatted}}</text>
                       <view class="reply-actions">
-                        <view class="reply-action" bindtap="onCommentTap" data-comment="{{reply}}">
-                          <text>回复</text>
-                        </view>
-                        <view 
-                          class="reply-like-btn {{reply.isLiked ? 'liked' : ''}}" 
-                          bindtap="onCommentLikeTap" 
-                          data-commentid="{{reply._id}}" 
-                          data-index="{{commentIndex}}"
-                          data-replyindex="{{index}}"
-                        >
-                          <van-icon name="{{reply.isLiked ? 'like' : 'like-o'}}" size="12" color="{{reply.isLiked ? '#b63b36' : '#999'}}" />
-                          <text wx:if="{{reply.like_count > 0}}">{{reply.like_count}}</text>
-                        </view>
+                        <!-- 已删除的回复不显示操作按钮 -->
+                        <block wx:if="{{reply.status !== 'deleted'}}">
+                          <view class="reply-action" bindtap="onCommentTap" data-comment="{{reply}}">
+                            <text>回复</text>
+                          </view>
+                          <view 
+                            class="reply-like-btn {{reply.isLiked ? 'liked' : ''}}" 
+                            bindtap="onCommentLikeTap" 
+                            data-commentid="{{reply._id}}" 
+                            data-index="{{commentIndex}}"
+                            data-replyindex="{{index}}"
+                          >
+                            <van-icon name="{{reply.isLiked ? 'like' : 'like-o'}}" size="12" color="{{reply.isLiked ? '#b63b36' : '#999'}}" />
+                            <text wx:if="{{reply.like_count > 0}}">{{reply.like_count}}</text>
+                          </view>
+                          <!-- 删除按钮（仅自己的回复可见） -->
+                          <view 
+                            class="reply-delete-btn" 
+                            wx:if="{{reply.from_uid === currentOpenid}}"
+                            bindtap="onDeleteComment" 
+                            data-commentid="{{reply._id}}" 
+                            data-index="{{commentIndex}}"
+                            data-replyindex="{{index}}"
+                          >
+                            <text>删除</text>
+                          </view>
+                        </block>
                       </view>
                     </view>
                   </view>

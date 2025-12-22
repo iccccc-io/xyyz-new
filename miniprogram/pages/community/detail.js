@@ -38,6 +38,9 @@ Page({
     replyMode: 'post',         // 'post' 回复帖子, 'comment' 回复评论
     replyTarget: null,         // 回复目标 { _id, root_id, nickname }
     
+    // 当前用户
+    currentOpenid: '',         // 当前用户的 openid，用于判断是否显示删除按钮
+    
     // 点赞相关
     isLiked: false,            // 是否已点赞
     likesCount: 0,             // 点赞数
@@ -56,7 +59,8 @@ Page({
     }
 
     this.setData({
-      postId: options.id
+      postId: options.id,
+      currentOpenid: app.globalData.openid || ''
     })
 
     await this.loadPostDetail()
@@ -499,6 +503,96 @@ Page({
       console.error('评论点赞操作失败:', err)
       wx.showToast({
         title: '操作失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  /**
+   * 删除评论
+   */
+  async onDeleteComment(e) {
+    const commentId = e.currentTarget.dataset.commentid
+    const commentIndex = e.currentTarget.dataset.index
+    const replyIndex = e.currentTarget.dataset.replyindex
+    const isReply = replyIndex !== undefined && replyIndex !== null && replyIndex !== ''
+
+    // 获取评论对象
+    let comment
+    if (isReply) {
+      comment = this.data.commentList[commentIndex].replies[replyIndex]
+    } else {
+      comment = this.data.commentList[commentIndex]
+    }
+
+    // 确认删除
+    const res = await wx.showModal({
+      title: '删除评论',
+      content: isReply ? '确定要删除这条回复吗？' : '确定要删除这条评论吗？删除后其下所有回复也将被删除。',
+      confirmText: '删除',
+      confirmColor: '#b63b36'
+    })
+
+    if (!res.confirm) return
+
+    wx.showLoading({ title: '删除中...' })
+
+    try {
+      // 判断是一级评论还是二级评论
+      const isRootComment = !comment.root_id || comment.root_id === ''
+
+      // 调用云函数删除
+      const result = await wx.cloud.callFunction({
+        name: 'delete_comment',
+        data: {
+          commentId: comment._id,
+          postId: this.data.postId,
+          isRootComment: isRootComment
+        }
+      })
+
+      wx.hideLoading()
+
+      if (result.result && result.result.success) {
+        wx.showToast({
+          title: '删除成功',
+          icon: 'success'
+        })
+
+        // 更新本地数据
+        const commentList = [...this.data.commentList]
+        let newCommentCount = this.data.commentCount
+
+        if (isRootComment) {
+          // 删除一级评论：从列表中移除
+          const deletedComment = commentList[commentIndex]
+          const deletedCount = 1 + (deletedComment.reply_count || 0)
+          commentList.splice(commentIndex, 1)
+          newCommentCount = Math.max(0, newCommentCount - deletedCount)
+        } else {
+          // 删除二级评论：逻辑删除，更新显示内容
+          commentList[commentIndex].replies[replyIndex].status = 'deleted'
+          commentList[commentIndex].replies[replyIndex].content = '该评论已由作者删除'
+          commentList[commentIndex].replies[replyIndex].like_count = 0
+          commentList[commentIndex].replies[replyIndex].isLiked = false
+        }
+
+        this.setData({
+          commentList,
+          commentCount: newCommentCount
+        })
+
+      } else {
+        wx.showToast({
+          title: result.result?.message || '删除失败',
+          icon: 'none'
+        })
+      }
+    } catch (err) {
+      wx.hideLoading()
+      console.error('删除评论失败:', err)
+      wx.showToast({
+        title: '删除失败',
         icon: 'none'
       })
     }

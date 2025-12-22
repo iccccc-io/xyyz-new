@@ -374,6 +374,19 @@ page {
   opacity: 0.6;
 }
 
+.comment-delete-btn {
+  padding: 4rpx 0;
+}
+
+.comment-delete-btn text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.comment-delete-btn:active {
+  opacity: 0.6;
+}
+
 /* 二级评论区 */
 .replies-section {
   margin-top: 20rpx;
@@ -473,6 +486,29 @@ page {
 
 .reply-like-btn:active {
   opacity: 0.6;
+}
+
+.reply-delete-btn {
+  padding: 4rpx 0;
+}
+
+.reply-delete-btn text {
+  font-size: 22rpx;
+  color: #999999;
+}
+
+.reply-delete-btn:active {
+  opacity: 0.6;
+}
+
+/* 已删除的回复样式 */
+.reply-item.deleted {
+  opacity: 0.7;
+}
+
+.reply-text.deleted-text {
+  color: #999999;
+  font-style: italic;
 }
 
 /* 展开更多回复 */
