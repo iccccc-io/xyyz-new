@@ -1,4 +1,5 @@
 // pages/community/post.js
+const app = getApp()
 const db = wx.cloud.database()
 
 Page({
@@ -237,7 +238,18 @@ Page({
         })
       }
 
-      // 4. 构建帖子数据
+      // 4. 获取当前登录用户信息
+      const userInfo = app.globalData.userInfo
+      if (!userInfo) {
+        wx.hideLoading()
+        wx.showToast({
+          title: '请先登录',
+          icon: 'none'
+        })
+        return
+      }
+
+      // 5. 构建帖子数据
       const postData = {
         title: this.data.title || '分享一下',
         content: this.data.content || '',
@@ -252,28 +264,29 @@ Page({
         create_time: new Date().toISOString(),
         likes: 0,
         comments: [],
-        // 模拟当前用户（硬编码使用"伊人绣庄"信息，方便演示红名效果）
-        author_id: 'user_master_001',
+        // 使用当前登录用户的真实信息
+        // 注：_openid 由云数据库自动填充，无需手动存储
+        author_id: userInfo._id,
         author_info: {
-          nickname: '伊人绣庄',
-          avatar_file_id: 'cloud://xiangyunyizhen-dev-1d02h7036c82a.7869-xiangyunyizhen-dev-1d02h7036c82a-1316629372/avatars/头像1.jpg',
-          is_certified: true
+          nickname: userInfo.nickname,
+          avatar_file_id: userInfo.avatar_url,
+          is_certified: userInfo.is_certified || false
         }
       }
 
-      // 5. 写入数据库
+      // 6. 写入数据库
       await db.collection('community_posts').add({
         data: postData
       })
 
-      // 6. 发布成功
+      // 7. 发布成功
       wx.hideLoading()
       wx.showToast({
         title: '发布成功',
         icon: 'success'
       })
 
-      // 7. 延迟返回
+      // 8. 延迟返回
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
