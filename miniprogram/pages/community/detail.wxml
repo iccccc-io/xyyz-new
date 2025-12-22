@@ -7,12 +7,22 @@
         <image class="author-avatar" src="{{postData.author_info.avatar_file_id}}" />
         <view class="author-text">
           <text class="author-name {{postData.author_info.is_certified ? 'certified' : ''}}">{{postData.author_info.nickname}}</text>
-          <text class="author-title">{{postData.author_info.is_certified ? (authorData.certified_title || '非遗传承人') : '非遗爱好者'}}</text>
+          <!-- 头衔：认证用户需等待详情加载，非认证用户直接显示 -->
+          <text class="author-title loading" wx:if="{{postData.author_info.is_certified && !authorDataLoaded}}">· · ·</text>
+          <text class="author-title" wx:elif="{{postData.author_info.is_certified}}">{{authorData.certified_title || '非遗传承人'}}</text>
+          <text class="author-title" wx:else>非遗爱好者</text>
         </view>
+      </view>
+      <!-- 关注按钮：加载中显示占位，加载后显示真实状态 -->
+      <view 
+        class="follow-btn loading" 
+        wx:if="{{!isSelf && !followStatusLoaded}}"
+      >
+        <text>· · ·</text>
       </view>
       <view 
         class="follow-btn {{isFollowing ? 'following' : ''}}" 
-        wx:if="{{!isSelf}}"
+        wx:if="{{!isSelf && followStatusLoaded}}"
         bindtap="onFollowTap"
       >
         <text wx:if="{{!isFollowing}}">+ 关注</text>

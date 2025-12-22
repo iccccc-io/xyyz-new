@@ -55,6 +55,11 @@ page {
   line-height: 1.3;
 }
 
+.author-title.loading {
+  color: #cccccc;
+  letter-spacing: 2rpx;
+}
+
 .follow-btn {
   padding: 12rpx 30rpx;
   border: 2rpx solid #b63b36;
@@ -81,6 +86,17 @@ page {
 
 .follow-btn.following text {
   color: #888888;
+}
+
+/* 加载中状态 - 灰色边框 */
+.follow-btn.loading {
+  border-color: #e0e0e0;
+  background: transparent;
+}
+
+.follow-btn.loading text {
+  color: #cccccc;
+  letter-spacing: 2rpx;
 }
 
 /* 图片展示区域 */

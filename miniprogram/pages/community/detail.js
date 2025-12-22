@@ -11,10 +11,12 @@ Page({
     postId: '',
     postData: null,
     authorData: null,
+    authorDataLoaded: false, // 作者详情是否已加载完成
     loading: true,
     isFollowing: false,
     isMutual: false, // 是否互相关注
     isSelf: false, // 是否是自己的帖子
+    followStatusLoaded: false, // 关注状态是否已加载完成
     currentImageIndex: 0,
     formatTime: '',
     swiperHeight: 400,
@@ -79,43 +81,33 @@ Page({
       const likesFormatted = this.formatCount(postData.likes || 0)
       const commentsFormatted = this.formatCount(postData.comments ? postData.comments.length : 0)
 
+      // 检查是否是自己的帖子（立即判断）
+      const myOpenid = app.globalData.openid
+      const isSelf = myOpenid && postData._openid === myOpenid
+
+      console.log('帖子详情:', postData)
+
+      // 并行加载：关注状态 + 作者信息，全部完成后再显示页面
+      await Promise.all([
+        this.checkFollowStatus(postData._openid),
+        this.loadAuthorData(postData.author_id)
+      ])
+
+      // 所有数据加载完成后，一次性更新页面（包括预加载的关注状态和作者信息）
       this.setData({
         postData,
         formatTime,
         likesFormatted,
         commentsFormatted,
-        imageHeights: new Array(postData.images.length).fill(0)
+        imageHeights: new Array(postData.images.length).fill(0),
+        isSelf: isSelf,
+        isFollowing: this.data.isFollowing,
+        isMutual: this.data.isMutual,
+        followStatusLoaded: this.data.followStatusLoaded,
+        authorData: this.data.authorData,
+        authorDataLoaded: this.data.authorDataLoaded,
+        loading: false
       })
-
-      console.log('帖子详情:', postData)
-
-      // 查询作者完整信息
-      if (postData.author_id) {
-        try {
-          const authorRes = await db.collection('users')
-            .doc(postData.author_id)
-            .get()
-          
-          if (authorRes.data) {
-            this.setData({
-              authorData: authorRes.data
-            })
-          }
-        } catch (err) {
-          console.warn('查询作者信息失败:', err)
-        }
-      }
-
-      // 检查是否是自己的帖子
-      const myOpenid = app.globalData.openid
-      if (myOpenid && postData._openid === myOpenid) {
-        this.setData({ isSelf: true })
-      }
-
-      // 检查关注状态
-      await this.checkFollowStatus(postData._openid)
-
-      this.setData({ loading: false })
 
     } catch (err) {
       console.error('加载帖子详情失败:', err)
@@ -235,6 +227,7 @@ Page({
   async checkFollowStatus(targetOpenid) {
     const myOpenid = app.globalData.openid
     if (!myOpenid || !targetOpenid || myOpenid === targetOpenid) {
+      this.data.followStatusLoaded = true
       return
     }
 
@@ -258,12 +251,37 @@ Page({
       const isFollowing = iFollowRes.total > 0
       const isFollowedByTarget = followMeRes.total > 0
 
-      this.setData({
-        isFollowing: isFollowing,
-        isMutual: isFollowing && isFollowedByTarget
-      })
+      // 先存到 data 对象，稍后统一 setData
+      this.data.isFollowing = isFollowing
+      this.data.isMutual = isFollowing && isFollowedByTarget
+      this.data.followStatusLoaded = true
     } catch (err) {
       console.warn('检查关注状态失败:', err)
+      this.data.followStatusLoaded = true
+    }
+  },
+
+  /**
+   * 加载作者详情
+   */
+  async loadAuthorData(authorId) {
+    if (!authorId) {
+      this.data.authorDataLoaded = true
+      return
+    }
+
+    try {
+      const authorRes = await db.collection('users')
+        .doc(authorId)
+        .get()
+      
+      if (authorRes.data) {
+        this.data.authorData = authorRes.data
+      }
+      this.data.authorDataLoaded = true
+    } catch (err) {
+      console.warn('查询作者信息失败:', err)
+      this.data.authorDataLoaded = true
     }
   },
 
