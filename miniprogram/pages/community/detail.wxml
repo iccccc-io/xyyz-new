@@ -271,18 +271,26 @@
         </view>
         <!-- 互动图标（非输入时显示） -->
         <view class="action-icons" wx:else>
-          <view class="action-icon-item {{isLiked ? 'liked' : ''}}" bindtap="onLikeTap">
-            <van-icon name="{{isLiked ? 'like' : 'like-o'}}" size="22" color="{{isLiked ? '#b63b36' : '#333'}}" />
-            <text class="action-count {{isLiked ? 'liked' : ''}}">{{likesFormatted}}</text>
+          <!-- 点赞按钮 -->
+          <view class="action-icon-item {{isLiked ? 'liked' : ''}} {{isSelf ? 'disabled' : ''}}" bindtap="onLikeTap">
+            <view class="icon-wrapper">
+              <van-icon name="{{isLiked ? 'like' : 'like-o'}}" size="22" color="{{isSelf ? '#ccc' : (isLiked ? '#b63b36' : '#333')}}" />
+              <!-- 自己的帖子显示禁止标记 -->
+              <view class="icon-ban" wx:if="{{isSelf}}">
+                <van-icon name="cross" size="10" color="#999" />
+              </view>
+            </view>
+            <text class="action-count {{isLiked ? 'liked' : ''}} {{isSelf ? 'disabled' : ''}}">{{likesFormatted}}</text>
           </view>
-          <view class="action-icon-item {{isCollected ? 'collected' : ''}}" bindtap="onCollectionTap">
+          <!-- 收藏按钮（自己的帖子不显示） -->
+          <view class="action-icon-item {{isCollected ? 'collected' : ''}}" wx:if="{{!isSelf}}" bindtap="onCollectionTap">
             <van-icon name="{{isCollected ? 'star' : 'star-o'}}" size="22" color="{{isCollected ? '#FFC83D' : '#333'}}" />
             <text class="action-count {{isCollected ? 'collected' : ''}}">{{collectionFormatted}}</text>
           </view>
-          <view class="action-icon-item">
-            <van-icon name="chat-o" size="22" color="#333" />
-            <text class="action-count">{{commentsFormatted}}</text>
-          </view>
+          <!-- 分享按钮 -->
+          <button class="share-btn" open-type="share">
+            <van-icon name="share-o" size="22" color="#333" />
+          </button>
         </view>
       </view>
     </view>

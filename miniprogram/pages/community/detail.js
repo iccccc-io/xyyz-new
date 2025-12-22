@@ -456,6 +456,16 @@ Page({
    * 点赞/取消点赞
    */
   async onLikeTap() {
+    // 自己的帖子不能点赞
+    if (this.data.isSelf) {
+      wx.showToast({
+        title: '不能给自己的帖子点赞哦~',
+        icon: 'none',
+        duration: 1500
+      })
+      return
+    }
+
     // 检查登录状态
     if (!app.globalData.openid) {
       wx.showToast({
@@ -1344,12 +1354,26 @@ Page({
   },
 
   /**
-   * 用户点击右上角分享
+   * 分享给朋友
    */
   onShareAppMessage() {
+    const postData = this.data.postData
     return {
-      title: this.data.postData?.title || '非遗社区',
-      path: `/pages/community/detail?id=${this.data.postId}`
+      title: postData?.title || '非遗社区',
+      path: `/pages/community/detail?id=${this.data.postId}`,
+      imageUrl: postData?.images?.[0] || ''  // 第一张图片作为封面
+    }
+  },
+
+  /**
+   * 分享到朋友圈
+   */
+  onShareTimeline() {
+    const postData = this.data.postData
+    return {
+      title: postData?.title || '非遗社区',
+      query: `id=${this.data.postId}`,
+      imageUrl: postData?.images?.[0] || ''  // 第一张图片作为封面
     }
   }
 })

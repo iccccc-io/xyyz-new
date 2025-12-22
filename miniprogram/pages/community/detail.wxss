@@ -562,6 +562,7 @@ page {
 .action-input {
   flex: 1;
   min-width: 0;
+  margin-right: 20rpx;
 }
 
 .comment-input {
@@ -576,6 +577,8 @@ page {
 
 .action-right {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 /* 发送按钮 */
@@ -605,11 +608,62 @@ page {
   display: flex;
   align-items: center;
   gap: 4rpx;
-  padding: 0 16rpx;
+  padding: 0 12rpx;
 }
 
 .action-icon-item:active {
   opacity: 0.6;
+}
+
+/* 禁用状态（自己的帖子） */
+.action-icon-item.disabled:active {
+  opacity: 1;
+}
+
+.action-icon-item .icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-icon-item .icon-ban {
+  position: absolute;
+  top: -6rpx;
+  right: -8rpx;
+  width: 22rpx;
+  height: 22rpx;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+}
+
+.action-count.disabled {
+  color: #ccc;
+}
+
+/* 分享按钮样式重置 */
+.share-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 12rpx !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  line-height: 1 !important;
+  width: auto !important;
+  min-width: auto !important;
+}
+
+.share-btn::after {
+  display: none !important;
+  border: none !important;
 }
 
 .action-count {
