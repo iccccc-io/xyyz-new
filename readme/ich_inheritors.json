@@ -1,2 +1,0 @@
-{"_id":"inh_001","name":"刘爱云","photo":"cloud://liuaiyun.jpg","gender":"女","ethnicity":"汉族","project_id":"proj_001","project_name":"湘绣","region":"长沙市","media_list":[{"type":"image","url":"cloud://liuaiyun_work.jpg"},{"type":"video","url":"cloud://liuaiyun_interview.mp4"}]}
-{"_id":"inh_002","name":"毛建华","photo":"cloud://maojianhua.jpg","gender":"男","ethnicity":"汉族","project_id":"proj_002","project_name":"长沙花鼓戏","region":"长沙市","media_list":[{"type":"image","url":"cloud://maojianhua_perform.jpg"}]}
