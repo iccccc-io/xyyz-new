@@ -168,6 +168,8 @@ page {
   line-height: 2;
   margin-bottom: 30rpx;
   text-align: justify;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* 非遗标签 */
