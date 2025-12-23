@@ -11,70 +11,95 @@
   <view class="menu-container">
     <!-- 主菜单 -->
     <view class="menu-content" wx:if="{{!showReportMenu}}">
-      <!-- 菜单标题 -->
+      <!-- 菜单标题栏 -->
       <view class="menu-header">
         <text class="menu-title">{{isAuthor ? '管理帖子' : '更多操作'}}</text>
-      </view>
-
-      <!-- 访客菜单 -->
-      <view class="menu-grid" wx:if="{{!isAuthor}}">
-        <!-- 分享 -->
-        <button class="menu-item" open-type="share">
-          <view class="menu-icon share">
-            <van-icon name="share-o" size="24" color="#333" />
-          </view>
-          <text class="menu-text">分享</text>
-        </button>
-        <!-- 举报 -->
-        <view class="menu-item" bindtap="onReportTap">
-          <view class="menu-icon report">
-            <van-icon name="warning-o" size="24" color="#333" />
-          </view>
-          <text class="menu-text">举报</text>
+        <view class="close-btn" bindtap="onClose">
+          <van-icon name="cross" size="20" color="#999" />
         </view>
       </view>
 
-      <!-- 作者菜单 -->
-      <view class="menu-grid author-grid" wx:if="{{isAuthor}}">
-        <!-- 第一行 -->
-        <view class="menu-item" bindtap="onEditTap">
-          <view class="menu-icon edit">
-            <van-icon name="edit" size="24" color="#333" />
-          </view>
-          <text class="menu-text">编辑</text>
+      <!-- 分享对象区（预留区域，后续开发私聊功能） -->
+      <view class="share-section">
+        <view class="section-placeholder">
+          <text class="placeholder-text">分享给好友（功能开发中）</text>
         </view>
-        <view class="menu-item" bindtap="onDeleteTap">
-          <view class="menu-icon delete">
-            <van-icon name="delete-o" size="24" color="#e74c3c" />
-          </view>
-          <text class="menu-text danger">删除</text>
-        </view>
-        <view class="menu-item" bindtap="onPrivacyTap">
-          <view class="menu-icon privacy">
-            <van-icon name="{{postData.status === 1 ? 'eye-o' : 'closed-eye'}}" size="24" color="#333" />
-          </view>
-          <text class="menu-text">{{postData.status === 1 ? '设为公开' : '设为私密'}}</text>
-        </view>
-        <!-- 第二行 -->
-        <view class="menu-item" bindtap="onCommentToggleTap">
-          <view class="menu-icon comment-toggle">
-            <van-icon name="{{postData.comment_status === false ? 'comment-o' : 'comments-o'}}" size="24" color="#333" />
-          </view>
-          <text class="menu-text">{{postData.comment_status === false ? '开启评论' : '关闭评论'}}</text>
-        </view>
-        <view class="menu-item" bindtap="onTopTap">
-          <view class="menu-icon top">
-            <van-icon name="{{postData.is_top ? 'descending' : 'ascending'}}" size="24" color="#333" />
-          </view>
-          <text class="menu-text">{{postData.is_top ? '取消置顶' : '置顶'}}</text>
-        </view>
-        <button class="menu-item" open-type="share">
-          <view class="menu-icon share">
-            <van-icon name="share-o" size="24" color="#333" />
-          </view>
-          <text class="menu-text">分享</text>
-        </button>
       </view>
+
+      <!-- 分隔线 -->
+      <view class="section-divider"></view>
+
+      <!-- 功能区 - 访客菜单 -->
+      <scroll-view class="function-section" scroll-x enable-flex enhanced show-scrollbar="{{false}}" wx:if="{{!isAuthor}}">
+        <view class="function-list">
+          <!-- 分享 -->
+          <view class="func-item share-item">
+            <button class="share-btn-wrap" open-type="share">
+              <view class="func-icon">
+                <van-icon name="share-o" size="22" color="#666" />
+              </view>
+              <text class="func-text">分享</text>
+            </button>
+          </view>
+          <!-- 举报 -->
+          <view class="func-item" bindtap="onReportTap">
+            <view class="func-icon">
+              <van-icon name="warning-o" size="22" color="#666" />
+            </view>
+            <text class="func-text">举报</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 功能区 - 作者菜单 -->
+      <scroll-view class="function-section" scroll-x enable-flex enhanced show-scrollbar="{{false}}" wx:if="{{isAuthor}}">
+        <view class="function-list">
+          <!-- 编辑 -->
+          <view class="func-item" bindtap="onEditTap">
+            <view class="func-icon">
+              <van-icon name="edit" size="22" color="#666" />
+            </view>
+            <text class="func-text">编辑</text>
+          </view>
+          <!-- 删除 -->
+          <view class="func-item" bindtap="onDeleteTap">
+            <view class="func-icon">
+              <van-icon name="delete-o" size="22" color="#666" />
+            </view>
+            <text class="func-text">删除</text>
+          </view>
+          <!-- 权限设置 -->
+          <view class="func-item" bindtap="onPrivacyTap">
+            <view class="func-icon">
+              <van-icon name="{{postData.status === 1 ? 'eye-o' : 'closed-eye'}}" size="22" color="#666" />
+            </view>
+            <text class="func-text">{{postData.status === 1 ? '公开' : '私密'}}</text>
+          </view>
+          <!-- 评论开关 -->
+          <view class="func-item" bindtap="onCommentToggleTap">
+            <view class="func-icon">
+              <van-icon name="{{postData.comment_status === false ? 'comment-o' : 'chat-o'}}" size="22" color="#666" />
+            </view>
+            <text class="func-text">{{postData.comment_status === false ? '开评论' : '关评论'}}</text>
+          </view>
+          <!-- 置顶 -->
+          <view class="func-item" bindtap="onTopTap">
+            <view class="func-icon">
+              <van-icon name="{{postData.is_top ? 'descending' : 'ascending'}}" size="22" color="#666" />
+            </view>
+            <text class="func-text">{{postData.is_top ? '取消置顶' : '置顶'}}</text>
+          </view>
+          <!-- 分享 -->
+          <view class="func-item share-item">
+            <button class="share-btn-wrap" open-type="share">
+              <view class="func-icon">
+                <van-icon name="share-o" size="22" color="#666" />
+              </view>
+              <text class="func-text">分享</text>
+            </button>
+          </view>
+        </view>
+      </scroll-view>
 
       <!-- 取消按钮 -->
       <view class="menu-cancel" bindtap="onClose">
@@ -89,6 +114,9 @@
           <van-icon name="arrow-left" size="20" color="#333" />
         </view>
         <text class="menu-title">选择举报理由</text>
+        <view class="close-btn" bindtap="onClose">
+          <van-icon name="cross" size="20" color="#999" />
+        </view>
       </view>
 
       <view class="report-list">
@@ -115,4 +143,3 @@
     </view>
   </view>
 </van-popup>
-

@@ -5,7 +5,7 @@
 }
 
 .menu-content {
-  padding: 30rpx 30rpx 0;
+  padding: 0;
 }
 
 /* 菜单头部 */
@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 30rpx;
+  padding: 28rpx 30rpx;
   border-bottom: 1rpx solid #f0f0f0;
   position: relative;
 }
@@ -24,45 +24,93 @@
   color: #333;
 }
 
-.back-btn {
+.close-btn {
   position: absolute;
-  left: 0;
+  right: 30rpx;
   top: 50%;
   transform: translateY(-50%);
   padding: 10rpx;
 }
 
-/* 菜单网格 */
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30rpx 20rpx;
-  padding: 40rpx 0;
+.back-btn {
+  position: absolute;
+  left: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 10rpx;
 }
 
-.menu-grid.author-grid {
-  grid-template-columns: repeat(3, 1fr);
+/* 分享对象区（预留） */
+.share-section {
+  padding: 30rpx;
+  min-height: 120rpx;
 }
 
-.menu-item {
+.section-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100rpx;
+  background: #fafafa;
+  border-radius: 12rpx;
+  border: 2rpx dashed #e0e0e0;
+}
+
+.placeholder-text {
+  font-size: 26rpx;
+  color: #bbb;
+}
+
+/* 分隔线 */
+.section-divider {
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 0 30rpx;
+}
+
+/* 功能区 */
+.function-section {
+  width: 100%;
+  white-space: nowrap;
+}
+
+/* 隐藏滚动条 */
+.function-section::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+.function-list {
+  display: inline-flex;
+  align-items: flex-start;
+  padding: 30rpx;
+  gap: 40rpx;
+}
+
+/* 功能按钮 */
+.func-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
   background: transparent;
   border: none;
   padding: 0;
   margin: 0;
   line-height: 1;
+  flex-shrink: 0;
+  min-width: 100rpx;
 }
 
-.menu-item::after {
+.func-item::after {
   display: none;
 }
 
-.menu-icon {
-  width: 100rpx;
-  height: 100rpx;
+.func-icon {
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -71,56 +119,63 @@
   transition: all 0.2s;
 }
 
-.menu-item:active .menu-icon {
+.func-item:active .func-icon {
   transform: scale(0.95);
   background: #ebebeb;
 }
 
-/* 图标颜色定制 */
-.menu-icon.share {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-}
-
-.menu-icon.report {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-}
-
-.menu-icon.edit {
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-}
-
-.menu-icon.delete {
-  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-}
-
-.menu-icon.privacy {
-  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-}
-
-.menu-icon.comment-toggle {
-  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-}
-
-.menu-icon.top {
-  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
-}
-
-.menu-text {
-  font-size: 26rpx;
+.func-text {
+  font-size: 24rpx;
   color: #333;
   text-align: center;
+  white-space: nowrap;
 }
 
-.menu-text.danger {
-  color: #e74c3c;
+/* 分享按钮特殊处理 */
+.share-item {
+  padding: 0;
+  margin: 0;
+}
+
+.share-btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  min-width: auto !important;
+  width: auto !important;
+}
+
+.share-btn-wrap::after {
+  display: none !important;
+  border: none !important;
+}
+
+.share-btn-wrap .func-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+
+.share-btn-wrap .func-text {
+  font-size: 24rpx;
+  color: #333;
 }
 
 /* 取消按钮 */
 .menu-cancel {
   padding: 30rpx 0;
   text-align: center;
-  border-top: 1rpx solid #f0f0f0;
-  margin-top: 10rpx;
+  border-top: 16rpx solid #f5f5f5;
 }
 
 .menu-cancel text {
@@ -138,14 +193,14 @@
 }
 
 .report-list {
-  padding: 20rpx 0;
+  padding: 10rpx 0;
 }
 
 .report-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 30rpx 20rpx;
+  padding: 30rpx;
   border-bottom: 1rpx solid #f5f5f5;
 }
 
@@ -176,4 +231,3 @@
   border-radius: 20rpx 20rpx 0 0;
   z-index: 10;
 }
-
