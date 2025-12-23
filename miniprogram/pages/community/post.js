@@ -15,6 +15,11 @@ Page({
     location: {},           // 位置信息
     showPicker: false,      // 项目选择器显示状态
     
+    // 编辑模式相关
+    isEditMode: false,      // 是否为编辑模式
+    editPostId: '',         // 编辑的帖子ID
+    originalImages: [],     // 原始图片列表（用于判断是否有删除）
+    
     // 推荐话题标签
     recommendTags: ['非遗打卡', '周末去哪儿', '匠心', '手艺人', '传统文化'],
     
@@ -26,7 +31,71 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 检测是否为编辑模式
+    if (options.id) {
+      this.setData({ 
+        isEditMode: true, 
+        editPostId: options.id 
+      })
+      wx.setNavigationBarTitle({ title: '编辑笔记' })
+      this.loadPostData(options.id)
+    }
+  },
 
+  /**
+   * 加载帖子数据（编辑模式）
+   */
+  async loadPostData(postId) {
+    wx.showLoading({ title: '加载中...' })
+
+    try {
+      const res = await db.collection('community_posts').doc(postId).get()
+      
+      if (!res.data) {
+        wx.hideLoading()
+        wx.showToast({ title: '帖子不存在', icon: 'none' })
+        setTimeout(() => wx.navigateBack(), 1500)
+        return
+      }
+
+      const post = res.data
+
+      // 权限校验：只能编辑自己的帖子
+      if (post._openid !== app.globalData.openid) {
+        wx.hideLoading()
+        wx.showToast({ title: '无权编辑此帖子', icon: 'none' })
+        setTimeout(() => wx.navigateBack(), 1500)
+        return
+      }
+
+      // 转换图片格式为 fileList
+      const fileList = (post.images || []).map(url => ({
+        url: url,
+        tempFilePath: url,
+        status: 'done',
+        isCloud: true  // 标记为云存储图片
+      }))
+
+      // 填充表单数据
+      this.setData({
+        title: post.title || '',
+        content: post.content || '',
+        fileList: fileList,
+        originalImages: post.images || [],
+        selectedTags: post.tags || [],
+        selectedProject: post.related_projects && post.related_projects.length > 0 
+          ? post.related_projects[0].name 
+          : '',
+        location: post.location || {}
+      })
+
+      wx.hideLoading()
+
+    } catch (err) {
+      console.error('加载帖子数据失败:', err)
+      wx.hideLoading()
+      wx.showToast({ title: '加载失败', icon: 'none' })
+    }
   },
 
   /**
@@ -184,7 +253,7 @@ Page({
   },
 
   /**
-   * 发布帖子
+   * 发布/更新帖子
    */
   async publishPost() {
     // 1. 校验
@@ -204,24 +273,39 @@ Page({
       return
     }
 
+    const isEditMode = this.data.isEditMode
+
     // 2. 显示加载
     wx.showLoading({
-      title: '发布中...',
+      title: isEditMode ? '保存中...' : '发布中...',
       mask: true
     })
 
     try {
-      // 3. 上传图片
+      // 3. 处理图片：区分已上传的云图片和新增的本地图片
       const uploadedImages = []
+      const newLocalImages = []
       
-      for (let i = 0; i < this.data.fileList.length; i++) {
-        const file = this.data.fileList[i]
+      this.data.fileList.forEach(file => {
+        const url = file.tempFilePath || file.url
+        if (url.startsWith('cloud://')) {
+          // 已上传到云存储的图片，直接使用
+          uploadedImages.push(url)
+        } else {
+          // 新增的本地图片，需要上传
+          newLocalImages.push(file)
+        }
+      })
+
+      // 4. 上传新增的本地图片
+      for (let i = 0; i < newLocalImages.length; i++) {
+        const file = newLocalImages[i]
         const tempFilePath = file.tempFilePath || file.url
         
         // 生成唯一文件名
         const timestamp = Date.now()
         const random = Math.floor(Math.random() * 10000)
-        const ext = tempFilePath.split('.').pop()
+        const ext = tempFilePath.split('.').pop() || 'jpg'
         const cloudPath = `posts/${timestamp}_${random}_${i}.${ext}`
         
         const uploadRes = await wx.cloud.uploadFile({
@@ -233,12 +317,12 @@ Page({
         
         // 更新进度
         wx.showLoading({
-          title: `上传中 ${i + 1}/${this.data.fileList.length}`,
+          title: `上传中 ${i + 1}/${newLocalImages.length}`,
           mask: true
         })
       }
 
-      // 4. 获取当前登录用户信息
+      // 5. 获取当前登录用户信息
       const userInfo = app.globalData.userInfo
       if (!userInfo) {
         wx.hideLoading()
@@ -249,53 +333,116 @@ Page({
         return
       }
 
-      // 5. 构建帖子数据
-      const postData = {
-        title: this.data.title || '分享一下',
-        content: this.data.content || '',
-        images: uploadedImages,
-        location: {
-          name: this.data.location.name,
-          latitude: this.data.location.latitude,
-          longitude: this.data.location.longitude
-        },
-        related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
-        tags: this.data.selectedTags,
-        create_time: new Date().toISOString(),
-        likes: 0,
-        comments: [],
-        // 使用当前登录用户的真实信息
-        // 注：_openid 由云数据库自动填充，无需手动存储
-        author_id: userInfo._id,
-        author_info: {
-          nickname: userInfo.nickname,
-          avatar_file_id: userInfo.avatar_url,
-          is_certified: userInfo.is_certified || false
+      if (isEditMode) {
+        // ========== 编辑模式：更新帖子 ==========
+        
+        // 找出被删除的图片（原图片中有但新图片中没有的）
+        const deletedImages = this.data.originalImages.filter(
+          img => !uploadedImages.includes(img)
+        )
+
+        // 构建更新数据
+        const updateData = {
+          title: this.data.title || '分享一下',
+          content: this.data.content || '',
+          images: uploadedImages,
+          location: {
+            name: this.data.location.name,
+            latitude: this.data.location.latitude,
+            longitude: this.data.location.longitude
+          },
+          related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
+          tags: this.data.selectedTags,
+          update_time: db.serverDate(),
+          // 更新作者信息（可能头像昵称有变化）
+          author_info: {
+            nickname: userInfo.nickname,
+            avatar_file_id: userInfo.avatar_url,
+            is_certified: userInfo.is_certified || false
+          }
         }
+
+        // 更新数据库
+        await db.collection('community_posts').doc(this.data.editPostId).update({
+          data: updateData
+        })
+
+        // 删除被移除的云存储图片（异步，不阻塞）
+        if (deletedImages.length > 0) {
+          wx.cloud.deleteFile({
+            fileList: deletedImages
+          }).then(() => {
+            console.log('已删除旧图片:', deletedImages.length)
+          }).catch(err => {
+            console.warn('删除旧图片失败:', err)
+          })
+        }
+
+        wx.hideLoading()
+        wx.showToast({
+          title: '保存成功',
+          icon: 'success'
+        })
+
+        // 通知详情页刷新
+        const pages = getCurrentPages()
+        const detailPage = pages.find(p => p.route === 'pages/community/detail')
+        if (detailPage && detailPage.loadPostDetail) {
+          detailPage.loadPostDetail()
+        }
+
+      } else {
+        // ========== 新建模式：发布帖子 ==========
+        
+        // 构建帖子数据
+        const postData = {
+          title: this.data.title || '分享一下',
+          content: this.data.content || '',
+          images: uploadedImages,
+          location: {
+            name: this.data.location.name,
+            latitude: this.data.location.latitude,
+            longitude: this.data.location.longitude
+          },
+          related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
+          tags: this.data.selectedTags,
+          create_time: new Date().toISOString(),
+          likes: 0,
+          comment_count: 0,
+          collection_count: 0,
+          status: 0,           // 0: 公开
+          comment_status: true, // 默认允许评论
+          is_top: false,       // 默认不置顶
+          author_id: userInfo._id,
+          author_info: {
+            nickname: userInfo.nickname,
+            avatar_file_id: userInfo.avatar_url,
+            is_certified: userInfo.is_certified || false
+          }
+        }
+
+        // 写入数据库
+        await db.collection('community_posts').add({
+          data: postData
+        })
+
+        wx.hideLoading()
+        wx.showToast({
+          title: '发布成功',
+          icon: 'success'
+        })
       }
 
-      // 6. 写入数据库
-      await db.collection('community_posts').add({
-        data: postData
-      })
-
-      // 7. 发布成功
-      wx.hideLoading()
-      wx.showToast({
-        title: '发布成功',
-        icon: 'success'
-      })
-
-      // 8. 延迟返回
+      // 延迟返回
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
 
     } catch (err) {
-      console.error('发布失败:', err)
+      console.error(isEditMode ? '保存失败:' : '发布失败:', err)
       wx.hideLoading()
       wx.showToast({
-        title: '发布失败，请重试',
+        title: isEditMode ? '保存失败，请重试' : '发布失败，请重试',
         icon: 'none'
       })
     }

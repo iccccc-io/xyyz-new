@@ -1,0 +1,118 @@
+<!--components/post-menu/index.wxml-->
+<!-- 底部半屏菜单弹窗 -->
+<van-popup
+  show="{{show}}"
+  position="bottom"
+  round
+  safe-area-inset-bottom
+  custom-style="background: #fff;"
+  bind:close="onClose"
+>
+  <view class="menu-container">
+    <!-- 主菜单 -->
+    <view class="menu-content" wx:if="{{!showReportMenu}}">
+      <!-- 菜单标题 -->
+      <view class="menu-header">
+        <text class="menu-title">{{isAuthor ? '管理帖子' : '更多操作'}}</text>
+      </view>
+
+      <!-- 访客菜单 -->
+      <view class="menu-grid" wx:if="{{!isAuthor}}">
+        <!-- 分享 -->
+        <button class="menu-item" open-type="share">
+          <view class="menu-icon share">
+            <van-icon name="share-o" size="24" color="#333" />
+          </view>
+          <text class="menu-text">分享</text>
+        </button>
+        <!-- 举报 -->
+        <view class="menu-item" bindtap="onReportTap">
+          <view class="menu-icon report">
+            <van-icon name="warning-o" size="24" color="#333" />
+          </view>
+          <text class="menu-text">举报</text>
+        </view>
+      </view>
+
+      <!-- 作者菜单 -->
+      <view class="menu-grid author-grid" wx:if="{{isAuthor}}">
+        <!-- 第一行 -->
+        <view class="menu-item" bindtap="onEditTap">
+          <view class="menu-icon edit">
+            <van-icon name="edit" size="24" color="#333" />
+          </view>
+          <text class="menu-text">编辑</text>
+        </view>
+        <view class="menu-item" bindtap="onDeleteTap">
+          <view class="menu-icon delete">
+            <van-icon name="delete-o" size="24" color="#e74c3c" />
+          </view>
+          <text class="menu-text danger">删除</text>
+        </view>
+        <view class="menu-item" bindtap="onPrivacyTap">
+          <view class="menu-icon privacy">
+            <van-icon name="{{postData.status === 1 ? 'eye-o' : 'closed-eye'}}" size="24" color="#333" />
+          </view>
+          <text class="menu-text">{{postData.status === 1 ? '设为公开' : '设为私密'}}</text>
+        </view>
+        <!-- 第二行 -->
+        <view class="menu-item" bindtap="onCommentToggleTap">
+          <view class="menu-icon comment-toggle">
+            <van-icon name="{{postData.comment_status === false ? 'comment-o' : 'comments-o'}}" size="24" color="#333" />
+          </view>
+          <text class="menu-text">{{postData.comment_status === false ? '开启评论' : '关闭评论'}}</text>
+        </view>
+        <view class="menu-item" bindtap="onTopTap">
+          <view class="menu-icon top">
+            <van-icon name="{{postData.is_top ? 'descending' : 'ascending'}}" size="24" color="#333" />
+          </view>
+          <text class="menu-text">{{postData.is_top ? '取消置顶' : '置顶'}}</text>
+        </view>
+        <button class="menu-item" open-type="share">
+          <view class="menu-icon share">
+            <van-icon name="share-o" size="24" color="#333" />
+          </view>
+          <text class="menu-text">分享</text>
+        </button>
+      </view>
+
+      <!-- 取消按钮 -->
+      <view class="menu-cancel" bindtap="onClose">
+        <text>取消</text>
+      </view>
+    </view>
+
+    <!-- 举报二级菜单 -->
+    <view class="menu-content report-menu" wx:if="{{showReportMenu}}">
+      <view class="menu-header">
+        <view class="back-btn" bindtap="onReportBack">
+          <van-icon name="arrow-left" size="20" color="#333" />
+        </view>
+        <text class="menu-title">选择举报理由</text>
+      </view>
+
+      <view class="report-list">
+        <view 
+          class="report-item" 
+          wx:for="{{reportReasons}}" 
+          wx:key="value"
+          bindtap="onReportSubmit"
+          data-reason="{{item.value}}"
+        >
+          <text class="report-reason">{{item.label}}</text>
+          <van-icon name="arrow" size="16" color="#ccc" />
+        </view>
+      </view>
+
+      <view class="menu-cancel" bindtap="onClose">
+        <text>取消</text>
+      </view>
+    </view>
+
+    <!-- 操作加载中遮罩 -->
+    <view class="loading-mask" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#b63b36" size="32">处理中...</van-loading>
+    </view>
+  </view>
+</van-popup>
+

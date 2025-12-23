@@ -49,6 +49,9 @@ Page({
     isCollected: false,        // 是否已收藏
     collectionCount: 0,        // 收藏数
     collectionFormatted: '0',  // 格式化的收藏数
+    
+    // 菜单相关
+    showPostMenu: false,       // 是否显示帖子菜单
   },
 
   /**
@@ -1306,6 +1309,55 @@ Page({
         title: '操作失败',
         icon: 'none'
       })
+    }
+  },
+
+  // ========== 菜单相关方法 ==========
+
+  /**
+   * 打开帖子菜单
+   */
+  onMenuTap() {
+    this.setData({ showPostMenu: true })
+  },
+
+  /**
+   * 关闭帖子菜单
+   */
+  onMenuClose() {
+    this.setData({ showPostMenu: false })
+  },
+
+  /**
+   * 帖子数据更新（来自菜单组件）
+   */
+  onPostUpdate(e) {
+    const { field, value } = e.detail
+    const postData = { ...this.data.postData }
+    postData[field] = value
+    
+    this.setData({ postData })
+    
+    // 如果是关闭评论，清空评论相关状态
+    if (field === 'comment_status' && value === false) {
+      this.setData({
+        inputValue: '',
+        inputFocus: false,
+        replyMode: 'post',
+        replyTarget: null
+      })
+    }
+  },
+
+  /**
+   * 帖子已删除（来自菜单组件）
+   */
+  onPostDeleted() {
+    // 通知列表页刷新
+    const pages = getCurrentPages()
+    const listPage = pages.find(p => p.route === 'pages/community/index')
+    if (listPage && listPage.loadPosts) {
+      listPage.loadPosts()
     }
   },
 

@@ -75,11 +75,11 @@
 
   <!-- 底部操作栏 -->
   <view class="action-bar">
-    <view class="draft-btn" bindtap="saveDraft">
+    <view class="draft-btn" bindtap="saveDraft" wx:if="{{!isEditMode}}">
       <text>存草稿</text>
     </view>
     <view class="publish-btn" bindtap="publishPost">
-      <text>发布笔记</text>
+      <text>{{isEditMode ? '保存修改' : '发布笔记'}}</text>
     </view>
   </view>
 

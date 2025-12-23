@@ -689,3 +689,34 @@ page {
   align-items: center;
   padding: 200rpx 0;
 }
+
+/* ========== 评论区关闭样式 ========== */
+.comment-closed .closed-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  height: 72rpx;
+  background: #f5f5f5;
+  border-radius: 36rpx;
+  padding: 0 28rpx;
+}
+
+.comment-closed .closed-tip text {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 输入框包装器 */
+.input-wrapper {
+  width: 100%;
+}
+
+/* 三点菜单按钮 */
+.menu-trigger {
+  padding: 0 16rpx !important;
+}
+
+.menu-trigger:active {
+  opacity: 0.6;
+}

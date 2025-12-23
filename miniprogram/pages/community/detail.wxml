@@ -120,7 +120,7 @@
     <view class="divider-line"></view>
 
     <!-- 评论区 -->
-    <view class="comment-section">
+    <view class="comment-section" wx:if="{{postData.comment_status !== false}}">
       <view class="comment-header">
         <text class="comment-title">共 {{commentCount}} 条评论</text>
       </view>
@@ -251,22 +251,33 @@
 
     <!-- 底部互动栏 -->
     <view class="action-bar">
-      <view class="action-input" bindtap="onInputAreaTap">
-        <input 
-          class="comment-input" 
-          placeholder="{{inputPlaceholder}}"
-          value="{{inputValue}}"
-          focus="{{inputFocus}}"
-          bindinput="onInputChange"
-          bindblur="onInputBlur"
-          confirm-type="send"
-          bindconfirm="sendComment"
-          adjust-position="{{true}}"
-        />
+      <!-- 评论输入区 -->
+      <view class="action-input" wx:if="{{postData.comment_status !== false}}">
+        <view class="input-wrapper" bindtap="onInputAreaTap">
+          <input 
+            class="comment-input" 
+            placeholder="{{inputPlaceholder}}"
+            value="{{inputValue}}"
+            focus="{{inputFocus}}"
+            bindinput="onInputChange"
+            bindblur="onInputBlur"
+            confirm-type="send"
+            bindconfirm="sendComment"
+            adjust-position="{{true}}"
+          />
+        </view>
       </view>
+      <!-- 评论已关闭提示 -->
+      <view class="action-input comment-closed" wx:else>
+        <view class="closed-tip">
+          <van-icon name="info-o" size="14" color="#999" />
+          <text>作者已关闭评论区</text>
+        </view>
+      </view>
+
       <view class="action-right">
         <!-- 发送按钮（输入时显示） -->
-        <view class="send-btn" wx:if="{{inputValue}}" bindtap="sendComment">
+        <view class="send-btn" wx:if="{{inputValue && postData.comment_status !== false}}" bindtap="sendComment">
           <text>发送</text>
         </view>
         <!-- 互动图标（非输入时显示） -->
@@ -275,10 +286,6 @@
           <view class="action-icon-item {{isLiked ? 'liked' : ''}} {{isSelf ? 'disabled' : ''}}" bindtap="onLikeTap">
             <view class="icon-wrapper">
               <van-icon name="{{isLiked ? 'like' : 'like-o'}}" size="22" color="{{isSelf ? '#ccc' : (isLiked ? '#b63b36' : '#333')}}" />
-              <!-- 自己的帖子显示禁止标记 -->
-              <view class="icon-ban" wx:if="{{isSelf}}">
-                <van-icon name="cross" size="10" color="#999" />
-              </view>
             </view>
             <text class="action-count {{isLiked ? 'liked' : ''}} {{isSelf ? 'disabled' : ''}}">{{likesFormatted}}</text>
           </view>
@@ -287,13 +294,29 @@
             <van-icon name="{{isCollected ? 'star' : 'star-o'}}" size="22" color="{{isCollected ? '#FFC83D' : '#333'}}" />
             <text class="action-count {{isCollected ? 'collected' : ''}}">{{collectionFormatted}}</text>
           </view>
-          <!-- 分享按钮 -->
-          <button class="share-btn" open-type="share">
-            <van-icon name="share-o" size="22" color="#333" />
-          </button>
+          <!-- 评论数量 -->
+          <view class="action-icon-item" wx:if="{{postData.comment_status !== false}}">
+            <van-icon name="chat-o" size="22" color="#333" />
+            <text class="action-count">{{commentsFormatted}}</text>
+          </view>
+          <!-- 更多菜单（三点按钮） -->
+          <view class="action-icon-item menu-trigger" bindtap="onMenuTap">
+            <van-icon name="ellipsis" size="22" color="#333" />
+          </view>
         </view>
       </view>
     </view>
+
+    <!-- 帖子管理菜单组件 -->
+    <post-menu
+      show="{{showPostMenu}}"
+      post-id="{{postId}}"
+      post-data="{{postData}}"
+      is-author="{{isSelf}}"
+      bind:close="onMenuClose"
+      bind:update="onPostUpdate"
+      bind:deleted="onPostDeleted"
+    />
   </block>
 
   <!-- 加载状态 -->

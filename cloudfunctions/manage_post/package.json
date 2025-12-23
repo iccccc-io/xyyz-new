@@ -1,0 +1,15 @@
+{
+  "name": "manage_post",
+  "version": "1.0.0",
+  "description": "帖子管理云函数（权限设置、评论开关、置顶）",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
+
