@@ -120,13 +120,30 @@ Page({
   },
 
   /**
-   * 删除图片
+   * 删除图片（仅发布模式可用）
    */
   deleteImage(event) {
+    // 编辑模式禁止删除图片
+    if (this.data.isEditMode) {
+      wx.showToast({ title: '编辑模式下不可修改图片', icon: 'none' })
+      return
+    }
     const { index } = event.detail
     const fileList = [...this.data.fileList]
     fileList.splice(index, 1)
     this.setData({ fileList })
+  },
+
+  /**
+   * 预览编辑模式下的图片
+   */
+  previewEditImage(e) {
+    const index = e.currentTarget.dataset.index
+    const urls = this.data.fileList.map(f => f.url)
+    wx.previewImage({
+      current: urls[index],
+      urls: urls
+    })
   },
 
   /**
@@ -334,18 +351,13 @@ Page({
       }
 
       if (isEditMode) {
-        // ========== 编辑模式：更新帖子 ==========
+        // ========== 编辑模式：更新帖子（图片不可修改）==========
         
-        // 找出被删除的图片（原图片中有但新图片中没有的）
-        const deletedImages = this.data.originalImages.filter(
-          img => !uploadedImages.includes(img)
-        )
-
-        // 构建更新数据
+        // 构建更新数据（不包含 images，保持原有图片不变）
         const updateData = {
           title: this.data.title || '分享一下',
           content: this.data.content || '',
-          images: uploadedImages,
+          // 注意：编辑模式不修改 images 字段
           location: {
             name: this.data.location.name,
             latitude: this.data.location.latitude,
@@ -353,7 +365,9 @@ Page({
           },
           related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
           tags: this.data.selectedTags,
-          update_time: db.serverDate(),
+          // 编辑记录
+          is_edited: true,
+          last_edit_time: db.serverDate(),
           // 更新作者信息（可能头像昵称有变化）
           author_info: {
             nickname: userInfo.nickname,
@@ -366,17 +380,6 @@ Page({
         await db.collection('community_posts').doc(this.data.editPostId).update({
           data: updateData
         })
-
-        // 删除被移除的云存储图片（异步，不阻塞）
-        if (deletedImages.length > 0) {
-          wx.cloud.deleteFile({
-            fileList: deletedImages
-          }).then(() => {
-            console.log('已删除旧图片:', deletedImages.length)
-          }).catch(err => {
-            console.warn('删除旧图片失败:', err)
-          })
-        }
 
         wx.hideLoading()
         wx.showToast({
@@ -413,6 +416,7 @@ Page({
           status: 0,           // 0: 公开
           comment_status: true, // 默认允许评论
           is_top: false,       // 默认不置顶
+          is_edited: false,    // 默认未编辑过
           author_id: userInfo._id,
           author_info: {
             nickname: userInfo.nickname,

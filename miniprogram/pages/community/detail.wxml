@@ -114,6 +114,12 @@
           <text class="time-text">{{formatTime}}</text>
         </view>
       </view>
+
+      <!-- 编辑记录（仅编辑过的帖子显示） -->
+      <view class="edit-record" wx:if="{{postData.is_edited}}">
+        <van-icon name="edit" size="14" color="#b8860b" />
+        <text class="edit-record-text">内容已于 {{lastEditTimeFormatted}} 编辑</text>
+      </view>
     </view>
 
     <!-- 分隔线 -->

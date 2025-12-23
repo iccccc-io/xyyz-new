@@ -52,6 +52,9 @@ Page({
     
     // 菜单相关
     showPostMenu: false,       // 是否显示帖子菜单
+    
+    // 编辑记录
+    lastEditTimeFormatted: '', // 格式化的最后编辑时间
   },
 
   /**
@@ -103,6 +106,12 @@ Page({
       // 格式化发布时间
       const formatTime = this.formatDate(postData.create_time)
       
+      // 格式化编辑时间（如果有）
+      let lastEditTimeFormatted = ''
+      if (postData.is_edited && postData.last_edit_time) {
+        lastEditTimeFormatted = this.formatEditTime(postData.last_edit_time)
+      }
+      
       // 获取点赞数
       const likesCount = postData.likes || 0
       const likesFormatted = this.formatCount(likesCount)
@@ -133,6 +142,7 @@ Page({
       this.setData({
         postData,
         formatTime,
+        lastEditTimeFormatted,
         likesCount,
         likesFormatted,
         isLiked: this.data.isLiked,
@@ -993,6 +1003,37 @@ Page({
     const day = String(d.getDate()).padStart(2, '0')
     
     return `${year}-${month}-${day}`
+  },
+
+  /**
+   * 格式化编辑时间（更友好的显示）
+   */
+  formatEditTime(date) {
+    if (!date) return ''
+    
+    const d = new Date(date)
+    const now = new Date()
+    const diff = now - d
+    
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+    
+    if (minutes < 1) return '刚刚'
+    if (minutes < 60) return `${minutes}分钟前`
+    if (hours < 24) return `${hours}小时前`
+    if (days < 7) return `${days}天前`
+    
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hour = String(d.getHours()).padStart(2, '0')
+    const minute = String(d.getMinutes()).padStart(2, '0')
+    
+    if (year === now.getFullYear()) {
+      return `${month}-${day} ${hour}:${minute}`
+    }
+    return `${year}-${month}-${day} ${hour}:${minute}`
   },
 
   /**

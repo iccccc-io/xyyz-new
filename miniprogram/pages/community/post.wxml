@@ -1,7 +1,7 @@
 <!--pages/community/post.wxml-->
 <view class="post-container">
-  <!-- 图片选择器 -->
-  <view class="uploader-section">
+  <!-- 图片选择器（发布模式可编辑） -->
+  <view class="uploader-section" wx:if="{{!isEditMode}}">
     <van-uploader
       file-list="{{ fileList }}"
       max-count="16"
@@ -10,6 +10,27 @@
       bind:delete="deleteImage"
       preview-size="200rpx"
     />
+  </view>
+
+  <!-- 图片预览（编辑模式只读） -->
+  <view class="images-preview-section" wx:if="{{isEditMode && fileList.length > 0}}">
+    <view class="preview-tip">
+      <van-icon name="info-o" size="14" color="#999" />
+      <text>图片初始发布后不允许被修改，如需更换请删帖重发</text>
+    </view>
+    <scroll-view class="images-scroll" scroll-x enable-flex>
+      <view class="preview-image-list">
+        <image 
+          class="preview-image" 
+          wx:for="{{fileList}}" 
+          wx:key="index" 
+          src="{{item.url}}" 
+          mode="aspectFill"
+          bindtap="previewEditImage"
+          data-index="{{index}}"
+        />
+      </view>
+    </scroll-view>
   </view>
 
   <!-- 内容输入区 -->
