@@ -102,6 +102,20 @@ Page({
       }
 
       const postData = postRes.data
+      const myOpenid = app.globalData.openid
+
+      // 权限检查：私密帖子只有作者可见
+      if (postData.status === 1 && postData._openid !== myOpenid) {
+        this.setData({ loading: false })
+        wx.showToast({
+          title: '该帖子为私密内容',
+          icon: 'none'
+        })
+        setTimeout(() => {
+          wx.navigateBack()
+        }, 1500)
+        return
+      }
 
       // 格式化发布时间
       const formatTime = this.formatDate(postData.create_time)
@@ -121,7 +135,6 @@ Page({
       const commentsFormatted = this.formatCount(commentCount)
 
       // 检查是否是自己的帖子（立即判断）
-      const myOpenid = app.globalData.openid
       const isSelf = myOpenid && postData._openid === myOpenid
 
       console.log('帖子详情:', postData)

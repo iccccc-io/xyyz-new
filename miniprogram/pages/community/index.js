@@ -32,15 +32,22 @@ Page({
       // 1. 查询帖子列表
       const res = await db.collection('community_posts')
         .orderBy('create_time', 'desc')
-        .limit(50)
+        .limit(100)  // 多查一些，因为要过滤私密帖子
         .get()
 
       console.log('帖子数据:', res.data)
 
-      let postList = res.data
-
-      // 2. 批量查询当前用户的点赞状态
       const myOpenid = app.globalData.openid
+
+      // 2. 过滤私密帖子（status=1 的帖子只有作者可见）
+      let postList = res.data.filter(post => {
+        // 公开帖子（status 为 0 或 undefined）所有人可见
+        if (!post.status || post.status === 0) return true
+        // 私密帖子只有作者本人可见
+        return post._openid === myOpenid
+      }).slice(0, 50)  // 只取前50条
+
+      // 3. 批量查询当前用户的点赞状态
       if (myOpenid && postList.length > 0) {
         const postIds = postList.map(item => item._id)
         
@@ -57,7 +64,7 @@ Page({
         const likedPostIds = (likedRes.data || []).map(item => item.target_id)
         console.log('已点赞的帖子:', likedPostIds)
 
-        // 3. 合并点赞状态到帖子列表
+        // 4. 合并点赞状态到帖子列表
         postList = postList.map(item => ({
           ...item,
           isLiked: likedPostIds.includes(item._id)

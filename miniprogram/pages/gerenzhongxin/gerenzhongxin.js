@@ -228,9 +228,15 @@ Page({
         postsMap[post._id] = post
       })
       
+      const myOpenid = app.globalData.openid
       const collectedPosts = postIds
         .map(id => postsMap[id])
-        .filter(Boolean) // 过滤掉已被删除的帖子
+        .filter(post => {
+          if (!post) return false  // 过滤掉已被删除的帖子
+          // 过滤掉私密帖子（status=1 的帖子只有作者可见）
+          if (post.status === 1 && post._openid !== myOpenid) return false
+          return true
+        })
       
       // 5. 分配到左右两列
       const leftCollectedPosts = []
