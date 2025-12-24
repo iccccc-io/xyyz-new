@@ -212,20 +212,34 @@ page {
   position: fixed;
   right: 40rpx;
   bottom: calc(60rpx + env(safe-area-inset-bottom));
-  width: 110rpx;
-  height: 110rpx;
-  background: #ffffff;
-  border-radius: 50%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 30rpx rgba(182, 59, 54, 0.3);
+  gap: 12rpx;
+  padding: 24rpx 36rpx;
+  background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
+  border-radius: 60rpx;
+  /* 白色描边确保在任何背景下都醒目 */
+  border: 3rpx solid rgba(255, 255, 255, 0.9);
+  /* 更深的多层投影 */
+  box-shadow: 
+    0 6rpx 20rpx rgba(0, 0, 0, 0.25),
+    0 12rpx 40rpx rgba(182, 59, 54, 0.4),
+    0 2rpx 8rpx rgba(0, 0, 0, 0.15);
   z-index: 100;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .fab-button:active {
-  transform: scale(0.9);
-  box-shadow: 0 4rpx 15rpx rgba(182, 59, 54, 0.4);
+  transform: scale(0.95);
+  box-shadow: 
+    0 4rpx 12rpx rgba(0, 0, 0, 0.2),
+    0 8rpx 24rpx rgba(182, 59, 54, 0.3);
+}
+
+.fab-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
 }
 

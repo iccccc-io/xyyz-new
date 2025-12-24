@@ -132,7 +132,8 @@
 
   <!-- 悬浮发布按钮 -->
   <view class="fab-button" bindtap="goToPost">
-    <van-icon name="plus" size="28" color="#b63b36" />
+    <van-icon name="edit" size="22" color="#fff" />
+    <text class="fab-text">发笔记</text>
   </view>
 </view>
 
