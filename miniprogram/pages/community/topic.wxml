@@ -1,0 +1,120 @@
+<!--pages/community/topic.wxml-->
+<view class="topic-page">
+  <!-- 话题头部信息 -->
+  <view class="topic-header">
+    <view class="topic-icon">#</view>
+    <view class="topic-info">
+      <view class="topic-name">{{tagName}}</view>
+      <view class="topic-stats">{{topicStats.countFormatted}} 篇笔记</view>
+    </view>
+  </view>
+
+  <!-- 排序切换 Tab -->
+  <van-tabs 
+    active="{{ activeTab }}" 
+    bind:change="onTabChange"
+    color="#b63b36"
+    title-active-color="#b63b36"
+    line-width="40"
+    sticky
+  >
+    <van-tab title="最新" name="latest"></van-tab>
+    <van-tab title="热门" name="hot"></van-tab>
+  </van-tabs>
+
+  <!-- 帖子列表 -->
+  <view class="post-list">
+    <!-- 加载中 -->
+    <view class="loading-container" wx:if="{{loading && postList.length === 0}}">
+      <van-loading size="24px" color="#b63b36">加载中...</van-loading>
+    </view>
+
+    <!-- 瀑布流布局 -->
+    <view class="waterfall" wx:if="{{postList.length > 0}}">
+      <view class="waterfall-column left">
+        <view 
+          class="post-card" 
+          wx:for="{{leftColumn}}" 
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-isliked="{{item.isLiked}}"
+        >
+          <!-- 封面图 -->
+          <image 
+            class="post-cover" 
+            src="{{item.images[0]}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 内容区 -->
+          <view class="post-content">
+            <view class="post-title">{{item.title || '分享一下'}}</view>
+            <view class="post-footer">
+              <view class="author-info">
+                <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                <text class="author-name">{{item.author_info.nickname}}</text>
+              </view>
+              <view class="post-stats">
+                <van-icon name="like-o" size="14" color="#999" />
+                <text class="stat-num">{{item.likesFormatted || item.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="waterfall-column right">
+        <view 
+          class="post-card" 
+          wx:for="{{rightColumn}}" 
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-isliked="{{item.isLiked}}"
+        >
+          <!-- 封面图 -->
+          <image 
+            class="post-cover" 
+            src="{{item.images[0]}}" 
+            mode="widthFix"
+            lazy-load
+          />
+          <!-- 内容区 -->
+          <view class="post-content">
+            <view class="post-title">{{item.title || '分享一下'}}</view>
+            <view class="post-footer">
+              <view class="author-info">
+                <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                <text class="author-name">{{item.author_info.nickname}}</text>
+              </view>
+              <view class="post-stats">
+                <van-icon name="like-o" size="14" color="#999" />
+                <text class="stat-num">{{item.likesFormatted || item.likes || 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <van-empty 
+      wx:if="{{!loading && postList.length === 0}}" 
+      description="暂无相关笔记"
+      image="search"
+    />
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{postList.length > 0 && !noMore}}">
+      <van-loading size="20px" wx:if="{{loadingMore}}">加载更多...</van-loading>
+      <text wx:else class="load-more-text">上拉加载更多</text>
+    </view>
+
+    <!-- 没有更多了 -->
+    <view class="no-more" wx:if="{{noMore && postList.length > 0}}">
+      <text>— 已经到底了 —</text>
+    </view>
+  </view>
+</view>
+

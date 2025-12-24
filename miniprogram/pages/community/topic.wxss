@@ -1,0 +1,176 @@
+/* pages/community/topic.wxss */
+page {
+  background-color: #f5f5f5;
+}
+
+.topic-page {
+  min-height: 100vh;
+}
+
+/* 话题头部 */
+.topic-header {
+  display: flex;
+  align-items: center;
+  padding: 40rpx 30rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.topic-icon {
+  width: 100rpx;
+  height: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
+  border-radius: 24rpx;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-right: 24rpx;
+}
+
+.topic-info {
+  flex: 1;
+}
+
+.topic-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 8rpx;
+}
+
+.topic-stats {
+  font-size: 26rpx;
+  color: #999999;
+}
+
+/* 帖子列表 */
+.post-list {
+  padding: 20rpx;
+}
+
+/* 加载容器 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+/* 瀑布流布局 */
+.waterfall {
+  display: flex;
+  gap: 20rpx;
+}
+
+.waterfall-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 帖子卡片 */
+.post-card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.post-card:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+.post-cover {
+  width: 100%;
+  display: block;
+}
+
+.post-content {
+  padding: 20rpx;
+}
+
+.post-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 16rpx;
+}
+
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.author-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.author-name {
+  font-size: 24rpx;
+  color: #999999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-stats {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+}
+
+.stat-num {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 加载更多 */
+.load-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.load-more-text {
+  font-size: 24rpx;
+  color: #cccccc;
+}
+
+/* 没有更多 */
+.no-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.no-more text {
+  font-size: 24rpx;
+  color: #cccccc;
+}
+

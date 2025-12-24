@@ -99,9 +99,15 @@
         </view>
       </view>
 
-      <!-- 普通标签 -->
+      <!-- 普通标签（可点击跳转话题聚合页） -->
       <view class="normal-tags" wx:if="{{postData.tags && postData.tags.length > 0}}">
-        <view class="normal-tag" wx:for="{{postData.tags}}" wx:key="index">#{{item}}</view>
+        <view 
+          class="normal-tag" 
+          wx:for="{{postData.tags}}" 
+          wx:key="index"
+          bindtap="goToTopic"
+          data-tag="{{item}}"
+        >#{{item}}</view>
       </view>
 
       <!-- 位置和时间信息 -->

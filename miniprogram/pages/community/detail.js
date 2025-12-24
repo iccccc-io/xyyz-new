@@ -55,6 +55,10 @@ Page({
     
     // 编辑记录
     lastEditTimeFormatted: '', // 格式化的最后编辑时间
+    
+    // 浏览量上报相关
+    viewReported: false,       // 是否已上报浏览量
+    viewTimer: null,           // 浏览计时器
   },
 
   /**
@@ -176,6 +180,9 @@ Page({
 
       // 加载评论列表（不阻塞页面显示）
       this.loadComments()
+      
+      // 启动浏览量上报计时器（5秒有效停留）
+      this.startViewTimer()
 
     } catch (err) {
       console.error('加载帖子详情失败:', err)
@@ -184,6 +191,56 @@ Page({
         title: '加载失败',
         icon: 'none'
       })
+    }
+  },
+  
+  // ========== 浏览量上报相关 ==========
+  
+  /**
+   * 启动浏览计时器（5秒有效停留）
+   */
+  startViewTimer() {
+    // 清除可能存在的旧计时器
+    if (this.data.viewTimer) {
+      clearTimeout(this.data.viewTimer)
+    }
+    
+    // 已上报过则跳过
+    if (this.data.viewReported) return
+    
+    // 自己的帖子不统计浏览量
+    if (this.data.isSelf) return
+    
+    // 5秒后上报浏览量
+    const timer = setTimeout(() => {
+      this.reportView()
+    }, 5000)
+    
+    this.setData({ viewTimer: timer })
+  },
+  
+  /**
+   * 上报浏览量
+   */
+  async reportView() {
+    if (this.data.viewReported) return
+    
+    try {
+      const result = await wx.cloud.callFunction({
+        name: 'report_view',
+        data: {
+          postId: this.data.postId
+        }
+      })
+      
+      if (result.result && result.result.recorded) {
+        console.log('[浏览上报] 成功记录浏览量')
+        this.setData({ viewReported: true })
+      } else {
+        console.log('[浏览上报]', result.result?.message || '未记录')
+      }
+    } catch (err) {
+      console.warn('[浏览上报] 失败:', err)
     }
   },
 
@@ -425,16 +482,27 @@ Page({
           })
           .remove()
 
-        // 调用云函数原子更新帖子收藏数 -1
-        await wx.cloud.callFunction({
-          name: 'update_stats',
-          data: {
-            collection: 'community_posts',
-            docId: postId,
-            field: 'collection_count',
-            amount: -1
-          }
-        })
+        // 调用云函数原子更新帖子收藏数 -1 和热度 -10
+        await Promise.all([
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'collection_count',
+              amount: -1
+            }
+          }),
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'hot_score',
+              amount: -10
+            }
+          })
+        ])
 
       } else {
         // 收藏
@@ -445,16 +513,27 @@ Page({
           }
         })
 
-        // 调用云函数原子更新帖子收藏数 +1
-        await wx.cloud.callFunction({
-          name: 'update_stats',
-          data: {
-            collection: 'community_posts',
-            docId: postId,
-            field: 'collection_count',
-            amount: 1
-          }
-        })
+        // 调用云函数原子更新帖子收藏数 +1 和热度 +10
+        await Promise.all([
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'collection_count',
+              amount: 1
+            }
+          }),
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'hot_score',
+              amount: 10
+            }
+          })
+        ])
 
         wx.showToast({
           title: '已收藏',
@@ -527,16 +606,27 @@ Page({
           })
           .remove()
 
-        // 调用云函数原子更新帖子点赞数 -1
-        await wx.cloud.callFunction({
-          name: 'update_stats',
-          data: {
-            collection: 'community_posts',
-            docId: postId,
-            field: 'likes',
-            amount: -1
-          }
-        })
+        // 调用云函数原子更新帖子点赞数 -1 和热度 -5
+        await Promise.all([
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'likes',
+              amount: -1
+            }
+          }),
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'hot_score',
+              amount: -5
+            }
+          })
+        ])
 
       } else {
         // 点赞
@@ -547,16 +637,27 @@ Page({
           }
         })
 
-        // 调用云函数原子更新帖子点赞数 +1
-        await wx.cloud.callFunction({
-          name: 'update_stats',
-          data: {
-            collection: 'community_posts',
-            docId: postId,
-            field: 'likes',
-            amount: 1
-          }
-        })
+        // 调用云函数原子更新帖子点赞数 +1 和热度 +5
+        await Promise.all([
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'likes',
+              amount: 1
+            }
+          }),
+          wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_posts',
+              docId: postId,
+              field: 'hot_score',
+              amount: 5
+            }
+          })
+        ])
 
         wx.showToast({
           title: '已点赞',
@@ -907,16 +1008,27 @@ Page({
         data: commentData
       })
 
-      // 调用云函数原子更新帖子的评论数
-      await wx.cloud.callFunction({
-        name: 'update_stats',
-        data: {
-          collection: 'community_posts',
-          docId: this.data.postId,
-          field: 'comment_count',
-          amount: 1
-        }
-      })
+      // 调用云函数原子更新帖子的评论数 +1 和热度 +10
+      await Promise.all([
+        wx.cloud.callFunction({
+          name: 'update_stats',
+          data: {
+            collection: 'community_posts',
+            docId: this.data.postId,
+            field: 'comment_count',
+            amount: 1
+          }
+        }),
+        wx.cloud.callFunction({
+          name: 'update_stats',
+          data: {
+            collection: 'community_posts',
+            docId: this.data.postId,
+            field: 'hot_score',
+            amount: 10
+          }
+        })
+      ])
 
       // 如果是二级评论，调用云函数更新一级评论的 reply_count
       if (commentData.root_id) {
@@ -1440,7 +1552,22 @@ Page({
    * 生命周期函数--监听页面卸载
    */
   onUnload() {
-
+    // 清除浏览计时器
+    if (this.data.viewTimer) {
+      clearTimeout(this.data.viewTimer)
+    }
+  },
+  
+  /**
+   * 点击标签跳转到话题聚合页
+   */
+  goToTopic(e) {
+    const tagName = e.currentTarget.dataset.tag
+    if (!tagName) return
+    
+    wx.navigateTo({
+      url: `/pages/community/topic?tag=${encodeURIComponent(tagName)}`
+    })
   },
 
   /**

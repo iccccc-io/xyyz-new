@@ -110,13 +110,15 @@ async function deleteRootComment(commentId, postId, comment) {
       console.log(`[事务] 删除 ${replyIds.length} 条回复`)
     }
 
-    // 4. 更新帖子评论数
+    // 4. 更新帖子评论数和热度（每条评论 -10 分）
+    const hotScoreDecrease = totalDeleteCount * 10
     await transaction.collection('community_posts').doc(postId).update({
       data: {
-        comment_count: _.inc(-totalDeleteCount)
+        comment_count: _.inc(-totalDeleteCount),
+        hot_score: _.inc(-hotScoreDecrease)
       }
     })
-    console.log(`[事务] 帖子评论数 -${totalDeleteCount}`)
+    console.log(`[事务] 帖子评论数 -${totalDeleteCount}，热度 -${hotScoreDecrease}`)
 
     // 5. 提交事务
     await transaction.commit()

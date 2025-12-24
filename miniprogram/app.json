@@ -9,6 +9,7 @@
     "pages/community/index",
     "pages/community/detail",
     "pages/community/post",
+    "pages/community/topic",
     "pages/mall/home",
     "pages/mall/detail",
     "pages/mall/category",
