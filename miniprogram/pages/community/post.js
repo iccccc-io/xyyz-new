@@ -14,13 +14,17 @@ Page({
     selectedProject: '',    // 选中的非遗项目
     location: {},           // 位置信息
     showPicker: false,      // 项目选择器显示状态
+    showTopicSearch: false, // 话题搜索浮层显示状态
     
     // 编辑模式相关
     isEditMode: false,      // 是否为编辑模式
     editPostId: '',         // 编辑的帖子ID
     originalImages: [],     // 原始图片列表（用于判断是否有删除）
     
-    // 推荐话题标签
+    // 记录新创建的话题（发布时需要入库）
+    newTopics: [],
+    
+    // 推荐话题标签（预设高频标签）
     recommendTags: ['非遗打卡', '周末去哪儿', '匠心', '手艺人', '传统文化'],
     
     // 非遗项目选项
@@ -164,41 +168,93 @@ Page({
     })
   },
 
+  // ========== 话题标签相关方法 ==========
+
   /**
-   * 切换标签选择
+   * 切换预设标签选择
    */
-  toggleTag(e) {
+  togglePresetTag(e) {
     const tag = e.currentTarget.dataset.tag
     const selectedTags = [...this.data.selectedTags]
     const index = selectedTags.indexOf(tag)
     
     if (index > -1) {
+      // 已选中，移除
       selectedTags.splice(index, 1)
+      // 同时从 newTopics 中移除（如果存在）
+      const newTopics = this.data.newTopics.filter(t => t !== tag)
+      this.setData({ selectedTags, newTopics })
     } else {
+      // 未选中，添加
+      if (selectedTags.length >= 10) {
+        wx.showToast({
+          title: '最多添加10个话题',
+          icon: 'none'
+        })
+        return
+      }
       selectedTags.push(tag)
+      this.setData({ selectedTags })
     }
-    
-    this.setData({ selectedTags })
   },
 
   /**
-   * 添加自定义标签
+   * 移除已选标签
    */
-  addCustomTag() {
-    wx.showModal({
-      title: '添加话题',
-      editable: true,
-      placeholderText: '输入话题名称',
-      success: (res) => {
-        if (res.confirm && res.content) {
-          const tag = res.content.trim()
-          if (tag && !this.data.selectedTags.includes(tag)) {
-            this.setData({
-              selectedTags: [...this.data.selectedTags, tag]
-            })
-          }
-        }
-      }
+  removeTag(e) {
+    const index = e.currentTarget.dataset.index
+    const selectedTags = [...this.data.selectedTags]
+    const removedTag = selectedTags[index]
+    selectedTags.splice(index, 1)
+    
+    // 同时从 newTopics 中移除（如果存在）
+    const newTopics = this.data.newTopics.filter(t => t !== removedTag)
+    
+    this.setData({ selectedTags, newTopics })
+  },
+
+  /**
+   * 打开话题搜索浮层
+   */
+  openTopicSearch() {
+    // 检查是否已达到最大数量
+    if (this.data.selectedTags.length >= 10) {
+      wx.showToast({
+        title: '最多添加10个话题',
+        icon: 'none'
+      })
+      return
+    }
+    this.setData({ showTopicSearch: true })
+  },
+
+  /**
+   * 关闭话题搜索浮层
+   */
+  closeTopicSearch() {
+    this.setData({ showTopicSearch: false })
+  },
+
+  /**
+   * 话题选中回调
+   */
+  onTopicSelect(e) {
+    const { name, isNew } = e.detail
+    const selectedTags = [...this.data.selectedTags]
+    const newTopics = [...this.data.newTopics]
+    
+    // 添加到已选标签
+    selectedTags.push(name)
+    
+    // 如果是新创建的话题，记录下来
+    if (isNew) {
+      newTopics.push(name)
+    }
+    
+    this.setData({ 
+      selectedTags, 
+      newTopics,
+      showTopicSearch: false 
     })
   },
 
@@ -350,6 +406,9 @@ Page({
         return
       }
 
+      // 6. 处理话题入库（新创建的话题需要添加到 community_topics）
+      await this.syncTopicsToDatabase()
+
       if (isEditMode) {
         // ========== 编辑模式：更新帖子（图片不可修改）==========
         
@@ -453,6 +512,78 @@ Page({
   },
 
   /**
+   * 同步话题到数据库
+   * - 新话题：创建新记录，count=1
+   * - 已有话题：count+1
+   */
+  async syncTopicsToDatabase() {
+    const selectedTags = this.data.selectedTags
+    const newTopics = this.data.newTopics
+
+    if (selectedTags.length === 0) return
+
+    const _ = db.command
+
+    for (const tagName of selectedTags) {
+      try {
+        if (newTopics.includes(tagName)) {
+          // 新话题：直接创建
+          await db.collection('community_topics').add({
+            data: {
+              name: tagName,
+              count: 1,
+              create_time: db.serverDate()
+            }
+          })
+          console.log(`[话题] 创建新话题: ${tagName}`)
+        } else {
+          // 已有话题：尝试增加 count
+          // 使用 where + update 来匹配 name 并更新
+          const updateRes = await db.collection('community_topics')
+            .where({ name: tagName })
+            .update({
+              data: {
+                count: _.inc(1)
+              }
+            })
+          
+          // 如果没有更新到任何记录，说明话题不存在（可能是预设标签首次使用）
+          if (updateRes.stats.updated === 0) {
+            await db.collection('community_topics').add({
+              data: {
+                name: tagName,
+                count: 1,
+                create_time: db.serverDate()
+              }
+            })
+            console.log(`[话题] 预设标签首次入库: ${tagName}`)
+          } else {
+            console.log(`[话题] 已有话题热度+1: ${tagName}`)
+          }
+        }
+      } catch (err) {
+        // 如果是重复键错误（话题已存在），尝试更新 count
+        if (err.errCode === -502005 || err.message?.includes('duplicate')) {
+          try {
+            await db.collection('community_topics')
+              .where({ name: tagName })
+              .update({
+                data: {
+                  count: _.inc(1)
+                }
+              })
+            console.log(`[话题] 重复创建，改为更新热度: ${tagName}`)
+          } catch (updateErr) {
+            console.warn(`[话题] 更新热度失败: ${tagName}`, updateErr)
+          }
+        } else {
+          console.warn(`[话题] 处理话题失败: ${tagName}`, err)
+        }
+      }
+    }
+  },
+
+  /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {
@@ -501,4 +632,3 @@ Page({
 
   }
 })
-

@@ -50,26 +50,55 @@
       value="{{content}}"
       bindinput="onContentInput"
       auto-height
-      maxlength="2000"
+      maxlength="1000"
     />
+    <view class="content-count" wx:if="{{content.length > 800}}">
+      <text class="{{content.length >= 1000 ? 'count-limit' : ''}}">{{content.length}}</text>/1000
+    </view>
   </view>
 
-  <!-- 话题标签区 -->
+  <!-- 话题标签区 - 新版三位一体设计 -->
   <view class="tags-section">
-    <view class="tags-row">
-      <view 
-        class="recommend-tag {{selectedTags.includes(item) ? 'selected' : ''}}"
-        wx:for="{{recommendTags}}"
-        wx:key="index"
-        bindtap="toggleTag"
-        data-tag="{{item}}"
-      >
-        #{{item}}
+    <!-- 第一行：预设标签滚动区 -->
+    <scroll-view class="preset-tags-scroll" scroll-x enable-flex>
+      <view class="preset-tags-list">
+        <view 
+          class="preset-tag {{selectedTags.includes(item) ? 'selected' : ''}}"
+          wx:for="{{recommendTags}}"
+          wx:key="index"
+          bindtap="togglePresetTag"
+          data-tag="{{item}}"
+        >
+          <text class="tag-hash">#</text>
+          <text class="tag-name">{{item}}</text>
+        </view>
       </view>
-      <view class="add-tag-btn" bindtap="addCustomTag">
-        <van-icon name="plus" size="14" color="#999" />
+    </scroll-view>
+
+    <!-- 第二行：话题入口 + 已选标签 -->
+    <view class="selected-tags-row">
+      <!-- 话题功能入口按钮 -->
+      <view class="topic-entry-btn" bindtap="openTopicSearch">
+        <van-icon name="add-o" size="16" color="#b63b36" />
         <text>话题</text>
       </view>
+
+      <!-- 已选标签展示区 -->
+      <view 
+        class="selected-tag"
+        wx:for="{{selectedTags}}"
+        wx:key="index"
+      >
+        <text class="selected-tag-text"># {{item}}</text>
+        <view class="selected-tag-close" bindtap="removeTag" data-index="{{index}}">
+          <van-icon name="cross" size="12" color="#fff" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 标签数量提示 -->
+    <view class="tags-count-tip" wx:if="{{selectedTags.length > 0}}">
+      <text>已选 {{selectedTags.length}}/10 个话题</text>
     </view>
   </view>
 
@@ -121,5 +150,13 @@
       cancel-button-text="取消"
     />
   </van-popup>
-</view>
 
+  <!-- 话题搜索浮层 -->
+  <topic-search 
+    show="{{ showTopicSearch }}"
+    selected-tags="{{ selectedTags }}"
+    max-count="{{ 10 }}"
+    bind:select="onTopicSelect"
+    bind:close="closeTopicSearch"
+  />
+</view>

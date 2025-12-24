@@ -1,0 +1,103 @@
+<!--components/topic-search/index.wxml-->
+<van-popup 
+  show="{{ show }}" 
+  position="bottom"
+  round
+  custom-style="height: 70vh;"
+  bind:close="onClose"
+>
+  <view class="topic-search-container">
+    <!-- 头部标题栏 -->
+    <view class="header">
+      <view class="header-title">添加话题</view>
+      <view class="header-close" bindtap="onClose">
+        <van-icon name="cross" size="20" color="#999" />
+      </view>
+    </view>
+
+    <!-- 搜索框 -->
+    <view class="search-box">
+      <van-icon name="search" size="18" color="#999" />
+      <input 
+        class="search-input"
+        placeholder="搜索或创建话题"
+        placeholder-class="search-placeholder"
+        value="{{ keyword }}"
+        bindinput="onInput"
+        focus="{{ show }}"
+        confirm-type="search"
+        bindconfirm="onSearch"
+        maxlength="15"
+      />
+      <view class="clear-btn" wx:if="{{ keyword }}" bindtap="clearKeyword">
+        <van-icon name="clear" size="16" color="#ccc" />
+      </view>
+    </view>
+
+    <!-- 搜索结果列表 -->
+    <scroll-view class="result-list" scroll-y>
+      <!-- 加载中 -->
+      <view class="loading-container" wx:if="{{ loading }}">
+        <van-loading size="24px" color="#b63b36">搜索中...</van-loading>
+      </view>
+
+      <!-- 搜索结果 -->
+      <block wx:elif="{{ keyword }}">
+        <!-- 创建新话题选项（始终在首位） -->
+        <view class="result-item create-item" bindtap="onCreateTopic">
+          <view class="create-icon">
+            <van-icon name="plus" size="16" color="#b63b36" />
+          </view>
+          <view class="create-text">
+            <text class="create-label">创建新话题：</text>
+            <text class="create-name"># {{ keyword }}</text>
+          </view>
+        </view>
+
+        <!-- 匹配的已有话题 -->
+        <view 
+          class="result-item" 
+          wx:for="{{ searchResults }}" 
+          wx:key="_id"
+          bindtap="onSelectTopic"
+          data-topic="{{ item }}"
+        >
+          <view class="topic-info">
+            <text class="topic-name"># {{ item.name }}</text>
+            <text class="topic-count">{{ item.countFormatted }}人参与</text>
+          </view>
+          <van-icon name="arrow" size="14" color="#ccc" />
+        </view>
+
+        <!-- 无匹配结果提示 -->
+        <view class="no-match-tip" wx:if="{{ searchResults.length === 0 && !loading }}">
+          <text>未找到相关话题，点击上方创建</text>
+        </view>
+      </block>
+
+      <!-- 热门话题（无搜索关键词时显示） -->
+      <block wx:else>
+        <view class="section-title">热门话题</view>
+        <view 
+          class="result-item" 
+          wx:for="{{ hotTopics }}" 
+          wx:key="_id"
+          bindtap="onSelectTopic"
+          data-topic="{{ item }}"
+        >
+          <view class="topic-info">
+            <text class="topic-name"># {{ item.name }}</text>
+            <text class="topic-count">{{ item.countFormatted }}人参与</text>
+          </view>
+          <van-icon name="arrow" size="14" color="#ccc" />
+        </view>
+
+        <!-- 暂无热门话题 -->
+        <view class="empty-tip" wx:if="{{ hotTopics.length === 0 && !loading }}">
+          <text>暂无热门话题，快来创建第一个吧</text>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+</van-popup>
+
