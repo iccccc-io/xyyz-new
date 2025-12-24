@@ -1,36 +1,90 @@
 <!--pages/community/topic.wxml-->
 <view class="topic-page">
-  <!-- 话题头部信息 -->
-  <view class="topic-header">
-    <view class="topic-icon">#</view>
-    <view class="topic-info">
-      <view class="topic-name">{{tagName}}</view>
-      <view class="topic-stats">{{topicStats.countFormatted}} 篇笔记</view>
+  <!-- 沉浸式头部 Hero Header -->
+  <view class="hero-header" style="padding-top: {{statusBarHeight + 44}}px;">
+    <!-- 模糊背景层 -->
+    <view class="hero-bg">
+      <image 
+        wx:if="{{heroImage}}" 
+        class="hero-bg-image" 
+        src="{{heroImage}}" 
+        mode="aspectFill"
+      />
+      <view class="hero-bg-overlay"></view>
+    </view>
+    
+    <!-- 自定义导航栏 -->
+    <view class="custom-navbar" style="top: {{statusBarHeight}}px;">
+      <view class="navbar-left" bindtap="goBack">
+        <van-icon name="arrow-left" size="20" color="#fff" />
+      </view>
+      <!-- 标题留空 -->
+      <view class="navbar-title"></view>
+      <view class="navbar-right" bindtap="onShare">
+        <van-icon name="share-o" size="20" color="#fff" />
+      </view>
+    </view>
+    
+    <!-- 头部内容 -->
+    <view class="hero-content animate-fade-up">
+      <!-- 话题图标 -->
+      <view class="topic-avatar">
+        <text class="topic-avatar-text">#</text>
+      </view>
+      
+      <!-- 话题信息 -->
+      <view class="topic-meta">
+        <view class="topic-name-row">
+          <text class="topic-hash">#</text>
+          <text class="topic-name">{{tagName}}</text>
+        </view>
+        <!-- 统计行：左侧数据 + 右侧 Tab 切换 -->
+        <view class="topic-bottom-row">
+          <view class="topic-stats-row">
+            <view class="stat-item">
+              <text class="stat-value">{{topicStats.viewCountFormatted || '0'}}</text>
+              <text class="stat-label">浏览</text>
+            </view>
+            <view class="stat-divider"></view>
+            <view class="stat-item">
+              <text class="stat-value">{{topicStats.countFormatted || '0'}}</text>
+              <text class="stat-label">篇笔记</text>
+            </view>
+          </view>
+          <!-- Tab 切换：文字形式 -->
+          <view class="inline-tabs">
+            <text 
+              class="inline-tab {{activeTab === 'hot' ? 'active' : ''}}" 
+              bindtap="onTabTap"
+              data-tab="hot"
+            >热门</text>
+            <text class="tab-separator">|</text>
+            <text 
+              class="inline-tab {{activeTab === 'latest' ? 'active' : ''}}" 
+              bindtap="onTabTap"
+              data-tab="latest"
+            >最新</text>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 
-  <!-- 排序切换 Tab -->
-  <van-tabs 
-    active="{{ activeTab }}" 
-    bind:change="onTabChange"
-    color="#b63b36"
-    title-active-color="#b63b36"
-    line-width="40"
-    sticky
-  >
-    <van-tab title="最新" name="latest"></van-tab>
-    <van-tab title="热门" name="hot"></van-tab>
-  </van-tabs>
+  <!-- 帖子列表容器 -->
+  <view class="post-list-container">
+    <!-- 轻量级加载指示器（Tab 切换时显示） -->
+    <view class="tab-loading-overlay" wx:if="{{tabSwitching}}">
+      <view class="tab-loading-spinner"></view>
+    </view>
 
-  <!-- 帖子列表 -->
-  <view class="post-list">
-    <!-- 加载中 -->
-    <view class="loading-container" wx:if="{{loading && postList.length === 0}}">
-      <van-loading size="24px" color="#b63b36">加载中...</van-loading>
+    <!-- 首次加载中 -->
+    <view class="loading-container" wx:if="{{loading && postList.length === 0 && !tabSwitching}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
     </view>
 
     <!-- 瀑布流布局 -->
-    <view class="waterfall" wx:if="{{postList.length > 0}}">
+    <view class="waterfall animate-stagger" wx:if="{{postList.length > 0}}">
       <view class="waterfall-column left">
         <view 
           class="post-card" 
@@ -39,14 +93,17 @@
           bindtap="goToDetail"
           data-id="{{item._id}}"
           data-isliked="{{item.isLiked}}"
+          style="animation-delay: {{index * 60}}ms;"
         >
           <!-- 封面图 -->
-          <image 
-            class="post-cover" 
-            src="{{item.images[0]}}" 
-            mode="widthFix"
-            lazy-load
-          />
+          <view class="card-image-wrapper">
+            <image 
+              class="post-cover" 
+              src="{{item.images[0]}}" 
+              mode="widthFix"
+              lazy-load
+            />
+          </view>
           <!-- 内容区 -->
           <view class="post-content">
             <view class="post-title">{{item.title || '分享一下'}}</view>
@@ -55,9 +112,13 @@
                 <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
                 <text class="author-name">{{item.author_info.nickname}}</text>
               </view>
-              <view class="post-stats">
-                <van-icon name="like-o" size="14" color="#999" />
-                <text class="stat-num">{{item.likesFormatted || item.likes || 0}}</text>
+              <view class="like-btn {{item.isLiked ? 'liked' : ''}}">
+                <van-icon 
+                  name="{{item.isLiked ? 'like' : 'like-o'}}" 
+                  size="14" 
+                  color="{{item.isLiked ? '#b63b36' : '#999'}}"
+                />
+                <text class="like-num">{{item.likesFormatted || item.likes || 0}}</text>
               </view>
             </view>
           </view>
@@ -72,14 +133,17 @@
           bindtap="goToDetail"
           data-id="{{item._id}}"
           data-isliked="{{item.isLiked}}"
+          style="animation-delay: {{(index * 60) + 30}}ms;"
         >
           <!-- 封面图 -->
-          <image 
-            class="post-cover" 
-            src="{{item.images[0]}}" 
-            mode="widthFix"
-            lazy-load
-          />
+          <view class="card-image-wrapper">
+            <image 
+              class="post-cover" 
+              src="{{item.images[0]}}" 
+              mode="widthFix"
+              lazy-load
+            />
+          </view>
           <!-- 内容区 -->
           <view class="post-content">
             <view class="post-title">{{item.title || '分享一下'}}</view>
@@ -88,9 +152,13 @@
                 <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
                 <text class="author-name">{{item.author_info.nickname}}</text>
               </view>
-              <view class="post-stats">
-                <van-icon name="like-o" size="14" color="#999" />
-                <text class="stat-num">{{item.likesFormatted || item.likes || 0}}</text>
+              <view class="like-btn {{item.isLiked ? 'liked' : ''}}">
+                <van-icon 
+                  name="{{item.isLiked ? 'like' : 'like-o'}}" 
+                  size="14" 
+                  color="{{item.isLiked ? '#b63b36' : '#999'}}"
+                />
+                <text class="like-num">{{item.likesFormatted || item.likes || 0}}</text>
               </view>
             </view>
           </view>
@@ -99,22 +167,36 @@
     </view>
 
     <!-- 空状态 -->
-    <van-empty 
-      wx:if="{{!loading && postList.length === 0}}" 
-      description="暂无相关笔记"
-      image="search"
-    />
+    <view class="empty-container" wx:if="{{!loading && !tabSwitching && postList.length === 0}}">
+      <view class="empty-icon">📝</view>
+      <view class="empty-title">暂无相关笔记</view>
+      <view class="empty-desc">成为第一个分享的人吧</view>
+      <view class="empty-action" bindtap="goToPost">
+        <text>去发布</text>
+      </view>
+    </view>
 
     <!-- 加载更多 -->
     <view class="load-more" wx:if="{{postList.length > 0 && !noMore}}">
-      <van-loading size="20px" wx:if="{{loadingMore}}">加载更多...</van-loading>
+      <view class="loading-dots" wx:if="{{loadingMore}}">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
       <text wx:else class="load-more-text">上拉加载更多</text>
     </view>
 
     <!-- 没有更多了 -->
     <view class="no-more" wx:if="{{noMore && postList.length > 0}}">
-      <text>— 已经到底了 —</text>
+      <view class="no-more-line"></view>
+      <text class="no-more-text">已经到底了</text>
+      <view class="no-more-line"></view>
     </view>
   </view>
-</view>
 
+  <!-- 底部浮动发布按钮 -->
+  <view class="fab-button" bindtap="goToPost">
+    <van-icon name="edit" size="22" color="#fff" />
+    <text class="fab-text">发笔记</text>
+  </view>
+</view>

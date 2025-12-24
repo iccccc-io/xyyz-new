@@ -14,22 +14,34 @@ Page({
     tagName: '',              // 话题名称
     topicStats: {             // 话题统计
       count: 0,
-      countFormatted: '0'
+      countFormatted: '0',
+      viewCount: 0,
+      viewCountFormatted: '0'
     },
-    activeTab: 'latest',      // 当前 Tab：latest / hot
+    heroImage: '',            // 头部背景图（最热帖子的封面）
+    activeTab: 'hot',         // 默认选中热门
     postList: [],             // 帖子列表
     leftColumn: [],           // 左列
     rightColumn: [],          // 右列
     loading: true,            // 首次加载
     loadingMore: false,       // 加载更多
     noMore: false,            // 没有更多
-    lastDoc: null             // 分页游标
+    lastDoc: null,            // 分页游标
+    statusBarHeight: 20,      // 状态栏高度
+    tabSwitching: false,      // Tab 切换中（轻量级加载）
+    topicId: ''               // 话题ID
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 获取系统信息
+    const systemInfo = wx.getWindowInfo()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    })
+
     if (!options.tag) {
       wx.showToast({
         title: '参数错误',
@@ -40,17 +52,32 @@ Page({
     }
 
     const tagName = decodeURIComponent(options.tag)
-    
-    // 设置导航栏标题
-    wx.setNavigationBarTitle({
-      title: `# ${tagName}`
-    })
-
     this.setData({ tagName })
     
-    // 加载话题统计和帖子列表
-    this.loadTopicStats()
-    this.loadPosts(true)
+    // 并行加载数据
+    Promise.all([
+      this.loadTopicStats(),
+      this.loadPosts(true),
+      this.loadHeroImage()
+    ])
+  },
+
+  /**
+   * 返回上一页
+   */
+  goBack() {
+    wx.navigateBack({
+      fail: () => {
+        wx.switchTab({ url: '/pages/community/index' })
+      }
+    })
+  },
+
+  /**
+   * 分享
+   */
+  onShare() {
+    // 触发分享
   },
 
   /**
@@ -64,10 +91,32 @@ Page({
 
       if (res.data && res.data.length > 0) {
         const topic = res.data[0]
+        
+        // 统计该话题下所有帖子的浏览量
+        let totalViewCount = 0
+        try {
+          const viewRes = await db.collection('community_posts')
+            .where({
+              tags: this.data.tagName,
+              status: _.neq(1)
+            })
+            .field({ view_count: true })
+            .get()
+          
+          totalViewCount = (viewRes.data || []).reduce((sum, post) => {
+            return sum + (post.view_count || 0)
+          }, 0)
+        } catch (err) {
+          console.warn('统计浏览量失败:', err)
+        }
+
         this.setData({
+          topicId: topic._id,
           topicStats: {
             count: topic.count || 0,
-            countFormatted: this.formatCount(topic.count || 0)
+            countFormatted: this.formatCount(topic.count || 0),
+            viewCount: totalViewCount,
+            viewCountFormatted: this.formatCount(totalViewCount)
           }
         })
       }
@@ -77,18 +126,54 @@ Page({
   },
 
   /**
-   * 加载帖子列表
+   * 加载头部背景图（使用最热帖子的封面）
    */
-  async loadPosts(isRefresh = false) {
+  async loadHeroImage() {
+    try {
+      const res = await db.collection('community_posts')
+        .where({
+          tags: this.data.tagName,
+          status: _.neq(1)
+        })
+        .orderBy('hot_score', 'desc')
+        .limit(1)
+        .field({ images: true })
+        .get()
+
+      if (res.data && res.data.length > 0 && res.data[0].images && res.data[0].images.length > 0) {
+        this.setData({
+          heroImage: res.data[0].images[0]
+        })
+      }
+    } catch (err) {
+      console.warn('加载头部背景图失败:', err)
+    }
+  },
+
+  /**
+   * 加载帖子列表
+   * @param {boolean} isRefresh - 是否刷新
+   * @param {boolean} isTabSwitch - 是否为 Tab 切换触发
+   */
+  async loadPosts(isRefresh = false, isTabSwitch = false) {
     if (isRefresh) {
-      this.setData({
-        loading: true,
-        postList: [],
-        leftColumn: [],
-        rightColumn: [],
-        lastDoc: null,
-        noMore: false
-      })
+      // Tab 切换时使用轻量级加载，不清空列表
+      if (isTabSwitch) {
+        this.setData({
+          tabSwitching: true,
+          lastDoc: null,
+          noMore: false
+        })
+      } else {
+        this.setData({
+          loading: true,
+          postList: [],
+          leftColumn: [],
+          rightColumn: [],
+          lastDoc: null,
+          noMore: false
+        })
+      }
     } else {
       if (this.data.loadingMore || this.data.noMore) return
       this.setData({ loadingMore: true })
@@ -113,8 +198,8 @@ Page({
         query = query.orderBy('create_time', 'desc')
       }
 
-      // 分页
-      if (!isRefresh && this.data.lastDoc) {
+      // 分页（非刷新时）
+      if (!isRefresh && this.data.postList.length > 0) {
         query = query.skip(this.data.postList.length)
       }
 
@@ -173,6 +258,7 @@ Page({
         rightColumn,
         loading: false,
         loadingMore: false,
+        tabSwitching: false,
         noMore: newPosts.length < PAGE_SIZE,
         lastDoc: newPosts.length > 0 ? newPosts[newPosts.length - 1] : null
       })
@@ -181,7 +267,8 @@ Page({
       console.error('加载帖子失败:', err)
       this.setData({
         loading: false,
-        loadingMore: false
+        loadingMore: false,
+        tabSwitching: false
       })
       wx.showToast({
         title: '加载失败',
@@ -191,14 +278,16 @@ Page({
   },
 
   /**
-   * Tab 切换
+   * Tab 点击切换
    */
-  onTabChange(e) {
-    const activeTab = e.detail.name
+  onTabTap(e) {
+    const activeTab = e.currentTarget.dataset.tab
     if (activeTab === this.data.activeTab) return
+    if (this.data.tabSwitching) return // 防止重复点击
 
     this.setData({ activeTab })
-    this.loadPosts(true)
+    // 使用轻量级加载（isTabSwitch = true）
+    this.loadPosts(true, true)
   },
 
   /**
@@ -209,6 +298,16 @@ Page({
     const isLiked = e.currentTarget.dataset.isliked
     wx.navigateTo({
       url: `/pages/community/detail?id=${id}&isLiked=${isLiked}`
+    })
+  },
+
+  /**
+   * 跳转到发布页，自动带上当前话题
+   */
+  goToPost() {
+    const tagName = this.data.tagName
+    wx.navigateTo({
+      url: `/pages/community/post?defaultTag=${encodeURIComponent(tagName)}`
     })
   },
 
@@ -230,7 +329,8 @@ Page({
   onPullDownRefresh() {
     Promise.all([
       this.loadTopicStats(),
-      this.loadPosts(true)
+      this.loadPosts(true),
+      this.loadHeroImage()
     ]).then(() => {
       wx.stopPullDownRefresh()
     })
@@ -248,9 +348,9 @@ Page({
    */
   onShareAppMessage() {
     return {
-      title: `# ${this.data.tagName}`,
-      path: `/pages/community/topic?tag=${encodeURIComponent(this.data.tagName)}`
+      title: `# ${this.data.tagName} - 一起来看看吧`,
+      path: `/pages/community/topic?tag=${encodeURIComponent(this.data.tagName)}`,
+      imageUrl: this.data.heroImage || ''
     }
   }
 })
-

@@ -44,6 +44,17 @@ Page({
       wx.setNavigationBarTitle({ title: '编辑笔记' })
       this.loadPostData(options.id)
     }
+    
+    // 从话题页跳转，自动关联话题
+    if (options.defaultTag) {
+      const tagName = decodeURIComponent(options.defaultTag)
+      const currentTags = this.data.selectedTags
+      if (!currentTags.includes(tagName) && currentTags.length < 10) {
+        this.setData({
+          selectedTags: [...currentTags, tagName]
+        })
+      }
+    }
   },
 
   /**
