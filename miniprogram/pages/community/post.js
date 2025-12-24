@@ -514,7 +514,7 @@ Page({
   /**
    * 同步话题到数据库
    * - 新话题：创建新记录，count=1
-   * - 已有话题：count+1
+   * - 已有话题：通过云函数原子更新 count+1
    */
   async syncTopicsToDatabase() {
     const selectedTags = this.data.selectedTags
@@ -522,12 +522,10 @@ Page({
 
     if (selectedTags.length === 0) return
 
-    const _ = db.command
-
     for (const tagName of selectedTags) {
       try {
         if (newTopics.includes(tagName)) {
-          // 新话题：直接创建
+          // 新话题：直接创建（count 初始为 1）
           await db.collection('community_topics').add({
             data: {
               name: tagName,
@@ -537,18 +535,20 @@ Page({
           })
           console.log(`[话题] 创建新话题: ${tagName}`)
         } else {
-          // 已有话题：尝试增加 count
-          // 使用 where + update 来匹配 name 并更新
-          const updateRes = await db.collection('community_topics')
-            .where({ name: tagName })
-            .update({
-              data: {
-                count: _.inc(1)
-              }
-            })
+          // 已有话题：通过云函数原子更新 count
+          const result = await wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_topics',
+              whereField: 'name',
+              whereValue: tagName,
+              field: 'count',
+              amount: 1
+            }
+          })
           
           // 如果没有更新到任何记录，说明话题不存在（可能是预设标签首次使用）
-          if (updateRes.stats.updated === 0) {
+          if (result.result && result.result.updated === 0) {
             await db.collection('community_topics').add({
               data: {
                 name: tagName,
@@ -562,16 +562,19 @@ Page({
           }
         }
       } catch (err) {
-        // 如果是重复键错误（话题已存在），尝试更新 count
+        // 如果是重复键错误（话题已存在），尝试通过云函数更新 count
         if (err.errCode === -502005 || err.message?.includes('duplicate')) {
           try {
-            await db.collection('community_topics')
-              .where({ name: tagName })
-              .update({
-                data: {
-                  count: _.inc(1)
-                }
-              })
+            await wx.cloud.callFunction({
+              name: 'update_stats',
+              data: {
+                collection: 'community_topics',
+                whereField: 'name',
+                whereValue: tagName,
+                field: 'count',
+                amount: 1
+              }
+            })
             console.log(`[话题] 重复创建，改为更新热度: ${tagName}`)
           } catch (updateErr) {
             console.warn(`[话题] 更新热度失败: ${tagName}`, updateErr)

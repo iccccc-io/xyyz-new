@@ -18,7 +18,7 @@
       <van-icon name="info-o" size="14" color="#999" />
       <text>图片初始发布后不允许被修改，如需更换请删帖重发</text>
     </view>
-    <scroll-view class="images-scroll" scroll-x enable-flex>
+    <scroll-view class="images-scroll" scroll-x enable-flex enhanced show-scrollbar="{{false}}"  scroll-with-animation>
       <view class="preview-image-list">
         <image 
           class="preview-image" 
@@ -35,14 +35,19 @@
 
   <!-- 内容输入区 -->
   <view class="content-section">
-    <input 
-      class="title-input"
-      placeholder="添加标题"
-      placeholder-class="placeholder-title"
-      value="{{title}}"
-      bindinput="onTitleInput"
-      maxlength="50"
-    />
+    <view class="title-row">
+      <input 
+        class="title-input"
+        placeholder="添加标题"
+        placeholder-class="placeholder-title"
+        value="{{title}}"
+        bindinput="onTitleInput"
+        maxlength="40"
+      />
+      <view class="title-count {{title.length >= 40 ? 'count-limit' : (title.length >= 35 ? 'count-warning' : '')}}">
+        {{title.length}}/40
+      </view>
+    </view>
     <textarea 
       class="content-textarea"
       placeholder="添加正文"
@@ -60,7 +65,7 @@
   <!-- 话题标签区 - 新版三位一体设计 -->
   <view class="tags-section">
     <!-- 第一行：预设标签滚动区 -->
-    <scroll-view class="preset-tags-scroll" scroll-x enable-flex>
+    <scroll-view class="preset-tags-scroll" scroll-x enable-flex enhanced show-scrollbar="{{false}}"  scroll-with-animation>
       <view class="preset-tags-list">
         <view 
           class="preset-tag {{selectedTags.includes(item) ? 'selected' : ''}}"

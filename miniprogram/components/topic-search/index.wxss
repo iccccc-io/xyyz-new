@@ -48,6 +48,23 @@
   line-height: 40rpx;
 }
 
+/* 话题字数统计 */
+.keyword-count {
+  font-size: 22rpx;
+  color: #cccccc;
+  margin-right: 12rpx;
+  transition: color 0.2s ease;
+}
+
+.keyword-count.count-warning {
+  color: #f5a623;
+}
+
+.keyword-count.count-limit {
+  color: #b63b36;
+  font-weight: 500;
+}
+
 .search-placeholder {
   color: #999999;
 }
@@ -60,6 +77,14 @@
 .result-list {
   flex: 1;
   overflow-y: auto;
+}
+
+/* 隐藏滚动条 */
+.result-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 /* 加载中 */

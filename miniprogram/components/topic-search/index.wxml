@@ -27,8 +27,12 @@
         focus="{{ show }}"
         confirm-type="search"
         bindconfirm="onSearch"
-        maxlength="15"
+        maxlength="20"
       />
+      <!-- 字数统计 -->
+      <view class="keyword-count {{keyword.length >= 20 ? 'count-limit' : (keyword.length >= 15 ? 'count-warning' : '')}}" wx:if="{{keyword.length > 0}}">
+        {{keyword.length}}/20
+      </view>
       <view class="clear-btn" wx:if="{{ keyword }}" bindtap="clearKeyword">
         <van-icon name="clear" size="16" color="#ccc" />
       </view>

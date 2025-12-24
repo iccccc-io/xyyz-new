@@ -184,9 +184,9 @@ Component({
       if (!keyword) return
       
       // 检查字符长度
-      if (keyword.length > 15) {
+      if (keyword.length > 20) {
         wx.showToast({
-          title: '话题名称不能超过15个字符',
+          title: '话题名称不能超过20个字符',
           icon: 'none'
         })
         return

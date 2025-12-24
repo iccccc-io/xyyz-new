@@ -41,6 +41,13 @@ page {
   white-space: nowrap;
 }
 
+/* 隐藏图片滚动区滚动条 */
+.images-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .preview-image-list {
   display: flex;
   gap: 16rpx;
@@ -60,13 +67,39 @@ page {
   position: relative;
 }
 
+/* 标题输入行 - 使用 flex 布局 */
+.title-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid #f0f0f0;
+  gap: 16rpx;
+}
+
 .title-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;  /* 防止 flex 子元素溢出 */
   font-size: 36rpx;
   font-weight: bold;
   color: #333333;
   padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+}
+
+/* 标题字数统计 */
+.title-count {
+  flex-shrink: 0;  /* 不压缩 */
+  font-size: 24rpx;
+  color: #cccccc;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.title-count.count-warning {
+  color: #f5a623;
+}
+
+.title-count.count-limit {
+  color: #b63b36;
+  font-weight: 500;
 }
 
 .placeholder-title {
@@ -112,6 +145,17 @@ page {
   white-space: nowrap;
   padding: 0 30rpx;
   box-sizing: border-box;
+  /* 隐藏滚动条 - 多重保障 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* 隐藏滚动条 - WebKit */
+.preset-tags-scroll::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 .preset-tags-list {
@@ -255,14 +299,15 @@ page {
   bottom: 0;
   left: 0;
   right: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 20rpx;
   padding: 20rpx 30rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #ffffff;
+  background-color: #ffffff;
   border-top: 1rpx solid #f0f0f0;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 .draft-btn {

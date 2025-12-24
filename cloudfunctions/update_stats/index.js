@@ -13,6 +13,7 @@ const _ = db.command
 const ALLOW_LIST = {
   'community_posts': ['comment_count', 'likes', 'views', 'collection_count'],
   'community_comments': ['reply_count', 'like_count'],
+  'community_topics': ['count'],  // 话题热度统计
   'users': ['stats.followers', 'stats.following', 'stats.likes']
 }
 
