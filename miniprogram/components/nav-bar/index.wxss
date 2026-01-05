@@ -1,0 +1,121 @@
+/* components/nav-bar/index.wxss */
+/* 沉浸式磨砂玻璃导航栏样式 */
+
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: transparent;
+  transition: background-color 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+/* 实色背景模式 */
+.nav-bar.solid {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 完全透明模式 */
+.nav-bar.transparent {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* 导航栏内容区 */
+.nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16rpx;
+}
+
+/* 左侧区域 */
+.nav-left {
+  display: flex;
+  align-items: center;
+  min-width: 80rpx;
+}
+
+/* 磨砂玻璃返回按钮 */
+.back-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+/* 浅色模式（深色背景上使用） */
+.back-btn.light {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+}
+
+/* 深色模式（浅色背景上使用） */
+.back-btn.dark {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+/* 按钮点击效果 */
+.back-btn-hover {
+  transform: scale(0.92);
+  opacity: 0.8;
+}
+
+/* 中间区域 */
+.nav-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 标题文字 */
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-title.show {
+  opacity: 1;
+}
+
+.nav-title.light {
+  color: #ffffff;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.nav-title.dark {
+  color: #333333;
+}
+
+/* 右侧区域 */
+.nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 占位元素 */
+.nav-placeholder {
+  width: 100%;
+}
+

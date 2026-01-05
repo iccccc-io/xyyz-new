@@ -1,0 +1,310 @@
+<!-- pages/community/user-profile.wxml -->
+<!-- 沉浸式个人主页 - 公共视图 -->
+
+<!-- 自定义导航栏 -->
+<view class="custom-nav {{navSolid ? 'solid' : ''}}" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-content">
+    <view class="nav-back {{navSolid ? 'solid' : ''}}" bindtap="goBack">
+      <van-icon name="arrow-left" size="20px" color="{{navSolid ? '#333' : '#fff'}}" />
+    </view>
+    <text class="nav-title {{navSolid ? 'show' : ''}}">{{userInfo.nickname || '用户主页'}}</text>
+    <view class="nav-placeholder"></view>
+  </view>
+</view>
+
+<scroll-view 
+  class="page-scroll"
+  scroll-y="{{true}}"
+  enhanced="{{true}}"
+  show-scrollbar="{{false}}"
+  bindscroll="onPageScroll"
+  style="height: 100vh;"
+>
+  <!-- ========== 沉浸式头部区域 ========== -->
+  <view class="hero-header" style="padding-top: {{statusBarHeight + 44}}px;">
+    <!-- 动态模糊背景 -->
+    <view class="backdrop">
+      <image 
+        class="backdrop-image" 
+        src="{{backdropImage || '/images/avatar.png'}}" 
+        mode="aspectFill"
+      />
+      <view class="backdrop-blur"></view>
+      <view class="backdrop-overlay"></view>
+    </view>
+
+    <!-- 用户身份信息 -->
+    <view class="identity-section">
+      <!-- 头像 -->
+      <image 
+        class="user-avatar" 
+        src="{{userInfo.avatar_url || '/images/avatar.png'}}" 
+        mode="aspectFill"
+      />
+      
+      <!-- 昵称和勋章 -->
+      <view class="user-name-row">
+        <text class="user-nickname">{{userInfo.nickname || '用户'}}</text>
+        <view class="user-badge" wx:if="{{userInfo.is_certified}}">
+          <van-icon name="certificate" size="14px" color="#fff" />
+          <text>{{userInfo.certified_title || '非遗爱好者'}}</text>
+        </view>
+      </view>
+
+      <!-- 个性签名 -->
+      <text class="user-bio">{{userInfo.bio || '这个人很神秘，什么都没写~'}}</text>
+
+      <!-- 社交资产 -->
+      <view class="social-stats">
+        <view class="stat-item" bindtap="goToFollowing">
+          <text class="stat-number">{{userInfo.stats.following || 0}}</text>
+          <text class="stat-label">关注</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item" bindtap="goToFollowers">
+          <text class="stat-number">{{userInfo.stats.followers || 0}}</text>
+          <text class="stat-label">粉丝</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-number">{{userInfo.stats.likes || 0}}</text>
+          <text class="stat-label">获赞与收藏</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 核心交互区 -->
+    <view class="action-bar" wx:if="{{!isSelf}}">
+      <!-- 关注按钮 -->
+      <view 
+        class="action-btn follow-btn {{isFollowing ? 'following' : ''}} {{isMutual ? 'mutual' : ''}}"
+        bindtap="toggleFollow"
+      >
+        <van-icon 
+          wx:if="{{!isFollowing}}" 
+          name="plus" 
+          size="14px" 
+          color="#fff" 
+        />
+        <text>{{isMutual ? '互相关注' : (isFollowing ? '已关注' : '关注')}}</text>
+      </view>
+
+      <!-- 私聊按钮 -->
+      <view class="action-btn chat-btn" bindtap="goToChat">
+        <van-icon name="chat-o" size="16px" color="#fff" />
+        <text>私信</text>
+      </view>
+    </view>
+
+    <!-- 自己的主页：编辑资料按钮 -->
+    <view class="action-bar" wx:if="{{isSelf}}">
+      <view class="action-btn edit-btn" bindtap="goToEditProfile">
+        <van-icon name="edit" size="16px" color="#fff" />
+        <text>编辑资料</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ========== 内容展示区 ========== -->
+  <view class="content-section">
+    <!-- Tabs 标签页 -->
+    <van-tabs 
+      active="{{ activeTab }}" 
+      bind:change="onTabChange"
+      color="#b63b36"
+      title-active-color="#b63b36"
+      title-inactive-color="#666"
+      line-width="40rpx"
+      line-height="6rpx"
+      sticky
+      offset-top="{{statusBarHeight + 44}}"
+    >
+      <van-tab title="笔记">
+        <!-- 笔记瀑布流 -->
+        <view class="tab-content">
+          <view class="waterfall-container" wx:if="{{posts.length > 0}}">
+            <view class="waterfall-column">
+              <block wx:for="{{leftPosts}}" wx:key="_id">
+                <view class="post-card" bindtap="goToPostDetail" data-id="{{item._id}}">
+                  <view class="card-cover">
+                    <van-image 
+                      width="100%"
+                      fit="widthFix"
+                      src="{{item.images[0]}}"
+                      lazy-load
+                      show-loading
+                    />
+                    <view class="image-count" wx:if="{{item.images.length > 1}}">
+                      <van-icon name="photo-o" size="12px" color="#fff" />
+                      <text class="count-text">{{item.images.length}}</text>
+                    </view>
+                    <!-- 私密标识 -->
+                    <view class="private-badge" wx:if="{{item.status === 1}}">
+                      <van-icon name="eye-o" size="12px" color="#fff" />
+                      <text>私密</text>
+                    </view>
+                  </view>
+                  <view class="card-content">
+                    <view class="title-row">
+                      <text class="project-tag" wx:if="{{item.related_projects[0]}}">{{item.related_projects[0].name}}</text>
+                      <text class="post-title">{{item.title}}</text>
+                    </view>
+                    <view class="card-footer">
+                      <view class="like-info">
+                        <van-icon name="good-job-o" size="14px" color="#999" />
+                        <text class="like-count">{{item.likes || 0}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </block>
+            </view>
+            <view class="waterfall-column">
+              <block wx:for="{{rightPosts}}" wx:key="_id">
+                <view class="post-card" bindtap="goToPostDetail" data-id="{{item._id}}">
+                  <view class="card-cover">
+                    <van-image 
+                      width="100%"
+                      fit="widthFix"
+                      src="{{item.images[0]}}"
+                      lazy-load
+                      show-loading
+                    />
+                    <view class="image-count" wx:if="{{item.images.length > 1}}">
+                      <van-icon name="photo-o" size="12px" color="#fff" />
+                      <text class="count-text">{{item.images.length}}</text>
+                    </view>
+                    <view class="private-badge" wx:if="{{item.status === 1}}">
+                      <van-icon name="eye-o" size="12px" color="#fff" />
+                      <text>私密</text>
+                    </view>
+                  </view>
+                  <view class="card-content">
+                    <view class="title-row">
+                      <text class="project-tag" wx:if="{{item.related_projects[0]}}">{{item.related_projects[0].name}}</text>
+                      <text class="post-title">{{item.title}}</text>
+                    </view>
+                    <view class="card-footer">
+                      <view class="like-info">
+                        <van-icon name="good-job-o" size="14px" color="#999" />
+                        <text class="like-count">{{item.likes || 0}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </block>
+            </view>
+          </view>
+
+          <!-- 空状态 -->
+          <view class="empty-state" wx:if="{{!postsLoading && posts.length === 0}}">
+            <view class="empty-icon">📝</view>
+            <text class="empty-text">{{isSelf ? '你还没有发布笔记' : 'TA 还没有发布笔记'}}</text>
+            <view class="empty-action" wx:if="{{isSelf}}" bindtap="goToPost">
+              <text>去发布第一篇</text>
+            </view>
+          </view>
+
+          <!-- 加载中 -->
+          <view class="loading-state" wx:if="{{postsLoading}}">
+            <van-loading size="24px" color="#b63b36">加载中...</van-loading>
+          </view>
+
+          <!-- 到底提示 -->
+          <view class="end-tip" wx:if="{{posts.length > 0 && noMorePosts}}">
+            <view class="end-line"></view>
+            <text class="end-text">已经到底啦</text>
+            <view class="end-line"></view>
+          </view>
+        </view>
+      </van-tab>
+
+      <van-tab title="收藏">
+        <!-- 收藏内容 -->
+        <view class="tab-content">
+          <!-- 隐私提示（访客视角） -->
+          <view class="privacy-tip" wx:if="{{!isSelf && !collectionsVisible}}">
+            <van-icon name="lock" size="48px" color="#ccc" />
+            <text class="privacy-text">由于隐私设置，收藏内容不可见</text>
+          </view>
+
+          <!-- 收藏瀑布流 -->
+          <view class="waterfall-container" wx:if="{{(isSelf || collectionsVisible) && collections.length > 0}}">
+            <view class="waterfall-column">
+              <block wx:for="{{leftCollections}}" wx:key="_id">
+                <view class="post-card" bindtap="goToPostDetail" data-id="{{item._id}}">
+                  <view class="card-cover">
+                    <van-image 
+                      width="100%"
+                      fit="widthFix"
+                      src="{{item.images[0]}}"
+                      lazy-load
+                      show-loading
+                    />
+                  </view>
+                  <view class="card-content">
+                    <view class="title-row">
+                      <text class="post-title">{{item.title}}</text>
+                    </view>
+                    <view class="card-footer">
+                      <view class="author-info">
+                        <image class="author-avatar" src="{{item.author_info.avatar_file_id || '/images/avatar.png'}}" />
+                        <text class="author-name">{{item.author_info.nickname}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </block>
+            </view>
+            <view class="waterfall-column">
+              <block wx:for="{{rightCollections}}" wx:key="_id">
+                <view class="post-card" bindtap="goToPostDetail" data-id="{{item._id}}">
+                  <view class="card-cover">
+                    <van-image 
+                      width="100%"
+                      fit="widthFix"
+                      src="{{item.images[0]}}"
+                      lazy-load
+                      show-loading
+                    />
+                  </view>
+                  <view class="card-content">
+                    <view class="title-row">
+                      <text class="post-title">{{item.title}}</text>
+                    </view>
+                    <view class="card-footer">
+                      <view class="author-info">
+                        <image class="author-avatar" src="{{item.author_info.avatar_file_id || '/images/avatar.png'}}" />
+                        <text class="author-name">{{item.author_info.nickname}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </block>
+            </view>
+          </view>
+
+          <!-- 收藏空状态 -->
+          <view class="empty-state" wx:if="{{(isSelf || collectionsVisible) && !collectionsLoading && collections.length === 0}}">
+            <view class="empty-icon">⭐</view>
+            <text class="empty-text">{{isSelf ? '你还没有收藏内容' : 'TA 还没有收藏内容'}}</text>
+          </view>
+
+          <!-- 加载中 -->
+          <view class="loading-state" wx:if="{{collectionsLoading}}">
+            <van-loading size="24px" color="#b63b36">加载中...</van-loading>
+          </view>
+        </view>
+      </van-tab>
+    </van-tabs>
+  </view>
+
+  <!-- 底部安全区域 -->
+  <view class="safe-area-bottom"></view>
+</scroll-view>
+
+<!-- 页面加载中 -->
+<view class="page-loading" wx:if="{{pageLoading}}">
+  <van-loading size="36px" color="#b63b36" vertical>加载中...</van-loading>
+</view>
+

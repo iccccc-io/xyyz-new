@@ -4,11 +4,9 @@
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
     "van-popup": "@vant/weapp/popup/index",
-    "post-menu": "/components/post-menu/index"
+    "post-menu": "/components/post-menu/index",
+    "nav-bar": "/components/nav-bar/index"
   },
-  "navigationBarTitleText": "帖子详情",
-  "navigationBarBackgroundColor": "#ffffff",
-  "navigationBarTextStyle": "black",
+  "navigationStyle": "custom",
   "backgroundColor": "#ffffff"
 }
-

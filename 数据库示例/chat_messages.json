@@ -1,0 +1,4 @@
+{"_id":"msg_001","room_id":"oirHv5EbIzgbJ_kShlB2Hlp0n62c_oirHv5KNR3PSWaDDnErs320DXeis","sender_id":"oirHv5KNR3PSWaDDnErs320DXeis","msg_type":"text","content":"你好，我对你分享的湘绣作品很感兴趣！","send_time":{"$date":"2025-12-22T10:00:00.000Z"},"is_revoked":false}
+{"_id":"msg_002","room_id":"oirHv5EbIzgbJ_kShlB2Hlp0n62c_oirHv5KNR3PSWaDDnErs320DXeis","sender_id":"oirHv5EbIzgbJ_kShlB2Hlp0n62c","msg_type":"text","content":"谢谢关注！这是我在长沙非遗展馆拍摄的，很有意义。","send_time":{"$date":"2025-12-22T10:01:30.000Z"},"is_revoked":false}
+{"_id":"msg_003","room_id":"oirHv5EbIzgbJ_kShlB2Hlp0n62c_oirHv5KNR3PSWaDDnErs320DXeis","sender_id":"oirHv5KNR3PSWaDDnErs320DXeis","msg_type":"image","content":"cloud://xiangyunyizhen-dev-1d02h7036c82a.7869-xiangyunyizhen-dev-1d02h7036c82a-1316629372/chat/sample.jpg","send_time":{"$date":"2025-12-22T10:05:00.000Z"},"is_revoked":false}
+

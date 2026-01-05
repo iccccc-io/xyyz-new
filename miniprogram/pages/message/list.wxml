@@ -1,0 +1,74 @@
+<!-- pages/message/list.wxml -->
+<!-- 消息列表页 - 会话列表 -->
+
+<!-- 自定义导航栏 -->
+<nav-bar 
+  title="消息"
+  showTitle="{{true}}"
+  showBack="{{false}}"
+  background="solid"
+  dark="{{true}}"
+  placeholder="{{true}}"
+/>
+
+<view class="message-container">
+  <!-- 会话列表 -->
+  <view class="conversation-list" wx:if="{{!loading && conversations.length > 0}}">
+    <view 
+      class="conversation-item"
+      wx:for="{{conversations}}"
+      wx:key="_id"
+      bindtap="goToChat"
+      data-room="{{item}}"
+    >
+      <!-- 头像 -->
+      <view class="avatar-wrapper">
+        <van-image 
+          class="avatar"
+          width="100rpx"
+          height="100rpx"
+          round
+          fit="cover"
+          src="{{item.targetUser.avatar || '/images/avatar.png'}}"
+        />
+        <!-- 未读红点 -->
+        <view class="unread-badge" wx:if="{{item.unreadCount > 0}}">
+          <text wx:if="{{item.unreadCount <= 99}}">{{item.unreadCount}}</text>
+          <text wx:else>99+</text>
+        </view>
+      </view>
+
+      <!-- 会话信息 -->
+      <view class="conversation-info">
+        <view class="info-top">
+          <text class="nickname">{{item.targetUser.nickname || '用户'}}</text>
+          <text class="time">{{item.lastMsgTimeStr}}</text>
+        </view>
+        <view class="info-bottom">
+          <text class="last-msg {{item.unreadCount > 0 ? 'unread' : ''}}">
+            {{item.lastMsgPreview}}
+          </text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && conversations.length === 0}}">
+    <view class="empty-icon">💬</view>
+    <text class="empty-title">暂无消息</text>
+    <text class="empty-desc">去社区逛逛，和大家聊聊非遗吧</text>
+    <view class="empty-action" bindtap="goToCommunity">
+      <text>去社区</text>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <van-loading size="30px" color="#b63b36" vertical>加载中...</van-loading>
+  </view>
+</view>
+
+<!-- 底部安全区域 -->
+<view class="safe-area-bottom"></view>
+

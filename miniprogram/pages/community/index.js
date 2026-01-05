@@ -10,14 +10,31 @@ Page({
     postList: [],      // 全部帖子
     leftColumn: [],    // 左列帖子
     rightColumn: [],   // 右列帖子
-    loading: true
+    loading: true,
+    statusBarHeight: 20
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 获取状态栏高度
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    })
+    
     this.loadPosts()
+  },
+
+  /**
+   * 跳转到搜索
+   */
+  goToSearch() {
+    wx.showToast({
+      title: '搜索功能开发中',
+      icon: 'none'
+    })
   },
 
   /**
@@ -171,7 +188,10 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-
+    // 更新自定义 tabBar 选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateActive(1)
+    }
   },
 
   /**

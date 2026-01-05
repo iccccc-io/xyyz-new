@@ -1,7 +1,7 @@
 <!--pages/mall/home.wxml-->
 <view class="mall-container">
   <!-- 沉浸式顶部 -->
-  <view class="header">
+  <view class="header" style="padding-top: {{statusBarHeight + 20}}px;">
     <view class="header-bg"></view>
     <view class="header-content">
       <view class="header-title">

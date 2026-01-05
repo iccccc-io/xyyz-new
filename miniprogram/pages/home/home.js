@@ -4,14 +4,18 @@ Page({
    * 页面的初始数据
    */
   data: {
-
+    statusBarHeight: 20
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-
+    // 获取状态栏高度
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    })
   },
 
   /**
@@ -54,7 +58,7 @@ Page({
    * 导航到非遗社区
    */
   navigateToCommunity() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/community/index'
     })
   },
@@ -63,7 +67,7 @@ Page({
    * 导航到文创商城
    */
   navigateToMall() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/mall/home'
     })
   },
@@ -72,7 +76,7 @@ Page({
    * 导航到个人中心
    */
   navigateToUser() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/gerenzhongxin/gerenzhongxin'
     })
   },
@@ -88,7 +92,10 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-
+    // 更新自定义 tabBar 选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateActive(0)
+    }
   },
 
   /**

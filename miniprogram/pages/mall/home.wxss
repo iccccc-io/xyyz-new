@@ -5,7 +5,7 @@ page {
 }
 
 .mall-container {
-  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
   background: transparent;
 }
 

@@ -1,21 +1,24 @@
 {
   "pages": [
     "pages/home/home",
+    "pages/community/index",
+    "pages/mall/home",
+    "pages/message/list",
+    "pages/gerenzhongxin/gerenzhongxin",
+    "pages/community/post",
     "pages/resource/list",
     "pages/resource/project-detail",
     "pages/resource/inheritor-detail",
     "pages/venue/list",
     "pages/venue/detail",
-    "pages/community/index",
     "pages/community/detail",
-    "pages/community/post",
     "pages/community/topic",
-    "pages/mall/home",
+    "pages/community/user-profile",
+    "pages/chat/room",
     "pages/mall/detail",
     "pages/mall/category",
     "pages/mall/topic",
     "pages/login/login",
-    "pages/gerenzhongxin/gerenzhongxin",
     "pages/user/relations",
     "pages/index/index",
     "pages/example/index"
@@ -23,9 +26,37 @@
   "window": {
     "backgroundColor": "#F6F6F6",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#F6F6F6",
-    "navigationBarTitleText": "云开发 QuickStart",
+    "navigationStyle": "custom",
     "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#888888",
+    "selectedColor": "#b63b36",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/community/index",
+        "text": "社区"
+      },
+      {
+        "pagePath": "pages/mall/home",
+        "text": "商城"
+      },
+      {
+        "pagePath": "pages/message/list",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/gerenzhongxin/gerenzhongxin",
+        "text": "我"
+      }
+    ]
   },
   "sitemapLocation": "sitemap.json",
   "style": "v2",

@@ -6,6 +6,7 @@ Page({
    * 页面的初始数据
    */
   data: {
+    statusBarHeight: 20,
     searchValue: '',
     // 每日推荐商品
     featuredProduct: null,
@@ -35,6 +36,12 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 获取状态栏高度
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    })
+    
     this.loadFeaturedProduct()
     this.loadWorkshops()
     this.loadProducts(true)
@@ -253,7 +260,10 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
-
+    // 更新自定义 tabBar 选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateActive(2)
+    }
   },
 
   /**

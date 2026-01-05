@@ -1,0 +1,47 @@
+<!-- components/nav-bar/index.wxml -->
+<!-- 沉浸式磨砂玻璃导航栏组件 -->
+
+<view 
+  class="nav-bar {{background === 'solid' ? 'solid' : ''}} {{transparent ? 'transparent' : ''}}"
+  style="padding-top: {{statusBarHeight}}px; {{customStyle}}"
+>
+  <!-- 导航栏内容区 -->
+  <view class="nav-content" style="height: {{navHeight}}px;">
+    <!-- 左侧：返回按钮 -->
+    <view class="nav-left">
+      <view 
+        class="back-btn {{dark ? 'dark' : 'light'}}" 
+        wx:if="{{showBack}}"
+        bindtap="onBack"
+        hover-class="back-btn-hover"
+      >
+        <van-icon name="arrow-left" size="18px" color="{{dark ? '#333' : '#fff'}}" />
+      </view>
+      <!-- 自定义左侧插槽 -->
+      <slot name="left"></slot>
+    </view>
+
+    <!-- 中间：标题 -->
+    <view class="nav-center">
+      <text 
+        class="nav-title {{showTitle ? 'show' : ''}} {{dark ? 'dark' : 'light'}}"
+        wx:if="{{title}}"
+      >{{title}}</text>
+      <!-- 自定义中间插槽 -->
+      <slot name="center"></slot>
+    </view>
+
+    <!-- 右侧占位（与胶囊按钮对齐） -->
+    <view class="nav-right" style="width: {{capsuleWidth}}px;">
+      <slot name="right"></slot>
+    </view>
+  </view>
+</view>
+
+<!-- 占位元素（防止内容被导航栏遮挡） -->
+<view 
+  class="nav-placeholder" 
+  wx:if="{{placeholder}}"
+  style="height: {{statusBarHeight + navHeight}}px;"
+></view>
+

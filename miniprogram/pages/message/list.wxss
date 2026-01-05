@@ -1,0 +1,172 @@
+/* pages/message/list.wxss */
+/* 消息列表页样式 */
+
+page {
+  background-color: #f5f5f5;
+}
+
+.message-container {
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ========== 会话列表 ========== */
+.conversation-list {
+  background: #ffffff;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f5f5f5;
+  transition: background-color 0.15s ease;
+}
+
+.conversation-item:active {
+  background-color: #f8f8f8;
+}
+
+/* 头像区域 */
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.avatar {
+  display: block;
+}
+
+/* 未读数角标 */
+.unread-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  background: linear-gradient(135deg, #ff4d4f 0%, #e63946 100%);
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(230, 57, 70, 0.4);
+}
+
+.unread-badge text {
+  font-size: 22rpx;
+  color: #ffffff;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* 会话信息 */
+.conversation-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.info-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nickname {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333333;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-size: 24rpx;
+  color: #bbbbbb;
+  flex-shrink: 0;
+}
+
+.info-bottom {
+  display: flex;
+  align-items: center;
+}
+
+.last-msg {
+  font-size: 28rpx;
+  color: #999999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 480rpx;
+}
+
+.last-msg.unread {
+  color: #666666;
+  font-weight: 500;
+}
+
+/* ========== 空状态 ========== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 32rpx;
+}
+
+.empty-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 16rpx;
+}
+
+.empty-desc {
+  font-size: 28rpx;
+  color: #999999;
+  margin-bottom: 48rpx;
+}
+
+.empty-action {
+  padding: 24rpx 64rpx;
+  background: linear-gradient(135deg, #d64a45 0%, #b63b36 100%);
+  border-radius: 44rpx;
+  box-shadow: 0 8rpx 24rpx rgba(182, 59, 54, 0.3);
+}
+
+.empty-action text {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.empty-action:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* ========== 加载状态 ========== */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 200rpx 0;
+}
+
+/* ========== 安全区域（为 TabBar 留空） ========== */
+.safe-area-bottom {
+  height: calc(120rpx + env(safe-area-inset-bottom));
+}
+

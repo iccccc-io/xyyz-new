@@ -6,9 +6,7 @@
     "van-empty": "@vant/weapp/empty/index",
     "van-tag": "@vant/weapp/tag/index"
   },
-  "navigationBarTitleText": "文创商城",
-  "navigationBarBackgroundColor": "#8B2E2A",
-  "navigationBarTextStyle": "white",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "dark"
 }

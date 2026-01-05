@@ -54,6 +54,11 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow() {
+    // 更新自定义 tabBar 选中状态
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().updateActive(4)
+    }
+    
     // 每次显示页面时检查登录状态（可能从登录页返回）
     this.checkLoginStatus()
     

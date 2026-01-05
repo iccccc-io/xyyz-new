@@ -1,10 +1,11 @@
 {
   "usingComponents": {
     "van-icon": "@vant/weapp/icon/index",
-    "van-empty": "@vant/weapp/empty/index",
     "van-loading": "@vant/weapp/loading/index",
+    "van-image": "@vant/weapp/image/index",
+    "van-empty": "@vant/weapp/empty/index",
     "nav-bar": "/components/nav-bar/index"
   },
-  "backgroundColor": "#f5f5f5",
-  "enablePullDownRefresh": true
+  "navigationStyle": "custom"
 }
+

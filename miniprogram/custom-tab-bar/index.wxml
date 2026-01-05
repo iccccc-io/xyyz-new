@@ -1,0 +1,73 @@
+<!-- 自定义 TabBar -->
+<view class="tab-bar">
+  <view 
+    class="tab-bar-item {{active === 0 ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="0"
+    data-path="/pages/home/home"
+  >
+    <view class="icon-wrapper">
+      <van-icon name="wap-home-o" size="24" custom-class="tab-icon" wx:if="{{active !== 0}}" />
+      <van-icon name="wap-home" size="24" custom-class="tab-icon active-icon" wx:else />
+    </view>
+    <text class="tab-text">首页</text>
+  </view>
+  
+  <view 
+    class="tab-bar-item {{active === 1 ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="1"
+    data-path="/pages/community/index"
+  >
+    <view class="icon-wrapper">
+      <van-icon name="friends-o" size="24" custom-class="tab-icon" wx:if="{{active !== 1}}" />
+      <van-icon name="friends" size="24" custom-class="tab-icon active-icon" wx:else />
+    </view>
+    <text class="tab-text">社区</text>
+  </view>
+  
+  <view 
+    class="tab-bar-item {{active === 2 ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="2"
+    data-path="/pages/mall/home"
+  >
+    <view class="icon-wrapper">
+      <van-icon name="shopping-cart-o" size="24" custom-class="tab-icon" wx:if="{{active !== 2}}" />
+      <van-icon name="shopping-cart" size="24" custom-class="tab-icon active-icon" wx:else />
+    </view>
+    <text class="tab-text">商城</text>
+  </view>
+  
+  <view 
+    class="tab-bar-item {{active === 3 ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="3"
+    data-path="/pages/message/list"
+  >
+    <view class="icon-wrapper">
+      <van-icon name="chat-o" size="24" custom-class="tab-icon" wx:if="{{active !== 3}}" />
+      <van-icon name="chat" size="24" custom-class="tab-icon active-icon" wx:else />
+      <!-- 未读消息红点 -->
+      <view class="badge" wx:if="{{unreadCount > 0}}">
+        <text wx:if="{{unreadCount < 100}}">{{unreadCount}}</text>
+        <text wx:else>99+</text>
+      </view>
+    </view>
+    <text class="tab-text">消息</text>
+  </view>
+  
+  <view 
+    class="tab-bar-item {{active === 4 ? 'active' : ''}}"
+    bindtap="switchTab"
+    data-index="4"
+    data-path="/pages/gerenzhongxin/gerenzhongxin"
+  >
+    <view class="icon-wrapper">
+      <van-icon name="user-o" size="24" custom-class="tab-icon" wx:if="{{active !== 4}}" />
+      <van-icon name="manager" size="24" custom-class="tab-icon active-icon" wx:else />
+    </view>
+    <text class="tab-text">我</text>
+  </view>
+</view>
+

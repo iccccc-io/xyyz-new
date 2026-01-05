@@ -1,7 +1,67 @@
 /* pages/community/index.wxss */
+/* 沉浸式社区列表页样式 */
+
 page {
   background-color: #f5f5f5;
   min-height: 100vh;
+}
+
+/* ========== 固定顶部区域 ========== */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100rpx;
+  padding: 0 32rpx;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.search-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.search-btn:active {
+  transform: scale(0.92);
+  background: #e8e8e8;
+}
+
+/* 占位元素 */
+.header-placeholder {
+  width: 100%;
 }
 
 .community-container {
@@ -11,23 +71,14 @@ page {
 
 /* 页面标题 */
 .page-header {
-  padding: 30rpx 20rpx 40rpx;
+  padding: 16rpx 20rpx 32rpx;
   text-align: center;
-}
-
-.header-title {
-  display: block;
-  font-size: 44rpx;
-  font-weight: bold;
-  color: #333333;
-  letter-spacing: 4rpx;
 }
 
 .header-subtitle {
   display: block;
   font-size: 26rpx;
   color: #999999;
-  margin-top: 12rpx;
   letter-spacing: 2rpx;
 }
 
@@ -207,25 +258,23 @@ page {
   color: #bbbbbb;
 }
 
-/* 悬浮发布按钮 */
+/* ========== 浮动发布按钮 ========== */
 .fab-button {
   position: fixed;
   right: 40rpx;
-  bottom: calc(60rpx + env(safe-area-inset-bottom));
+  bottom: calc(140rpx + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 12rpx;
   padding: 24rpx 36rpx;
   background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
   border-radius: 60rpx;
-  /* 白色描边确保在任何背景下都醒目 */
   border: 3rpx solid rgba(255, 255, 255, 0.9);
-  /* 更深的多层投影 */
   box-shadow: 
     0 6rpx 20rpx rgba(0, 0, 0, 0.25),
     0 12rpx 40rpx rgba(182, 59, 54, 0.4),
     0 2rpx 8rpx rgba(0, 0, 0, 0.15);
-  z-index: 100;
+  z-index: 50;
   transition: all 0.3s ease;
 }
 
@@ -241,5 +290,10 @@ page {
   font-weight: 600;
   color: #ffffff;
   text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 底部安全区域（给 tabbar 留空） */
+.safe-area-bottom {
+  height: calc(120rpx + env(safe-area-inset-bottom));
 }
 

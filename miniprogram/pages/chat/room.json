@@ -1,0 +1,12 @@
+{
+  "navigationBarTitleText": "私信",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "van-icon": "@vant/weapp/icon/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-image": "@vant/weapp/image/index"
+  },
+  "disableScroll": true
+}
+

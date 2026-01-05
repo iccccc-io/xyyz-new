@@ -6,10 +6,8 @@
     "van-cell-group": "@vant/weapp/cell-group/index",
     "van-popup": "@vant/weapp/popup/index",
     "van-picker": "@vant/weapp/picker/index",
-    "topic-search": "/components/topic-search/index"
+    "topic-search": "/components/topic-search/index",
+    "nav-bar": "/components/nav-bar/index"
   },
-  "navigationBarTitleText": "发布笔记",
-  "navigationBarBackgroundColor": "#ffffff",
-  "navigationBarTextStyle": "black",
   "backgroundColor": "#ffffff"
 }

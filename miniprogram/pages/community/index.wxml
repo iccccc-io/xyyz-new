@@ -1,8 +1,26 @@
 <!--pages/community/index.wxml-->
+<!-- 沉浸式社区列表页 -->
+
+<!-- 固定顶部区域 -->
+<view class="fixed-header" style="padding-top: {{statusBarHeight}}px;">
+  <view class="header-content">
+    <view class="header-left">
+      <text class="header-title">非遗社区</text>
+    </view>
+    <view class="header-right">
+      <view class="search-btn" bindtap="goToSearch">
+        <van-icon name="search" size="22px" color="#333" />
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 占位元素 -->
+<view class="header-placeholder" style="height: {{statusBarHeight + 50}}px;"></view>
+
 <view class="community-container">
   <!-- 页面标题 -->
   <view class="page-header">
-    <text class="header-title">非遗社区</text>
     <text class="header-subtitle">分享非遗生活方式</text>
   </view>
 
@@ -18,7 +36,6 @@
         data-id="{{item._id}}"
         data-isliked="{{item.isLiked}}"
       >
-        <!-- 封面图区域 -->
         <view class="card-cover">
           <image 
             class="cover-image" 
@@ -26,16 +43,13 @@
             mode="widthFix"
             lazy-load
           />
-          <!-- 多图标识 -->
           <view class="image-count" wx:if="{{item.images.length > 1}}">
             <van-icon name="photo-o" size="12" color="#fff" />
             <text class="count-text">{{item.images.length}}</text>
           </view>
         </view>
 
-        <!-- 内容区域 -->
         <view class="card-content">
-          <!-- 标题行 -->
           <view class="title-row">
             <text 
               class="project-tag" 
@@ -43,14 +57,11 @@
             >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
           </view>
 
-          <!-- 底部信息 -->
           <view class="card-footer">
-            <!-- 作者信息 -->
             <view class="author-info">
               <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
               <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
             </view>
-            <!-- 点赞 -->
             <view class="like-info">
               <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
               <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
@@ -70,7 +81,6 @@
         data-id="{{item._id}}"
         data-isliked="{{item.isLiked}}"
       >
-        <!-- 封面图区域 -->
         <view class="card-cover">
           <image 
             class="cover-image" 
@@ -78,16 +88,13 @@
             mode="widthFix"
             lazy-load
           />
-          <!-- 多图标识 -->
           <view class="image-count" wx:if="{{item.images.length > 1}}">
             <van-icon name="photo-o" size="12" color="#fff" />
             <text class="count-text">{{item.images.length}}</text>
           </view>
         </view>
 
-        <!-- 内容区域 -->
         <view class="card-content">
-          <!-- 标题行 -->
           <view class="title-row">
             <text 
               class="project-tag" 
@@ -95,14 +102,11 @@
             >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
           </view>
 
-          <!-- 底部信息 -->
           <view class="card-footer">
-            <!-- 作者信息 -->
             <view class="author-info">
               <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
               <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
             </view>
-            <!-- 点赞 -->
             <view class="like-info">
               <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
               <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
@@ -129,11 +133,13 @@
   <view class="loading-state" wx:if="{{loading}}">
     <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
   </view>
-
-  <!-- 悬浮发布按钮 -->
-  <view class="fab-button" bindtap="goToPost">
-    <van-icon name="edit" size="22" color="#fff" />
-    <text class="fab-text">发笔记</text>
-  </view>
 </view>
 
+<!-- 底部浮动发布按钮 -->
+<view class="fab-button" bindtap="goToPost">
+  <van-icon name="edit" size="22" color="#fff" />
+  <text class="fab-text">发笔记</text>
+</view>
+
+<!-- 底部安全区域（给 tabbar 留空） -->
+<view class="safe-area-bottom"></view>

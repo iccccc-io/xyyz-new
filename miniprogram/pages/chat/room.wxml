@@ -1,0 +1,164 @@
+<!-- pages/chat/room.wxml -->
+<view class="chat-container" style="--keyboard-height: {{keyboardHeight}}px;">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-left" bindtap="goBack">
+      <van-icon name="arrow-left" size="22px" color="#333" />
+    </view>
+    <view class="nav-center" bindtap="goToUserProfile">
+      <image class="nav-avatar" src="{{targetUser.avatar || '/images/avatar.png'}}" mode="aspectFill" />
+      <text class="nav-nickname">{{targetUser.nickname || '用户'}}</text>
+    </view>
+    <view class="nav-right">
+      <van-icon name="ellipsis" size="22px" color="#333" />
+    </view>
+  </view>
+
+  <!-- 消息列表区域 -->
+  <scroll-view 
+    class="message-list"
+    scroll-y="{{true}}"
+    scroll-into-view="{{scrollToView}}"
+    scroll-with-animation="{{true}}"
+    upper-threshold="50"
+    bindscrolltoupper="loadMoreMessages"
+    enhanced="{{true}}"
+    show-scrollbar="{{false}}"
+    bounces="{{true}}"
+  >
+    <!-- 加载更多提示 -->
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <van-loading size="20px" color="#999">加载中...</van-loading>
+    </view>
+    <view class="load-more" wx:elif="{{noMore && messages.length > 0}}">
+      <text class="no-more-text">— 没有更多消息了 —</text>
+    </view>
+
+    <!-- 消息列表 -->
+    <block wx:for="{{messages}}" wx:key="_id">
+      <!-- 时间分割线：间隔超过5分钟显示 -->
+      <view class="time-divider" wx:if="{{item.showTime}}">
+        <text>{{item.timeStr}}</text>
+      </view>
+
+      <!-- 消息气泡 -->
+      <view 
+        id="msg-{{item._id}}" 
+        class="message-item {{item.isSelf ? 'self' : 'other'}}"
+      >
+        <!-- 对方消息：头像在左 -->
+        <image 
+          wx:if="{{!item.isSelf}}" 
+          class="msg-avatar" 
+          src="{{targetUser.avatar || '/images/avatar.png'}}" 
+          mode="aspectFill"
+          bindtap="goToUserProfile"
+        />
+
+        <!-- 消息内容 -->
+        <view class="msg-content-wrapper">
+          <!-- 文本消息 -->
+          <view 
+            wx:if="{{item.msg_type === 'text'}}" 
+            class="msg-bubble {{item.isSelf ? 'self' : 'other'}} {{item.status === 'sending' ? 'sending' : ''}} {{item.status === 'failed' ? 'failed' : ''}}"
+          >
+            <text class="msg-text" user-select="{{true}}">{{item.content}}</text>
+          </view>
+
+          <!-- 图片消息 -->
+          <view 
+            wx:elif="{{item.msg_type === 'image'}}" 
+            class="msg-image-wrapper {{item.isSelf ? 'self' : 'other'}}"
+          >
+            <van-image 
+              class="msg-image"
+              width="200px"
+              height="200px"
+              fit="cover"
+              radius="12"
+              src="{{item.content}}"
+              show-loading="{{true}}"
+              show-error="{{true}}"
+              lazy-load="{{true}}"
+              data-src="{{item.content}}"
+              bindtap="previewImage"
+            />
+            <!-- 上传进度 -->
+            <view class="upload-progress" wx:if="{{item.status === 'uploading'}}">
+              <van-loading size="24px" color="#fff" />
+              <text class="progress-text">{{item.progress || 0}}%</text>
+            </view>
+          </view>
+
+          <!-- 发送状态指示 -->
+          <view class="msg-status" wx:if="{{item.isSelf && item.status === 'failed'}}">
+            <view class="status-failed" bindtap="resendMessage" data-msg="{{item}}">
+              <van-icon name="warning" size="18px" color="#fff" />
+            </view>
+          </view>
+        </view>
+
+        <!-- 自己消息：头像在右 -->
+        <image 
+          wx:if="{{item.isSelf}}" 
+          class="msg-avatar" 
+          src="{{currentUser.avatar || '/images/avatar.png'}}" 
+          mode="aspectFill"
+        />
+      </view>
+    </block>
+
+    <!-- 底部占位，用于滚动定位 -->
+    <view id="msg-bottom" class="scroll-bottom-anchor"></view>
+  </scroll-view>
+
+  <!-- 底部输入区域 -->
+  <view class="input-area" style="padding-bottom: {{safeAreaBottom}}px;">
+    <!-- 图片选择按钮 -->
+    <view class="input-action" bindtap="chooseImage">
+      <van-icon name="photo-o" size="26px" color="#666" />
+    </view>
+
+    <!-- 输入框 -->
+    <view class="input-wrapper">
+      <textarea 
+        class="message-input"
+        value="{{inputValue}}"
+        placeholder="发送消息..."
+        placeholder-class="input-placeholder"
+        bindinput="onInput"
+        bindfocus="onInputFocus"
+        bindblur="onInputBlur"
+        bindconfirm="sendTextMessage"
+        confirm-type="send"
+        confirm-hold="{{true}}"
+        adjust-position="{{false}}"
+        cursor-spacing="20"
+        show-confirm-bar="{{false}}"
+        auto-height="{{true}}"
+        maxlength="500"
+        disable-default-padding="{{true}}"
+      />
+    </view>
+
+    <!-- 发送按钮 -->
+    <view 
+      class="send-btn {{inputValue.trim() ? 'active' : ''}}" 
+      bindtap="sendTextMessage"
+    >
+      <text>发送</text>
+    </view>
+  </view>
+</view>
+
+<!-- 空状态：无消息 -->
+<view class="empty-state" wx:if="{{!loading && messages.length === 0}}">
+  <view class="empty-icon">💬</view>
+  <text class="empty-text">开始和 TA 聊天吧</text>
+</view>
+
+<!-- 初始加载状态 -->
+<view class="loading-wrapper" wx:if="{{loading}}">
+  <van-loading size="30px" color="#b63b36" vertical>加载中...</van-loading>
+</view>
+

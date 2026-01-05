@@ -19,9 +19,16 @@ Page({
     followStatusLoaded: false,
     currentImageIndex: 0,
     formatTime: '',
-    swiperHeight: 400,
+    swiperHeight: 500,
     imageHeights: [],
     likesFormatted: '0',
+    
+    // 沉浸式导航栏相关
+    statusBarHeight: 20,
+    navShowTitle: false,
+    navBackground: 'transparent',
+    navDark: false,
+    navCustomStyle: '',
     
     // ========== 评论相关 ==========
     commentCount: 0,           // 评论总数
@@ -73,13 +80,18 @@ Page({
       return
     }
 
+    // 获取状态栏高度
+    const systemInfo = wx.getSystemInfoSync()
+    const statusBarHeight = systemInfo.statusBarHeight || 20
+
     // 接收列表页传来的点赞初始状态，避免闪烁
     const initialIsLiked = options.isLiked === 'true'
 
     this.setData({
       postId: options.id,
       currentOpenid: app.globalData.openid || '',
-      isLiked: initialIsLiked  // 预设点赞状态
+      isLiked: initialIsLiked,
+      statusBarHeight
     })
 
     await this.loadPostDetail()
@@ -1568,6 +1580,61 @@ Page({
     wx.navigateTo({
       url: `/pages/community/topic?tag=${encodeURIComponent(tagName)}`
     })
+  },
+
+  /**
+   * 跳转到用户主页
+   */
+  goToUserProfile(e) {
+    const userId = e.currentTarget.dataset.userid
+    if (!userId) return
+    
+    wx.navigateTo({
+      url: `/pages/community/user-profile?userId=${userId}`
+    })
+  },
+
+  /**
+   * 跳转到私聊页面
+   */
+  goToChat() {
+    const postData = this.data.postData
+    if (!postData) return
+
+    // 检查登录状态
+    if (!app.globalData.openid) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none'
+      })
+      return
+    }
+
+    const targetUserId = postData._openid
+    if (!targetUserId) return
+
+    wx.navigateTo({
+      url: `/pages/chat/room?targetUserId=${targetUserId}`
+    })
+  },
+
+  /**
+   * 页面滚动事件 - 导航栏联动
+   */
+  onPageScroll(e) {
+    const scrollTop = e.detail.scrollTop
+    const threshold = 300 // 触发阈值
+
+    // 根据滚动位置切换导航栏状态
+    const shouldSolid = scrollTop > threshold
+    
+    if (shouldSolid !== (this.data.navBackground === 'solid')) {
+      this.setData({
+        navShowTitle: shouldSolid,
+        navBackground: shouldSolid ? 'solid' : 'transparent',
+        navDark: shouldSolid
+      })
+    }
   },
 
   /**

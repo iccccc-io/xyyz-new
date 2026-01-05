@@ -1,0 +1,382 @@
+/* pages/chat/room.wxss */
+
+/* ========== 页面容器 ========== */
+page {
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* ========== 顶部导航栏 ========== */
+.nav-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 24rpx;
+  padding-top: env(safe-area-inset-top);
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.nav-left,
+.nav-right {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-left:active,
+.nav-right:active {
+  opacity: 0.6;
+}
+
+.nav-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.nav-center:active {
+  opacity: 0.7;
+}
+
+.nav-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 2rpx solid #f0f0f0;
+}
+
+.nav-nickname {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+  max-width: 280rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== 消息列表区域 ========== */
+.message-list {
+  flex: 1;
+  padding: 24rpx 24rpx 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* 加载更多 */
+.load-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24rpx 0 32rpx;
+}
+
+.no-more-text {
+  font-size: 24rpx;
+  color: #c0c0c0;
+}
+
+/* ========== 时间分割线 ========== */
+.time-divider {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0;
+}
+
+.time-divider text {
+  font-size: 22rpx;
+  color: #b0b0b0;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
+}
+
+/* ========== 消息气泡样式 ========== */
+.message-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 28rpx;
+  gap: 16rpx;
+}
+
+/* 自己的消息靠右 */
+.message-item.self {
+  flex-direction: row-reverse;
+}
+
+/* 头像 */
+.msg-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2rpx solid #f0f0f0;
+}
+
+.msg-avatar:active {
+  opacity: 0.7;
+}
+
+/* 消息内容包装器 */
+.msg-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  max-width: calc(100% - 180rpx);
+}
+
+.message-item.self .msg-content-wrapper {
+  flex-direction: row-reverse;
+}
+
+/* ========== 文本气泡 ========== */
+.msg-bubble {
+  padding: 20rpx 28rpx;
+  border-radius: 20rpx;
+  max-width: 100%;
+  word-break: break-all;
+  line-height: 1.6;
+  position: relative;
+}
+
+/* 对方消息：左侧气泡 */
+.msg-bubble.other {
+  background: #ffffff;
+  border-top-left-radius: 6rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.msg-bubble.other .msg-text {
+  color: #333333;
+  font-size: 30rpx;
+}
+
+/* 自己消息：右侧气泡 */
+.msg-bubble.self {
+  background: linear-gradient(135deg, #d64a45 0%, #b63b36 100%);
+  border-top-right-radius: 6rpx;
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.25);
+}
+
+.msg-bubble.self .msg-text {
+  color: #ffffff;
+  font-size: 30rpx;
+}
+
+/* 发送中状态 */
+.msg-bubble.sending {
+  opacity: 0.7;
+}
+
+/* 发送失败状态 */
+.msg-bubble.failed {
+  opacity: 0.6;
+}
+
+/* ========== 图片消息 ========== */
+.msg-image-wrapper {
+  position: relative;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.msg-image-wrapper.self {
+  border-top-right-radius: 6rpx;
+}
+
+.msg-image-wrapper.other {
+  border-top-left-radius: 6rpx;
+}
+
+.msg-image {
+  display: block;
+}
+
+/* 上传进度遮罩 */
+.upload-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  border-radius: 24rpx;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* ========== 消息状态指示 ========== */
+.msg-status {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.status-failed {
+  width: 40rpx;
+  height: 40rpx;
+  background: #ff4d4f;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-failed:active {
+  opacity: 0.7;
+}
+
+/* ========== 底部输入区域 ========== */
+.input-area {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.input-action {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.input-action:active {
+  opacity: 0.6;
+}
+
+/* 输入框包装器 */
+.input-wrapper {
+  flex: 1;
+  min-width: 0;
+  background: #f5f5f5;
+  border-radius: 36rpx;
+  padding: 16rpx 28rpx;
+  display: flex;
+  align-items: center;
+}
+
+.message-input {
+  width: 100%;
+  min-height: 40rpx;
+  max-height: 160rpx;
+  font-size: 30rpx;
+  color: #333333;
+  line-height: 1.5;
+}
+
+.input-placeholder {
+  color: #b0b0b0;
+  font-size: 30rpx;
+}
+
+/* 发送按钮 */
+.send-btn {
+  width: 120rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  border-radius: 36rpx;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.send-btn text {
+  font-size: 28rpx;
+  color: #999999;
+  font-weight: 500;
+}
+
+.send-btn.active {
+  background: linear-gradient(135deg, #d64a45 0%, #b63b36 100%);
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.3);
+}
+
+.send-btn.active text {
+  color: #ffffff;
+}
+
+.send-btn:active {
+  transform: scale(0.95);
+}
+
+/* ========== 滚动锚点 ========== */
+.scroll-bottom-anchor {
+  height: 2rpx;
+}
+
+/* ========== 空状态 ========== */
+.empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999999;
+}
+
+/* ========== 加载状态 ========== */
+.loading-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ========== 键盘弹起适配 ========== */
+.chat-container {
+  transition: padding-bottom 0.25s ease;
+}
+
+/* 适配iPhone安全区域 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .input-area {
+    padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  }
+}
+
