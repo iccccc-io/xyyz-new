@@ -25,69 +25,69 @@
 
   <!-- 白色内容卡片 -->
   <view class="content-card">
-    <!-- 导航入口区 -->
-    <view class="nav-section">
-      <view class="section-title">非遗百科</view>
-      <van-grid column-num="4" border="{{ false }}" gutter="{{ 10 }}">
-        <van-grid-item 
-          icon="todo-list" 
-          text="非遗资源" 
-          icon-color="#b63b36"
-          bind:click="navigateToResource"
-        />
-        <van-grid-item 
-          icon="shop-o" 
-          text="非遗展馆" 
-          icon-color="#b63b36"
-          bind:click="navigateToHall"
-        />
-        <van-grid-item 
-          icon="hotel-o" 
-          text="非遗工坊" 
-          icon-color="#b63b36"
-          bind:click="navigateToWorkshop"
-        />
-        <van-grid-item 
-          icon="location-o" 
-          text="非遗街区" 
-          icon-color="#b63b36"
-          bind:click="navigateToStreet"
-        />
-      </van-grid>
-    </view>
+  <!-- 导航入口区 -->
+  <view class="nav-section">
+    <view class="section-title">非遗百科</view>
+    <van-grid column-num="4" border="{{ false }}" gutter="{{ 10 }}">
+      <van-grid-item 
+        icon="todo-list" 
+        text="非遗资源" 
+        icon-color="#b63b36"
+        bind:click="navigateToResource"
+      />
+      <van-grid-item 
+        icon="shop-o" 
+        text="非遗展馆" 
+        icon-color="#b63b36"
+        bind:click="navigateToHall"
+      />
+      <van-grid-item 
+        icon="hotel-o" 
+        text="非遗工坊" 
+        icon-color="#b63b36"
+        bind:click="navigateToWorkshop"
+      />
+      <van-grid-item 
+        icon="location-o" 
+        text="非遗街区" 
+        icon-color="#b63b36"
+        bind:click="navigateToStreet"
+      />
+    </van-grid>
+  </view>
 
-    <!-- 非遗社区入口 -->
-    <view class="nav-section community-section">
-      <view class="section-title">非遗社区</view>
-      <view class="community-banner" bindtap="navigateToCommunity">
-        <view class="banner-content">
-          <view class="banner-icon">
-            <van-icon name="friends-o" size="40" color="#ffffff" />
-          </view>
-          <view class="banner-text">
-            <text class="banner-title">探索非遗生活方式</text>
-            <text class="banner-desc">分享 · 交流 · 发现</text>
-          </view>
+  <!-- 非遗社区入口 -->
+  <view class="nav-section community-section">
+    <view class="section-title">非遗社区</view>
+    <view class="community-banner" bindtap="navigateToCommunity">
+      <view class="banner-content">
+        <view class="banner-icon">
+          <van-icon name="friends-o" size="40" color="#ffffff" />
         </view>
-        <van-icon name="arrow" size="20" color="#ffffff" />
+        <view class="banner-text">
+          <text class="banner-title">探索非遗生活方式</text>
+          <text class="banner-desc">分享 · 交流 · 发现</text>
+        </view>
       </view>
+      <van-icon name="arrow" size="20" color="#ffffff" />
     </view>
+  </view>
 
-    <!-- 文创商城入口 -->
-    <view class="nav-section mall-section">
-      <view class="section-title">文创商城</view>
-      <view class="mall-banner" bindtap="navigateToMall">
-        <view class="banner-content">
-          <view class="banner-icon mall-icon">
-            <van-icon name="shopping-cart-o" size="40" color="#ffffff" />
-          </view>
-          <view class="banner-text">
-            <text class="banner-title">非遗好物精选</text>
-            <text class="banner-desc">匠心传承 · 文创新生</text>
-          </view>
+  <!-- 文创商城入口 -->
+  <view class="nav-section mall-section">
+    <view class="section-title">文创商城</view>
+    <view class="mall-banner" bindtap="navigateToMall">
+      <view class="banner-content">
+        <view class="banner-icon mall-icon">
+          <van-icon name="shopping-cart-o" size="40" color="#ffffff" />
         </view>
-        <van-icon name="arrow" size="20" color="#ffffff" />
+        <view class="banner-text">
+          <text class="banner-title">非遗好物精选</text>
+          <text class="banner-desc">匠心传承 · 文创新生</text>
+        </view>
       </view>
+      <van-icon name="arrow" size="20" color="#ffffff" />
+    </view>
     </view>
   </view>
 

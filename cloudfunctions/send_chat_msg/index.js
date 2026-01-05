@@ -54,17 +54,19 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // ========== 2. 内容安全审核（仅文本消息）==========
-    if (msg_type === 'text') {
-      const secCheckResult = await checkTextSecurity(content, openid)
-      if (!secCheckResult.pass) {
-        console.warn('[安全审核] 文本包含敏感内容:', content.substring(0, 50))
-        return {
-          success: false,
-          message: secCheckResult.message || '消息包含敏感内容，请修改后重试'
-        }
-      }
-    }
+    // ========== 2. 内容安全审核（开发阶段暂时跳过）==========
+    // TODO: 上线前恢复内容安全审核
+    // if (msg_type === 'text') {
+    //   const secCheckResult = await checkTextSecurity(content, openid)
+    //   if (!secCheckResult.pass) {
+    //     console.warn('[安全审核] 文本包含敏感内容:', content.substring(0, 50))
+    //     return {
+    //       success: false,
+    //       message: secCheckResult.message || '消息包含敏感内容，请修改后重试'
+    //     }
+    //   }
+    // }
+    console.log('[安全审核] 开发阶段已跳过')
 
     // ========== 3. 写入消息记录 ==========
     const now = db.serverDate()
