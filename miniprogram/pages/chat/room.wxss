@@ -173,13 +173,18 @@ page {
 
 .msg-content {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 6px;
   max-width: 70%;
 }
 
 .msg-self .msg-content {
   flex-direction: row-reverse;
+}
+
+/* 图片消息不需要受 max-width 限制 */
+.msg-content .img-wrap {
+  max-width: none;
 }
 
 /* ========== 气泡 ========== */
@@ -220,7 +225,8 @@ page {
 /* ========== 图片消息 ========== */
 .img-wrap {
   position: relative;
-  max-width: 200px;
+  min-width: 120px;
+  max-width: 280px;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -231,13 +237,27 @@ page {
   border-radius: 12px;
 }
 
+/* 上传中状态 - 使用固定尺寸避免闪烁 */
+.img-wrap.uploading {
+  width: 180px;
+  height: 180px;
+  background: #f0f0f0;
+}
+
+.img-wrap.uploading .msg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .img-loading {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,6 +276,215 @@ page {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* ========== 撤回消息 ========== */
+.revoked-msg {
+  text-align: center;
+  padding: 8px 0;
+  margin: 4px 0;
+}
+
+.revoked-msg text {
+  font-size: 12px;
+  color: #999;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 4px 12px;
+  border-radius: 10px;
+}
+
+/* ========== 引用块（气泡内） ========== */
+.quote-block {
+  background: rgba(0, 0, 0, 0.06);
+  border-left: 3px solid rgba(0, 0, 0, 0.2);
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  max-width: 100%;
+}
+
+.bubble-self .quote-block {
+  background: rgba(255, 255, 255, 0.2);
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.quote-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.bubble-self .quote-name {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.quote-content {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.bubble-self .quote-content {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 图片消息的引用块 */
+.img-quote {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border-left: none;
+  border-radius: 12px 12px 0 0;
+  z-index: 1;
+}
+
+.img-quote .quote-name,
+.img-quote .quote-content {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ========== 引用预览栏 ========== */
+.quote-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px 12px 0 0;
+  margin: 0 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.quote-preview-content {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+}
+
+.quote-preview-line {
+  width: 3px;
+  background: #007aff;
+  border-radius: 2px;
+  margin-right: 10px;
+}
+
+.quote-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.quote-preview-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #007aff;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.quote-preview-text {
+  font-size: 12px;
+  color: #666;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quote-preview-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+/* ========== 长按菜单 ========== */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.menu-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.msg-menu {
+  position: fixed;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  white-space: nowrap; /* 防止菜单项换行 */
+}
+
+.msg-menu.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 箭头在底部（菜单在消息上方） */
+.menu-arrow {
+  width: 10px;
+  height: 10px;
+  background: rgba(48, 48, 48, 0.96);
+  transform: rotate(45deg);
+  position: absolute;
+  bottom: -5px;
+}
+
+/* 箭头在顶部（菜单在消息下方） */
+.msg-menu.arrow-top .menu-arrow {
+  bottom: auto;
+  top: -5px;
+}
+
+.menu-content {
+  display: flex;
+  background: rgba(48, 48, 48, 0.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 10px;
+  padding: 6px 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  min-width: 36px;
+}
+
+.menu-item:active {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+
+.menu-item text {
+  font-size: 10px;
+  color: #fff;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
 }
 
 /* ========== 底部输入区域 (TG 风格) ========== */

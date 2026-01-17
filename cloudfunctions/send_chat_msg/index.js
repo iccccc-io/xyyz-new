@@ -16,13 +16,14 @@ const _ = db.command
  * @param {String} event.target_user_id - 目标用户ID（openid）
  * @param {String} event.msg_type - 消息类型：'text' | 'image'
  * @param {String} event.content - 消息内容
+ * @param {Object} event.quote_msg - 引用消息信息 {msg_id, sender_name, content}
  * @param {Object} event.user_info - 发送者信息 {nickname, avatar}
  * @param {Object} event.target_user_info - 接收者信息 {nickname, avatar}
  * 
  * @returns {Object} { success: Boolean, message: String, msgId: String }
  */
 exports.main = async (event, context) => {
-  const { room_id, target_user_id, msg_type, content, user_info, target_user_info } = event
+  const { room_id, target_user_id, msg_type, content, quote_msg, user_info, target_user_info } = event
   
   // 获取调用者 openid
   const wxContext = cloud.getWXContext()
@@ -77,6 +78,15 @@ exports.main = async (event, context) => {
       content: content,
       send_time: now,
       is_revoked: false
+    }
+    
+    // 如果有引用消息，添加引用信息
+    if (quote_msg && quote_msg.msg_id) {
+      messageData.quote_msg = {
+        msg_id: quote_msg.msg_id,
+        sender_name: quote_msg.sender_name || '',
+        content: quote_msg.content || ''
+      }
     }
 
     const msgResult = await db.collection('chat_messages').add({

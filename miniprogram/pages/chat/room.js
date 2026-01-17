@@ -139,7 +139,15 @@ Page({
     scrollToView: '',
     pageSize: 20,
     oldestMsgTime: null,
-    watcher: null
+    watcher: null,
+    
+    // 长按菜单相关
+    showMsgMenu: false,
+    menuMsg: null,
+    menuPosition: { top: 0, left: 0 },
+    
+    // 引用相关
+    quoteMsg: null
   },
 
   onLoad(options) {
@@ -326,7 +334,12 @@ Page({
         onChange: snap => {
           if (snap.type === 'init') return
           snap.docChanges?.forEach(c => {
-            if (c.queueType === 'enqueue') this.onNewMsg(c.doc)
+            if (c.queueType === 'enqueue') {
+              this.onNewMsg(c.doc)
+            } else if (c.queueType === 'update') {
+              // 处理消息更新（如撤回）
+              this.onMsgUpdate(c.doc)
+            }
           })
         },
         onError: e => {
@@ -336,16 +349,64 @@ Page({
       })
   },
 
+  // 处理消息更新（撤回等）
+  onMsgUpdate(msg) {
+    const { messages } = this.data
+    const idx = messages.findIndex(m => m._id === msg._id)
+    if (idx > -1) {
+      const updated = [...messages]
+      updated[idx] = { 
+        ...updated[idx], 
+        ...msg,
+        showTime: updated[idx].showTime,
+        timeStr: updated[idx].timeStr
+      }
+      this.setData({ messages: updated })
+    }
+  },
+
   onNewMsg(msg) {
     const { messages, currentUser } = this.data
+    
+    // 1. 检查是否已存在相同 _id 的消息
     if (messages.some(m => m._id === msg._id)) return
 
-    const tempIdx = messages.findIndex(m => m._tempId && m.content === msg.content && m.sender_id === msg.sender_id)
+    // 2. 查找匹配的临时消息（自己发送的消息）
+    // 对于图片消息，content 会从本地路径变成云存储 fileID，所以不能用 content 匹配
+    // 改用 sender_id + msg_type + 时间接近（5秒内）+ status 为 uploading/sending
+    const msgTime = new Date(msg.send_time).getTime()
+    const tempIdx = messages.findIndex(m => {
+      if (!m._tempId) return false
+      if (m.sender_id !== msg.sender_id) return false
+      if (m.msg_type !== msg.msg_type) return false
+      if (m.status !== 'uploading' && m.status !== 'sending') return false
+      
+      // 文本消息可以精确匹配 content
+      if (msg.msg_type === 'text' && m.content === msg.content) return true
+      
+      // 图片消息用时间接近来匹配（5秒内）
+      if (msg.msg_type === 'image') {
+        const tempTime = new Date(m.send_time).getTime()
+        return Math.abs(msgTime - tempTime) < 5000
+      }
+      
+      return false
+    })
+
     if (tempIdx > -1) {
+      // 找到临时消息，更新它，保留本地的 quote_msg（以防数据库返回延迟）
+      const tempMsg = messages[tempIdx]
       const updated = [...messages]
-      updated[tempIdx] = { ...msg, showTime: updated[tempIdx].showTime, timeStr: updated[tempIdx].timeStr, status: 'sent' }
+      updated[tempIdx] = { 
+        ...msg,
+        quote_msg: msg.quote_msg || tempMsg.quote_msg, // 优先使用数据库的，否则保留本地的
+        showTime: tempMsg.showTime, 
+        timeStr: tempMsg.timeStr, 
+        status: 'sent' 
+      }
       this.setData({ messages: updated })
     } else {
+      // 对方发送的新消息
       const processed = this.processMsgs([msg], false)[0]
       this.setData({ messages: [...messages, processed] })
     }
@@ -440,11 +501,12 @@ Page({
 
   // ========== 发送消息 ==========
   async sendTextMessage() {
-    const { inputValue, roomId, currentUser, targetUser, messages, targetUserId } = this.data
+    const { inputValue, roomId, currentUser, targetUser, messages, targetUserId, quoteMsg } = this.data
     const content = inputValue.trim()
     if (!content) return
 
-    this.setData({ inputValue: '' })
+    // 清空输入和引用
+    this.setData({ inputValue: '', quoteMsg: null })
 
     const tempId = `temp_${Date.now()}`
     const now = new Date()
@@ -458,7 +520,8 @@ Page({
       send_time: now.toISOString(),
       showTime: this.shouldShowTime(now),
       timeStr: this.shouldShowTime(now) ? this.formatTime(now) : '',
-      status: 'sending'
+      status: 'sending',
+      quote_msg: quoteMsg || null // 携带引用信息
     }
 
     this.setData({ messages: [...messages, tempMsg] })
@@ -472,6 +535,7 @@ Page({
           target_user_id: targetUser.openid || targetUserId,
           msg_type: 'text',
           content,
+          quote_msg: quoteMsg || null, // 传递引用信息到云函数
           user_info: { nickname: currentUser.nickname, avatar: currentUser.avatar },
           target_user_info: { nickname: targetUser.nickname, avatar: targetUser.avatar }
         }
@@ -494,7 +558,7 @@ Page({
       itemList: ['从相册选择', '拍照'],
       success: res => {
         if (res.tapIndex === 0) this.chooseImage('album')
-        else this.chooseImage('camera')
+        else if (res.tapIndex === 1) this.chooseImage('camera')
       }
     })
   },
@@ -502,27 +566,44 @@ Page({
   async chooseImage(source) {
     try {
       const res = await wx.chooseMedia({
-        count: 1,
+        count: 9,
         mediaType: ['image'],
         sourceType: [source],
-        sizeType: ['compressed']
+        sizeType: ['compressed'],
+        maxDuration: 60
       })
-      if (res.tempFiles?.[0]) {
-        this.sendImage(res.tempFiles[0].tempFilePath)
+      
+      if (res.tempFiles && res.tempFiles.length > 0) {
+        // 支持多张图片发送
+        for (const file of res.tempFiles) {
+          await this.sendImage(file.tempFilePath)
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      if (e.errMsg && !e.errMsg.includes('cancel')) {
+        console.error('选择图片失败:', e)
+        wx.showToast({ title: '选择图片失败', icon: 'none' })
+      }
+    }
   },
 
   async sendImage(path) {
-    const { roomId, currentUser, targetUser, messages, targetUserId } = this.data
-    const tempId = `temp_${Date.now()}`
+    const { roomId, currentUser, targetUser, targetUserId } = this.data
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const now = new Date()
+
+    console.log('[发送图片] 开始:', { path, roomId, currentUser: currentUser?.openid })
+
+    // 获取图片扩展名
+    const ext = path.split('.').pop().toLowerCase() || 'jpg'
+    const validExts = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    const finalExt = validExts.includes(ext) ? ext : 'jpg'
 
     const tempMsg = {
       _id: tempId,
       _tempId: tempId,
       room_id: roomId,
-      sender_id: currentUser.openid,
+      sender_id: currentUser?.openid || '',
       msg_type: 'image',
       content: path,
       send_time: now.toISOString(),
@@ -531,14 +612,30 @@ Page({
       status: 'uploading'
     }
 
-    this.setData({ messages: [...messages, tempMsg] })
+    console.log('[发送图片] 临时消息:', tempMsg)
+
+    const newMessages = [...this.data.messages, tempMsg]
+    console.log('[发送图片] 更新消息列表, 长度:', newMessages.length)
+    
+    this.setData({ messages: newMessages })
     this.scrollToBottom()
 
     try {
-      const cloudPath = `chat/${roomId}/${Date.now()}.jpg`
-      const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: path })
+      // 上传到云存储
+      const cloudPath = `chat/${roomId}/${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${finalExt}`
+      
+      const uploadRes = await wx.cloud.uploadFile({ 
+        cloudPath, 
+        filePath: path 
+      })
+      
+      if (!uploadRes.fileID) {
+        throw new Error('上传失败：未获取到 fileID')
+      }
+      
       const fileID = uploadRes.fileID
 
+      // 调用云函数发送消息
       const res = await wx.cloud.callFunction({
         name: 'send_chat_msg',
         data: {
@@ -552,23 +649,27 @@ Page({
       })
 
       if (res.result?.success) {
-        const msgs = this.data.messages.map(m => {
-          if (m._tempId === tempId) return { ...m, _id: res.result.msgId || m._id, content: fileID, status: 'sent' }
-          return m
-        })
-        this.setData({ messages: msgs })
+        // 使用统一的更新函数，同时更新 content 为云存储 fileID
+        this.updateMsgStatus(tempId, 'sent', res.result.msgId, fileID)
       } else {
+        console.error('发送消息失败:', res.result?.message)
         this.updateMsgStatus(tempId, 'failed')
+        wx.showToast({ title: res.result?.message || '发送失败', icon: 'none' })
       }
     } catch (e) {
       console.error('图片发送失败:', e)
       this.updateMsgStatus(tempId, 'failed')
+      wx.showToast({ title: '图片发送失败', icon: 'none' })
     }
   },
 
-  updateMsgStatus(tempId, status, realId) {
+  updateMsgStatus(tempId, status, realId, newContent) {
     const msgs = this.data.messages.map(m => {
-      if (m._tempId === tempId) return { ...m, _id: realId || m._id, status }
+      if (m._tempId === tempId) {
+        const updated = { ...m, _id: realId || m._id, status }
+        if (newContent) updated.content = newContent
+        return updated
+      }
       return m
     })
     this.setData({ messages: msgs })
@@ -628,8 +729,219 @@ Page({
 
   previewImage(e) {
     const src = e.currentTarget.dataset.src
-    const urls = this.data.messages.filter(m => m.msg_type === 'image').map(m => m.content)
+    const urls = this.data.messages.filter(m => m.msg_type === 'image' && !m.is_revoked).map(m => m.content)
     wx.previewImage({ current: src, urls })
+  },
+
+  // ========== 长按菜单相关 ==========
+  onMsgLongPress(e) {
+    const msg = e.currentTarget.dataset.msg
+    const { currentUser } = this.data
+    if (!msg || msg.status === 'sending' || msg.status === 'uploading') return
+    
+    // 计算是否可以撤回（2分钟内）
+    const sendTime = new Date(msg.send_time).getTime()
+    const now = Date.now()
+    const canRevoke = (now - sendTime) < 2 * 60 * 1000
+    const isSelf = msg.sender_id === currentUser.openid
+    
+    // 先设置菜单数据，让菜单渲染出来
+    this.setData({
+      menuMsg: { ...msg, canRevoke, isSelf },
+      showMsgMenu: false
+    }, () => {
+      setTimeout(() => {
+        const query = wx.createSelectorQuery()
+        query.select(`#msg-${msg._id}`).boundingClientRect()
+        query.select('#menu-content').boundingClientRect()
+        query.exec(res => {
+          const rect = res[0]
+          const menuRect = res[1]
+          if (!rect) return
+          
+          const windowInfo = wx.getWindowInfo()
+          const menuHeight = menuRect ? menuRect.height : 55
+          const menuWidth = menuRect ? menuRect.width : 160
+          const margin = 16 // 统一屏幕边距
+          
+          // 垂直位置
+          let arrowPos = ''
+          let top
+          if (rect.top > menuHeight + this.data.navBarHeight + 20) {
+            top = rect.top - menuHeight - 10
+            arrowPos = ''
+          } else {
+            top = rect.bottom + 10
+            arrowPos = 'arrow-top'
+          }
+          
+          // 水平位置 - 统一边距 + 固定箭头位置
+          let left, arrowLeft
+          
+          if (isSelf) {
+            // 自己的消息（右侧）：菜单距离右边缘16px，箭头在右侧固定位置
+            left = windowInfo.windowWidth - menuWidth - margin
+            arrowLeft = menuWidth - 64 // 箭头距离菜单右边缘45px
+          } else {
+            // 对方的消息（左侧）：菜单距离左边缘16px，箭头在左侧固定位置
+            left = margin
+            arrowLeft = 64 // 箭头距离菜单左边缘45px
+          }
+          
+          this.setData({
+            showMsgMenu: true,
+            menuPosition: { top, left, arrowLeft, arrowPos }
+          })
+          
+          wx.vibrateShort({ type: 'medium' })
+        })
+      }, 50)
+    })
+  },
+
+  closeMsgMenu() {
+    this.setData({ showMsgMenu: false, menuMsg: null })
+  },
+
+  // 复制消息
+  copyMessage() {
+    const { menuMsg } = this.data
+    if (menuMsg?.msg_type === 'text') {
+      wx.setClipboardData({
+        data: menuMsg.content,
+        success: () => wx.showToast({ title: '已复制', icon: 'success' })
+      })
+    }
+    this.closeMsgMenu()
+  },
+
+  // 转发消息
+  forwardMessage() {
+    wx.showToast({ title: '转发功能开发中', icon: 'none' })
+    this.closeMsgMenu()
+  },
+
+  // 引用消息
+  quoteMessage() {
+    const { menuMsg, targetUser, currentUser } = this.data
+    if (!menuMsg) return
+    
+    const senderName = menuMsg.sender_id === currentUser.openid 
+      ? currentUser.nickname 
+      : targetUser.nickname
+    
+    const content = menuMsg.msg_type === 'text' 
+      ? menuMsg.content.substring(0, 50) + (menuMsg.content.length > 50 ? '...' : '')
+      : '[图片]'
+    
+    this.setData({
+      quoteMsg: {
+        msg_id: menuMsg._id,
+        sender_name: senderName,
+        content: content
+      },
+      inputFocus: true
+    })
+    this.closeMsgMenu()
+  },
+
+  // 清除引用
+  clearQuote() {
+    this.setData({ quoteMsg: null })
+  },
+
+  // 滚动到被引用的消息
+  scrollToQuote(e) {
+    const msgId = e.currentTarget.dataset.id
+    if (msgId) {
+      this.setData({ scrollToView: `msg-${msgId}` })
+      // 短暂高亮被引用的消息
+      setTimeout(() => this.setData({ scrollToView: '' }), 500)
+    }
+  },
+
+  // 撤回消息
+  async revokeMessage() {
+    const { menuMsg } = this.data
+    if (!menuMsg) return
+    
+    this.closeMsgMenu()
+    
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'revoke_chat_msg',
+        data: { msg_id: menuMsg._id }
+      })
+      
+      if (res.result?.success) {
+        // 本地立即更新（乐观更新，watcher 也会同步）
+        const messages = this.data.messages.map(m => {
+          if (m._id === menuMsg._id) {
+            return { ...m, is_revoked: true }
+          }
+          return m
+        })
+        this.setData({ messages })
+        wx.showToast({ title: '已撤回', icon: 'success' })
+      } else {
+        wx.showToast({ title: res.result?.message || '撤回失败', icon: 'none' })
+      }
+    } catch (e) {
+      console.error('撤回失败:', e)
+      wx.showToast({ title: '撤回失败', icon: 'none' })
+    }
+  },
+
+  // 删除消息（本地删除，不影响对方）
+  deleteMessage() {
+    const { menuMsg } = this.data
+    if (!menuMsg) return
+    
+    this.closeMsgMenu()
+    
+    wx.showModal({
+      title: '删除消息',
+      content: '确定要删除这条消息吗？仅从您的设备删除',
+      success: (res) => {
+        if (res.confirm) {
+          const messages = this.data.messages.filter(m => m._id !== menuMsg._id)
+          this.setData({ messages })
+          wx.showToast({ title: '已删除', icon: 'success' })
+        }
+      }
+    })
+  },
+
+  // 举报消息
+  reportMessage() {
+    const { menuMsg, roomId } = this.data
+    if (!menuMsg) return
+    
+    this.closeMsgMenu()
+    
+    wx.showModal({
+      title: '举报消息',
+      content: '确定要举报这条消息吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            await wx.cloud.callFunction({
+              name: 'report_content',
+              data: {
+                type: 'chat_message',
+                target_id: menuMsg._id,
+                room_id: roomId,
+                content: menuMsg.content,
+                reason: '违规内容'
+              }
+            })
+            wx.showToast({ title: '举报成功', icon: 'success' })
+          } catch (e) {
+            wx.showToast({ title: '举报失败', icon: 'none' })
+          }
+        }
+      }
+    })
   },
 
   goBack() {

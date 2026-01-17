@@ -36,7 +36,17 @@
           <text>{{item.timeStr}}</text>
         </view>
 
-        <view id="msg-{{item._id}}" class="msg-row {{item.sender_id === currentUser.openid ? 'msg-self' : 'msg-other'}} animate-fade-in">
+        <!-- 撤回消息显示 -->
+        <view wx:if="{{item.is_revoked}}" class="revoked-msg">
+          <text>{{item.sender_id === currentUser.openid ? '你' : '对方'}}撤回了一条消息</text>
+        </view>
+
+        <!-- 正常消息 -->
+        <view 
+          wx:else
+          id="msg-{{item._id}}" 
+          class="msg-row {{item.sender_id === currentUser.openid ? 'msg-self' : 'msg-other'}} animate-fade-in"
+        >
           <image 
             class="avatar" 
             src="{{item.sender_id === currentUser.openid ? (currentUser.avatar || '/images/avatar.png') : (targetUser.avatar || '/images/avatar.png')}}" 
@@ -44,11 +54,35 @@
           />
           <view class="msg-content">
             <view class="msg-fail" wx:if="{{item.sender_id === currentUser.openid && item.status === 'failed'}}" bindtap="resendMessage" data-msg="{{item}}">!</view>
-            <view wx:if="{{item.msg_type === 'text'}}" class="bubble {{item.sender_id === currentUser.openid ? 'bubble-self' : 'bubble-other'}} {{item.status === 'sending' ? 'sending' : ''}}">
+            
+            <!-- 文本消息 -->
+            <view 
+              wx:if="{{item.msg_type === 'text'}}" 
+              class="bubble {{item.sender_id === currentUser.openid ? 'bubble-self' : 'bubble-other'}} {{item.status === 'sending' ? 'sending' : ''}}"
+              bindlongpress="onMsgLongPress"
+              data-msg="{{item}}"
+            >
+              <!-- 引用块 -->
+              <view wx:if="{{item.quote_msg}}" class="quote-block" bindtap="scrollToQuote" data-id="{{item.quote_msg.msg_id}}">
+                <text class="quote-name">{{item.quote_msg.sender_name}}</text>
+                <text class="quote-content">{{item.quote_msg.content}}</text>
+              </view>
               <text class="bubble-text" user-select decode>{{item.content}}</text>
             </view>
-            <view wx:elif="{{item.msg_type === 'image'}}" class="img-wrap">
-              <image class="msg-img" src="{{item.content}}" mode="widthFix" bindtap="previewImage" data-src="{{item.content}}" />
+            
+            <!-- 图片消息 -->
+            <view 
+              wx:elif="{{item.msg_type === 'image'}}" 
+              class="img-wrap {{item.status === 'uploading' ? 'uploading' : ''}}"
+              bindlongpress="onMsgLongPress"
+              data-msg="{{item}}"
+            >
+              <!-- 引用块（图片消息也可以有引用） -->
+              <view wx:if="{{item.quote_msg}}" class="quote-block img-quote" bindtap="scrollToQuote" data-id="{{item.quote_msg.msg_id}}">
+                <text class="quote-name">{{item.quote_msg.sender_name}}</text>
+                <text class="quote-content">{{item.quote_msg.content}}</text>
+              </view>
+              <image class="msg-img" src="{{item.content}}" mode="{{item.status === 'uploading' ? 'aspectFill' : 'widthFix'}}" bindtap="previewImage" data-src="{{item.content}}" />
               <view class="img-loading" wx:if="{{item.status === 'uploading'}}">
                 <van-loading size="24px" color="#fff" />
               </view>
@@ -63,6 +97,20 @@
 
   <!-- 底部输入区域 (TG 风格) -->
   <view class="input-area {{showEmojiPanel ? 'panel-open' : ''}}" style="transform: translateY(-{{keyboardHeight}}px); padding-bottom: {{safeAreaBottom}}px;">
+    <!-- 引用预览栏 -->
+    <view class="quote-preview" wx:if="{{quoteMsg}}">
+      <view class="quote-preview-content">
+        <view class="quote-preview-line"></view>
+        <view class="quote-preview-info">
+          <text class="quote-preview-name">{{quoteMsg.sender_name}}</text>
+          <text class="quote-preview-text">{{quoteMsg.content}}</text>
+        </view>
+      </view>
+      <view class="quote-preview-close" bindtap="clearQuote">
+        <van-icon name="cross" size="16px" color="#999" />
+      </view>
+    </view>
+
     <!-- TG 风格输入框 -->
     <view class="input-capsule">
       <!-- 左侧：表情/键盘切换 -->
@@ -185,5 +233,40 @@
   <!-- 加载中 -->
   <view class="loading" wx:if="{{loading}}">
     <van-loading size="28px" color="#b63b36" vertical>加载中</van-loading>
+  </view>
+
+  <!-- 长按菜单遮罩 -->
+  <view class="menu-overlay {{showMsgMenu ? 'show' : ''}}" bindtap="closeMsgMenu"></view>
+
+  <!-- 长按菜单 -->
+  <view class="msg-menu {{showMsgMenu ? 'show' : ''}} {{menuPosition.arrowPos}}" style="top: {{menuPosition.top}}px; left: {{menuPosition.left}}px;">
+    <view class="menu-arrow" style="left: {{menuPosition.arrowLeft}}px;"></view>
+    <view class="menu-content" id="menu-content">
+      <!-- 复制（仅文本消息） -->
+      <view class="menu-item" wx:if="{{menuMsg.msg_type === 'text'}}" bindtap="copyMessage">
+        <van-icon name="description-o" size="16px" color="#fff" />
+        <text>复制</text>
+      </view>
+      <!-- 引用 -->
+      <view class="menu-item" bindtap="quoteMessage">
+        <van-icon name="chat-o" size="16px" color="#fff" />
+        <text>引用</text>
+      </view>
+      <!-- 撤回（仅自己的消息且2分钟内） -->
+      <view class="menu-item" wx:if="{{menuMsg.isSelf && menuMsg.canRevoke}}" bindtap="revokeMessage">
+        <van-icon name="revoke" size="16px" color="#fff" />
+        <text>撤回</text>
+      </view>
+      <!-- 删除（仅自己的消息） -->
+      <view class="menu-item" wx:if="{{menuMsg.isSelf}}" bindtap="deleteMessage">
+        <van-icon name="delete-o" size="16px" color="#fff" />
+        <text>删除</text>
+      </view>
+      <!-- 举报（仅对方的消息） -->
+      <view class="menu-item" wx:if="{{!menuMsg.isSelf}}" bindtap="reportMessage">
+        <van-icon name="warning-o" size="16px" color="#fff" />
+        <text>举报</text>
+      </view>
+    </view>
   </view>
 </view>

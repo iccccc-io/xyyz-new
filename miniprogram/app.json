@@ -23,6 +23,14 @@
     "pages/index/index",
     "pages/example/index"
   ],
+  "permission": {
+    "scope.camera": {
+      "desc": "用于拍照发送图片"
+    },
+    "scope.writePhotosAlbum": {
+      "desc": "用于保存图片到相册"
+    }
+  },
   "window": {
     "backgroundColor": "#F6F6F6",
     "backgroundTextStyle": "light",
