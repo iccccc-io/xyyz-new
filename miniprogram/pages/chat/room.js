@@ -273,13 +273,13 @@ Page({
       if (refresh) {
         this.setData({
           messages: processed,
-          oldestMsgTime: processed[0]?.send_time || null,
+          oldestMsgTime: processed[0]?.send_time_raw || null,
           loadingMore: false
         })
       } else {
         this.setData({
           messages: [...processed, ...this.data.messages],
-          oldestMsgTime: processed[0]?.send_time || oldestMsgTime,
+          oldestMsgTime: processed[0]?.send_time_raw || oldestMsgTime,
           loadingMore: false
         })
       }
@@ -292,7 +292,8 @@ Page({
   processMsgs(msgs, refresh) {
     let lastTime = 0
     if (!refresh && this.data.messages.length) {
-      lastTime = new Date(this.data.messages[this.data.messages.length - 1].send_time).getTime()
+      const lastMsg = this.data.messages[this.data.messages.length - 1]
+      lastTime = typeof lastMsg.send_time === 'number' ? lastMsg.send_time : new Date(lastMsg.send_time).getTime()
     }
 
     return msgs.map((msg, i) => {
@@ -301,6 +302,8 @@ Page({
       lastTime = time
       return {
         ...msg,
+        send_time: time, // 转换为时间戳，便于后续使用
+        send_time_raw: msg.send_time, // 保留原始值用于查询
         showTime,
         timeStr: showTime ? this.formatTime(msg.send_time) : '',
         status: msg.status || 'sent'
@@ -355,9 +358,12 @@ Page({
     const idx = messages.findIndex(m => m._id === msg._id)
     if (idx > -1) {
       const updated = [...messages]
+      const time = new Date(msg.send_time).getTime()
       updated[idx] = { 
         ...updated[idx], 
         ...msg,
+        send_time: time, // 转换为时间戳
+        send_time_raw: msg.send_time, // 保留原始值
         showTime: updated[idx].showTime,
         timeStr: updated[idx].timeStr
       }
@@ -386,7 +392,7 @@ Page({
       
       // 图片消息用时间接近来匹配（5秒内）
       if (msg.msg_type === 'image') {
-        const tempTime = new Date(m.send_time).getTime()
+        const tempTime = typeof m.send_time === 'number' ? m.send_time : new Date(m.send_time).getTime()
         return Math.abs(msgTime - tempTime) < 5000
       }
       
@@ -397,8 +403,11 @@ Page({
       // 找到临时消息，更新它，保留本地的 quote_msg（以防数据库返回延迟）
       const tempMsg = messages[tempIdx]
       const updated = [...messages]
+      const msgSendTime = new Date(msg.send_time).getTime()
       updated[tempIdx] = { 
         ...msg,
+        send_time: msgSendTime, // 转换为时间戳
+        send_time_raw: msg.send_time, // 保留原始值
         quote_msg: msg.quote_msg || tempMsg.quote_msg, // 优先使用数据库的，否则保留本地的
         showTime: tempMsg.showTime, 
         timeStr: tempMsg.timeStr, 
@@ -510,6 +519,7 @@ Page({
 
     const tempId = `temp_${Date.now()}`
     const now = new Date()
+    const nowTime = now.getTime()
     const tempMsg = {
       _id: tempId,
       _tempId: tempId,
@@ -517,7 +527,8 @@ Page({
       sender_id: currentUser.openid,
       msg_type: 'text',
       content,
-      send_time: now.toISOString(),
+      send_time: nowTime, // 使用时间戳
+      send_time_raw: now.toISOString(), // 保留ISO格式用于发送到服务器
       showTime: this.shouldShowTime(now),
       timeStr: this.shouldShowTime(now) ? this.formatTime(now) : '',
       status: 'sending',
@@ -599,6 +610,7 @@ Page({
     const validExts = ['jpg', 'jpeg', 'png', 'gif', 'webp']
     const finalExt = validExts.includes(ext) ? ext : 'jpg'
 
+    const nowTime = now.getTime()
     const tempMsg = {
       _id: tempId,
       _tempId: tempId,
@@ -606,7 +618,8 @@ Page({
       sender_id: currentUser?.openid || '',
       msg_type: 'image',
       content: path,
-      send_time: now.toISOString(),
+      send_time: nowTime, // 使用时间戳
+      send_time_raw: now.toISOString(), // 保留ISO格式
       showTime: this.shouldShowTime(now),
       timeStr: this.shouldShowTime(now) ? this.formatTime(now) : '',
       status: 'uploading'
@@ -703,8 +716,10 @@ Page({
   shouldShowTime(t) {
     const { messages } = this.data
     if (!messages.length) return true
-    const last = new Date(messages[messages.length - 1].send_time).getTime()
-    return new Date(t).getTime() - last > 5 * 60 * 1000
+    const lastMsg = messages[messages.length - 1]
+    const last = typeof lastMsg.send_time === 'number' ? lastMsg.send_time : new Date(lastMsg.send_time).getTime()
+    const current = typeof t === 'number' ? t : new Date(t).getTime()
+    return current - last > 5 * 60 * 1000
   },
 
   scrollToBottom() {
@@ -737,13 +752,22 @@ Page({
   onMsgLongPress(e) {
     const msg = e.currentTarget.dataset.msg
     const { currentUser } = this.data
-    if (!msg || msg.status === 'sending' || msg.status === 'uploading') return
+    if (!msg || msg.status === 'sending' || msg.status === 'uploading' || msg.is_revoked) return
     
     // 计算是否可以撤回（2分钟内）
-    const sendTime = new Date(msg.send_time).getTime()
+    const sendTime = typeof msg.send_time === 'number' ? msg.send_time : new Date(msg.send_time).getTime()
     const now = Date.now()
-    const canRevoke = (now - sendTime) < 2 * 60 * 1000
+    const timeDiff = now - sendTime
+    const canRevoke = !isNaN(sendTime) && sendTime > 0 && timeDiff < 2 * 60 * 1000
     const isSelf = msg.sender_id === currentUser.openid
+    
+    console.log('[长按消息]', {
+      msgId: msg._id,
+      isSelf,
+      sendTime: new Date(sendTime).toLocaleString(),
+      timeDiff: `${Math.floor(timeDiff / 1000)}秒`,
+      canRevoke
+    })
     
     // 先设置菜单数据，让菜单渲染出来
     this.setData({
