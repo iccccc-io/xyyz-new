@@ -1,0 +1,95 @@
+<view class="page">
+  <nav-bar title="传承人认证" showBack="{{true}}" />
+
+  <view class="content">
+    <view class="card tip">
+      <text class="tip-title">认证说明</text>
+      <text class="tip-desc">认证后将获得传承人标识，并自动创建专属非遗工坊。</text>
+    </view>
+
+    <view class="card">
+      <van-cell-group border="{{false}}">
+        <van-field
+          label="真实姓名"
+          placeholder="请输入真实姓名"
+          value="{{realName}}"
+          required
+          maxlength="20"
+          bind:change="onRealNameInput"
+        />
+        <van-cell
+          title="非遗类别"
+          is-link
+          clickable
+          value="{{ichCategory || '请选择'}}"
+          value-class="{{ichCategory ? 'value-text' : 'value-placeholder'}}"
+          bind:click="openCategorySheet"
+        />
+      </van-cell-group>
+    </view>
+
+    <view class="card">
+      <view class="section-title">证书证明</view>
+      <view class="section-desc">请上传资质证明（1-3张）</view>
+      
+      <!-- 自定义证书上传区域 -->
+      <view class="cert-upload-area">
+        <view class="cert-list">
+          <view 
+            class="cert-item" 
+            wx:for="{{certFiles}}" 
+            wx:key="url"
+          >
+            <image class="cert-image" src="{{item.url}}" mode="aspectFill" />
+            <view class="cert-delete-btn" data-index="{{index}}" catchtap="handleDeleteCert">
+              <text class="cert-delete-icon">×</text>
+            </view>
+          </view>
+          
+          <!-- 添加按钮 -->
+          <view class="add-cert-btn" wx:if="{{certFiles.length < 3}}" bindtap="chooseCertImages">
+            <van-icon name="plus" size="28" color="#999" />
+            <text class="add-cert-text">{{certFiles.length}}/3</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <van-field
+        label="工坊简介"
+        type="textarea"
+        autosize
+        maxlength="300"
+        required
+        placeholder="介绍技艺特长、从业经历等（至少50字）"
+        value="{{bio}}"
+        bind:change="onBioInput"
+      />
+      <view class="counter">{{bio.length}} / 300</view>
+    </view>
+
+    <view class="footer">
+      <van-button
+        type="primary"
+        block
+        round
+        color="#b63b36"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bind:click="submitApplication"
+      >
+        {{submitting ? '提交中...' : '提交认证申请'}}
+      </van-button>
+    </view>
+  </view>
+</view>
+
+<van-action-sheet
+  show="{{showCategorySheet}}"
+  actions="{{categoryActions}}"
+  cancel-text="取消"
+  bind:close="onCloseCategorySheet"
+  bind:select="onSelectCategory"
+/>
+

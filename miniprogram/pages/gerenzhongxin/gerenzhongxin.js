@@ -367,13 +367,34 @@ Page({
   },
 
   /**
-   * 跳转到认证页面
+   * 跳转到认证页面或工坊
    */
   goToCertify() {
-    wx.showToast({
-      title: '认证功能开发中',
-      icon: 'none'
-    })
+    // 检查登录状态
+    if (!this.data.isLoggedIn) {
+      this.goToLogin()
+      return
+    }
+    
+    // 根据认证状态跳转到不同页面
+    if (this.data.userInfo.is_certified) {
+      // 已认证，跳转到工坊页面
+      if (this.data.userInfo.workshop_id) {
+        wx.navigateTo({
+          url: `/pages/workshop/index?id=${this.data.userInfo.workshop_id}`
+        })
+      } else {
+        wx.showToast({
+          title: '工坊信息异常',
+          icon: 'none'
+        })
+      }
+    } else {
+      // 未认证，跳转到认证申请页面
+      wx.navigateTo({
+        url: '/pages/certification/apply'
+      })
+    }
   },
 
   /**

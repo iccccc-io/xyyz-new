@@ -1,0 +1,164 @@
+<view class="page">
+  <nav-bar title="发布商品" showBack="{{true}}" />
+
+  <view class="content">
+    <view class="card">
+      <view class="section-title">商品图片</view>
+      <view class="section-desc">建议尺寸 750x750，最多 9 张，第一张为封面</view>
+      
+      <!-- 自定义图片上传区域，支持首图标记 -->
+      <view class="image-upload-area">
+        <view class="image-list">
+          <view 
+            class="image-item" 
+            wx:for="{{imageFiles}}" 
+            wx:key="url"
+          >
+            <image class="preview-image" src="{{item.url}}" mode="aspectFill" />
+            <view class="first-badge" wx:if="{{index === 0}}">首图</view>
+            <view class="delete-btn" data-index="{{index}}" catchtap="handleDeleteImage">
+              <text class="delete-icon">×</text>
+            </view>
+          </view>
+          
+          <!-- 添加按钮 -->
+          <view class="add-image-btn" wx:if="{{imageFiles.length < 9}}" bindtap="chooseImages">
+            <van-icon name="plus" size="28" color="#999" />
+            <text class="add-text">{{imageFiles.length}}/9</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">基本信息</view>
+      <van-cell-group border="{{false}}">
+        <van-field
+          label="商品标题"
+          placeholder="请输入商品标题（至少5字）"
+          value="{{title}}"
+          maxlength="60"
+          required
+          bind:change="onTitleInput"
+        />
+        <van-field
+          label="商品描述"
+          type="textarea"
+          autosize
+          maxlength="500"
+          required
+          placeholder="描述工艺、材质、文化内涵等（至少20字）"
+          value="{{intro}}"
+          bind:change="onIntroInput"
+        />
+        <van-cell
+          title="商品分类"
+          is-link
+          clickable
+          value="{{category || '请选择'}}"
+          value-class="{{category ? 'value-text' : 'value-placeholder'}}"
+          bind:click="openCategorySheet"
+        />
+      </van-cell-group>
+    </view>
+
+    <view class="card">
+      <view class="section-title">价格与库存</view>
+      <van-cell-group border="{{false}}">
+        <van-field
+          label="现价"
+          type="digit"
+          placeholder="输入现价（元）"
+          value="{{price}}"
+          required
+          bind:change="onPriceInput"
+        />
+        <van-field
+          label="原价"
+          type="digit"
+          placeholder="选填"
+          value="{{originalPrice}}"
+          bind:change="onOriginalPriceInput"
+        />
+        <van-field
+          label="库存"
+          type="digit"
+          placeholder="输入库存数量"
+          value="{{stock}}"
+          required
+          bind:change="onStockInput"
+        />
+      </van-cell-group>
+    </view>
+
+    <view class="card">
+      <view class="section-title">文化属性</view>
+      <van-cell-group border="{{false}}">
+        <van-cell
+          title="关联非遗项目"
+          is-link
+          clickable
+          value="{{projectName || '请选择'}}"
+          value-class="{{projectName ? 'value-text' : 'value-placeholder'}}"
+          bind:click="openProjectSheet"
+        />
+        <van-field
+          label="产地信息"
+          placeholder="如：湖南长沙（选填）"
+          value="{{origin}}"
+          maxlength="30"
+          bind:change="onOriginInput"
+        />
+      </van-cell-group>
+      <view wx:if="{{projectEmpty}}" class="hint">
+        暂无可选非遗项目，请先在 ich_projects 集合中添加数据
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">商品标签</view>
+      <view class="tag-grid">
+        <view
+          class="tag-item {{item.selected ? 'selected' : ''}}"
+          wx:for="{{tagList}}"
+          wx:key="name"
+          data-index="{{index}}"
+          bindtap="toggleTag"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+
+    <view class="footer">
+      <van-button
+        type="primary"
+        block
+        round
+        color="#b63b36"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bind:click="submitProduct"
+      >
+        {{submitting ? '发布中...' : '立即发布'}}
+      </van-button>
+    </view>
+  </view>
+</view>
+
+<van-action-sheet
+  show="{{showCategorySheet}}"
+  actions="{{categoryActions}}"
+  cancel-text="取消"
+  bind:close="onCloseCategorySheet"
+  bind:select="onSelectCategory"
+/>
+
+<van-action-sheet
+  show="{{showProjectSheet}}"
+  actions="{{projectActions}}"
+  cancel-text="取消"
+  bind:close="onCloseProjectSheet"
+  bind:select="onSelectProject"
+/>
+

@@ -481,23 +481,6 @@ page {
   display: block;
 }
 
-.card-tags {
-  position: absolute;
-  top: 12rpx;
-  left: 12rpx;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-}
-
-.card-tag {
-  font-size: 20rpx;
-  color: #ffffff;
-  background: linear-gradient(135deg, #8B2E2A 0%, #B63B36 100%);
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-}
-
 .card-content {
   padding: 20rpx;
 }
@@ -514,50 +497,66 @@ page {
   margin-bottom: 12rpx;
 }
 
-.card-origin {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
+/* 关联非遗项目标签 */
+.card-project {
   margin-bottom: 16rpx;
 }
 
-.origin-icon {
-  font-size: 22rpx;
-}
-
-.origin-text {
+.project-tag {
+  display: inline-block;
   font-size: 22rpx;
   color: #8B2E2A;
-  font-weight: 500;
+  background: linear-gradient(135deg, #FDF5F0 0%, #FCEEE6 100%);
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  border: 1rpx solid #E8D5CC;
+  max-width: 200rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-footer {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 8rpx;
 }
 
 .price-wrap {
   display: flex;
   align-items: baseline;
-  gap: 8rpx;
+  gap: 6rpx;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .current-price {
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #B63B36;
+  max-width: 160rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .original-price {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #bbbbbb;
   text-decoration: line-through;
+  max-width: 80rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sales-text {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #999999;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* 加载更多 */

@@ -47,7 +47,7 @@ Page({
    */
   async loadProductDetail(id) {
     try {
-      const res = await db.collection('products').doc(id).get()
+      const res = await db.collection('shopping_products').doc(id).get()
       
       if (res.data) {
         // 处理图片数组
@@ -55,6 +55,20 @@ Page({
         if (!product.detail_imgs || product.detail_imgs.length === 0) {
           product.detail_imgs = [product.cover_img]
         }
+        
+        // 如果有工坊ID，查询工坊信息
+        if (product.workshop_id) {
+          try {
+            const workshopRes = await db.collection('shopping_workshops')
+              .doc(product.workshop_id)
+              .get()
+            product.workshop_info = workshopRes.data
+          } catch (err) {
+            console.log('工坊信息加载失败:', err)
+          }
+        }
+        
+        // 如果有非遗项目ID，可以在这里查询项目信息（预留）
         
         this.setData({
           product: product,

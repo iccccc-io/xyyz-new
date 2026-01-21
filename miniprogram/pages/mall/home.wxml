@@ -41,10 +41,10 @@
         />
         <view class="hero-overlay">
           <view class="hero-info">
-            <text class="hero-title">{{featuredProduct.title}}</text>
+            <text class="hero-title">{{featuredProduct.titleDisplay || featuredProduct.title}}</text>
             <view class="hero-price-row">
-              <text class="hero-price">¥{{featuredProduct.price}}</text>
-              <text class="hero-origin">📍 {{featuredProduct.origin || '湖南'}}</text>
+              <text class="hero-price">¥{{featuredProduct.priceDisplay}}</text>
+              <text class="hero-origin">📍 {{featuredProduct.originDisplay || '湖南'}}</text>
             </view>
           </view>
         </view>
@@ -114,15 +114,15 @@
           <view class="workshop-info">
             <text class="workshop-name">{{item.name}}</text>
             <view class="workshop-meta">
-              <text class="workshop-origin">📍 {{item.origin}}</text>
+              <text class="workshop-origin">📍 {{item.origin || '湖南'}}</text>
             </view>
             <view class="workshop-product">
               <text class="product-label">代表作：</text>
-              <text class="product-name">{{item.product.title}}</text>
+              <text class="product-name">{{item.product.titleDisplay || item.product.title}}</text>
             </view>
             <view class="workshop-price">
               <text class="price-symbol">¥</text>
-              <text class="price-value">{{item.product.price}}</text>
+              <text class="price-value">{{item.product.priceDisplay}}</text>
               <text class="price-suffix">起</text>
             </view>
           </view>
@@ -171,21 +171,16 @@
               mode="widthFix"
               lazy-load
             />
-            <!-- 标签 -->
-            <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
-              <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
-            </view>
           </view>
           <view class="card-content">
-            <text class="card-title">{{item.title}}</text>
-            <view class="card-origin">
-              <text class="origin-icon">📍</text>
-              <text class="origin-text">{{item.origin || '湖南'}}</text>
+            <text class="card-title">{{item.titleDisplay || item.title}}</text>
+            <view class="card-project" wx:if="{{item.related_project_name}}">
+              <text class="project-tag">{{item.related_project_name}}</text>
             </view>
             <view class="card-footer">
               <view class="price-wrap">
-                <text class="current-price">¥{{item.price}}</text>
-                <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+                <text class="current-price">¥{{item.priceDisplay}}</text>
+                <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
               </view>
               <text class="sales-text">已售{{item.sales || 0}}</text>
             </view>
@@ -209,21 +204,16 @@
               mode="widthFix"
               lazy-load
             />
-            <!-- 标签 -->
-            <view class="card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
-              <text class="card-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
-            </view>
           </view>
           <view class="card-content">
-            <text class="card-title">{{item.title}}</text>
-            <view class="card-origin">
-              <text class="origin-icon">📍</text>
-              <text class="origin-text">{{item.origin || '湖南'}}</text>
+            <text class="card-title">{{item.titleDisplay || item.title}}</text>
+            <view class="card-project" wx:if="{{item.related_project_name}}">
+              <text class="project-tag">{{item.related_project_name}}</text>
             </view>
             <view class="card-footer">
               <view class="price-wrap">
-                <text class="current-price">¥{{item.price}}</text>
-                <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+                <text class="current-price">¥{{item.priceDisplay}}</text>
+                <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
               </view>
               <text class="sales-text">已售{{item.sales || 0}}</text>
             </view>

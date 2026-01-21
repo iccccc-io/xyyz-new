@@ -20,6 +20,9 @@
     "pages/mall/topic",
     "pages/login/login",
     "pages/user/relations",
+    "pages/certification/apply",
+    "pages/workshop/index",
+    "pages/product/publish",
     "pages/index/index",
     "pages/example/index"
   ],

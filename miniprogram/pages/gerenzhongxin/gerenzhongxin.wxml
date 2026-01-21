@@ -112,8 +112,8 @@
           bindtap="goToAddress"
         />
         <van-cell 
-          title="{{userInfo.is_certified ? '认证信息' : '申请认证'}}" 
-          icon="certificate" 
+          title="{{userInfo.is_certified ? '我的工坊' : '传承人认证'}}" 
+          icon="{{userInfo.is_certified ? 'shop-o' : 'certificate'}}" 
           is-link
           bindtap="goToCertify"
         />
