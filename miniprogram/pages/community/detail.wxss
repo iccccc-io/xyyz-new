@@ -2,13 +2,13 @@
 /* 沉浸式帖子详情页样式 */
 
 page {
-  background-color: #000000;
+  background-color: #ffffff;
 }
 
 /* 滚动容器 */
 .detail-scroll {
   height: 100vh;
-  background: #000000;
+  background: #ffffff;
 }
 
 .detail-container {
