@@ -66,8 +66,8 @@
           </view>
           <view class="card-footer">
             <view class="price-wrap">
-              <text class="current-price">¥{{item.price}}</text>
-              <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+              <text class="current-price">¥{{item.priceDisplay}}</text>
+              <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
             </view>
             <text class="sales-text">已售{{item.sales || 0}}</text>
           </view>
@@ -104,8 +104,8 @@
           </view>
           <view class="card-footer">
             <view class="price-wrap">
-              <text class="current-price">¥{{item.price}}</text>
-              <text class="original-price" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+              <text class="current-price">¥{{item.priceDisplay}}</text>
+              <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
             </view>
             <text class="sales-text">已售{{item.sales || 0}}</text>
           </view>

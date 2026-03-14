@@ -1,5 +1,12 @@
 <view class="page">
-  <nav-bar title="发布商品" showBack="{{true}}" />
+  <nav-bar
+    title="发布商品"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
 
   <view class="content">
     <view class="card">

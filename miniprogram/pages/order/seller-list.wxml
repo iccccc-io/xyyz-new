@@ -1,0 +1,154 @@
+<!--pages/order/seller-list.wxml-->
+<view class="seller-list-page">
+  <nav-bar
+    title="销售订单管理"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- Tab -->
+  <van-tabs
+    active="{{activeTab}}"
+    color="#8B2E2A"
+    title-active-color="#8B2E2A"
+    bind:click="onTabChange"
+    sticky
+    offset-top="{{navBarHeight}}"
+  >
+    <van-tab title="待发货" name="20" />
+    <van-tab title="已发货" name="30" />
+    <van-tab title="已完成" name="40" />
+  </van-tabs>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <van-empty
+    wx:elif="{{!loading && orders.length === 0}}"
+    image="order"
+    description="暂无相关订单"
+  />
+
+  <!-- 订单列表 -->
+  <view class="orders-wrap" wx:else>
+    <view class="order-card" wx:for="{{orders}}" wx:key="_id">
+
+      <!-- 卡片头部 -->
+      <view class="card-header">
+        <view class="order-no">
+          <text class="order-no-label">订单号：</text>
+          <text class="order-no-val">{{item._id}}</text>
+        </view>
+        <text class="order-status-text {{item.statusStyle}}">{{item.statusText}}</text>
+      </view>
+
+      <!-- 商品信息行 -->
+      <view class="product-row">
+        <image class="product-img" src="{{item.product_snapshot.cover_img}}" mode="aspectFill" />
+        <view class="product-info">
+          <text class="product-title">{{item.product_snapshot.title}}</text>
+          <view class="product-meta">
+            <text class="product-price">¥{{item.productPriceDisplay}}</text>
+            <text class="product-qty">× {{item.quantity}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 收货信息 -->
+      <view class="address-row" wx:if="{{item.delivery_address}}">
+        <van-icon name="location-o" size="15" color="#8B6F47" />
+        <text class="address-text">
+          {{item.delivery_address.userName}} {{item.delivery_address.telNumber}} | {{item.delivery_address.provinceName}}{{item.delivery_address.cityName}}{{item.delivery_address.countyName}} {{item.delivery_address.detailInfo}}
+        </text>
+      </view>
+
+      <!-- 物流（已发货后显示） -->
+      <view class="logistics-row" wx:if="{{item.status >= 30 && item.tracking_number}}">
+        <van-icon name="logistics" size="15" color="#1989fa" />
+        <text class="logistics-text">{{item.carrier_code}} {{item.tracking_number}}</text>
+        <text class="ship-time">{{item.shipTimeDisplay}}</text>
+      </view>
+
+      <!-- 总价 -->
+      <view class="total-row">
+        <text class="total-label">共 {{item.quantity}} 件，买家实付：</text>
+        <text class="total-price">¥{{item.totalDisplay}}</text>
+      </view>
+
+      <!-- 操作 -->
+      <view class="card-actions">
+        <block wx:if="{{item.status === 20}}">
+          <van-button size="small" round color="#8B2E2A" bind:click="openShipDialog" data-id="{{item._id}}" data-idx="{{index}}">
+            去发货
+          </van-button>
+        </block>
+        <block wx:elif="{{item.status === 30}}">
+          <van-button size="small" round plain color="#1989fa" bind:click="viewLogistics" data-id="{{item._id}}">
+            查看物流
+          </van-button>
+          <text class="waiting-hint">等待买家确认收货</text>
+        </block>
+        <block wx:elif="{{item.status === 40}}">
+          <van-button size="small" round plain color="#8B6F47" bind:click="viewLogistics" data-id="{{item._id}}">
+            查看物流
+          </van-button>
+          <text class="done-hint">交易完成</text>
+        </block>
+      </view>
+    </view>
+
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">加载更多</view>
+    <view class="no-more" wx:elif="{{orders.length > 0 && !hasMore}}">— 没有更多了 —</view>
+  </view>
+</view>
+
+<!-- ===== 发货弹窗 ===== -->
+<van-popup
+  show="{{showShipDialog}}"
+  position="bottom"
+  round
+  bind:close="closeShipDialog"
+>
+  <view class="ship-panel">
+    <view class="ship-panel-handle"></view>
+    <view class="ship-panel-title">填写发货信息</view>
+
+    <!-- 快递公司选择 -->
+    <view class="ship-field-label">快递公司</view>
+    <view class="carrier-grid">
+      <view
+        class="carrier-item {{shipForm.carrier_code === item.code ? 'carrier-active' : ''}}"
+        wx:for="{{carriers}}"
+        wx:key="code"
+        bindtap="selectCarrier"
+        data-code="{{item.code}}"
+        data-name="{{item.name}}"
+      >
+        {{item.name}}
+      </view>
+    </view>
+
+    <!-- 快递单号 -->
+    <view class="ship-field-label">快递单号</view>
+    <van-field
+      value="{{shipForm.tracking_number}}"
+      placeholder="请输入快递单号"
+      border
+      clearable
+      bind:change="onTrackingInput"
+    />
+
+    <view class="ship-actions">
+      <van-button block round plain color="#999" bind:click="closeShipDialog">取消</van-button>
+      <van-button block round color="#8B2E2A" loading="{{shipping}}" bind:click="submitShip">
+        确认发货
+      </van-button>
+    </view>
+  </view>
+</van-popup>

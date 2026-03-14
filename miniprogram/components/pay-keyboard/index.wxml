@@ -1,0 +1,66 @@
+<!--components/pay-keyboard/index.wxml-->
+<view class="kb-mask" wx:if="{{show}}" bindtap="onMaskTap">
+  <!-- 面板：阻止事件冒泡，防止点击面板时关闭 -->
+  <view class="kb-panel" catchtap>
+
+    <!-- ===== 顶部把手 ===== -->
+    <view class="kb-handle"></view>
+
+    <!-- ===== 标题行 ===== -->
+    <view class="kb-header">
+      <view class="kb-close" bindtap="onClose">
+        <van-icon name="cross" size="20" color="#999" />
+      </view>
+      <view class="kb-title-wrap">
+        <text class="kb-title">{{title}}</text>
+        <text class="kb-amount">¥{{amountDisplay}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 6 位密码格 ===== -->
+    <view class="kb-dots-row">
+      <view
+        class="kb-dot {{passwordArr.length > index ? 'dot-filled' : 'dot-empty'}}"
+        wx:for="{{dotIndexes}}"
+        wx:key="index"
+      >
+        <view class="dot-inner" wx:if="{{passwordArr.length > index}}"></view>
+      </view>
+    </view>
+
+    <!-- ===== 错误 / 提示信息 ===== -->
+    <view class="kb-msg kb-msg-error" wx:if="{{errorMsg}}">
+      <van-icon name="warning-o" size="14" color="#ee0a24" />
+      <text>{{errorMsg}}</text>
+    </view>
+    <view class="kb-msg kb-msg-hint" wx:elif="{{hintMsg}}">
+      <text>{{hintMsg}}</text>
+    </view>
+    <view class="kb-msg" wx:else></view>
+
+    <!-- ===== 数字键盘 ===== -->
+    <view class="kb-grid">
+      <view
+        class="kb-key {{item === '' ? 'kb-key-empty' : ''}} {{loading ? 'kb-key-disabled' : ''}}"
+        wx:for="{{keys}}"
+        wx:key="index"
+        bindtap="onKeyTap"
+        data-key="{{item}}"
+      >
+        <!-- 删除键 -->
+        <view wx:if="{{item === 'del'}}">
+          <van-icon name="arrow-left" size="22" color="#333" />
+        </view>
+        <!-- 加载中 -->
+        <view class="kb-loading" wx:elif="{{item === '0' && loading}}">
+          <view class="loading-dot d1"></view>
+          <view class="loading-dot d2"></view>
+          <view class="loading-dot d3"></view>
+        </view>
+        <!-- 普通数字 -->
+        <text wx:elif="{{item !== ''}}">{{item}}</text>
+      </view>
+    </view>
+
+  </view>
+</view>

@@ -1,0 +1,182 @@
+/* components/pay-keyboard/index.wxss */
+
+/* ===== 遮罩层 ===== */
+.kb-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ===== 键盘面板 ===== */
+.kb-panel {
+  width: 100%;
+  background: #f7f8fa;
+  border-radius: 32rpx 32rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ===== 顶部把手 ===== */
+.kb-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: #ddd;
+  border-radius: 4rpx;
+  margin: 20rpx auto 0;
+}
+
+/* ===== 标题行 ===== */
+.kb-header {
+  position: relative;
+  padding: 28rpx 40rpx 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.kb-close {
+  position: absolute;
+  left: 40rpx;
+  top: 28rpx;
+  padding: 8rpx;
+}
+
+.kb-title-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.kb-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.kb-amount {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #8B2E2A;
+  letter-spacing: 2rpx;
+}
+
+/* ===== 密码格 ===== */
+.kb-dots-row {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 40rpx 0 12rpx;
+}
+
+.kb-dot {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s;
+}
+
+.dot-filled {
+  border-color: #8B2E2A;
+  background: #fff;
+}
+
+.dot-inner {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #333;
+}
+
+/* ===== 消息行 ===== */
+.kb-msg {
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.kb-msg-error {
+  color: #ee0a24;
+}
+
+.kb-msg-hint {
+  color: #999;
+}
+
+/* ===== 数字键盘网格 ===== */
+.kb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rpx;
+  background: #e0e0e0;
+  border-top: 2rpx solid #e0e0e0;
+}
+
+.kb-key {
+  background: #fff;
+  height: 108rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  font-weight: 400;
+  color: #333;
+  user-select: none;
+}
+
+.kb-key:active {
+  background: #e8e8e8;
+}
+
+.kb-key-empty {
+  background: #f7f8fa;
+  pointer-events: none;
+}
+
+.kb-key-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ===== 加载动画（显示在 0 键位置） ===== */
+.kb-loading {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.loading-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #8B2E2A;
+  animation: blink 1.2s infinite;
+}
+
+.loading-dot.d2 { animation-delay: 0.2s; }
+.loading-dot.d3 { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%            { opacity: 1;   transform: scale(1); }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "process_payment",
+  "version": "1.0.0",
+  "description": "模拟支付处理云函数：验密码、扣余额、改订单状态、记账本",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

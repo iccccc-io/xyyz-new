@@ -1,0 +1,9 @@
+{
+  "name": "cancel_order",
+  "version": "1.0.0",
+  "description": "取消待付款订单并回滚库存",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "manage_aftersale",
+  "version": "1.0.0",
+  "description": "售后统一处理云函数：申请/撤销/审批/寄回/确认退货/退款",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

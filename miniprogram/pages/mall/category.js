@@ -1,6 +1,19 @@
 // pages/mall/category.js
 const db = wx.cloud.database()
 
+/**
+ * 将价格（分）格式化为可读的元字符串
+ * @param {number} fen - 价格（单位：分）
+ * @returns {string}
+ */
+function formatPrice(fen) {
+  if (!fen && fen !== 0) return '0.00'
+  const yuan = fen / 100
+  if (yuan >= 100000000) return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
+  if (yuan >= 10000) return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
+  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -55,23 +68,27 @@ Page({
     try {
       const { activeCategory, page, pageSize } = this.data
       
-      let query = db.collection('products')
-      
-      // 分类筛选（按官方非遗分类）
+      const _ = db.command
+      let whereCondition = { status: 1, stock: _.gt(0) }
+
       if (activeCategory !== 'all') {
-        query = query.where({
-          category: activeCategory
-        })
+        whereCondition.category = activeCategory
       }
-      
+
+      let query = db.collection('shopping_products').where(whereCondition)
+
       const res = await query
         .skip(page * pageSize)
         .limit(pageSize)
         .orderBy('sales', 'desc')
         .get()
-      
-      const newProducts = res.data
-      
+
+      const newProducts = res.data.map(item => ({
+        ...item,
+        priceDisplay: formatPrice(item.price),
+        originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : ''
+      }))
+
       if (newProducts.length < pageSize) {
         this.setData({ noMore: true })
       }

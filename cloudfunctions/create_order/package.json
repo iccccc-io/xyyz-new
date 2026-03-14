@@ -1,0 +1,9 @@
+{
+  "name": "create_order",
+  "version": "1.0.0",
+  "description": "统一下单入口（管理员权限操作库存和订单）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

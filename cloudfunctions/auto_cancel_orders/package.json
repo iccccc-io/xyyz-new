@@ -1,0 +1,9 @@
+{
+  "name": "auto_cancel_orders",
+  "version": "1.0.0",
+  "description": "定时取消超时未支付订单",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

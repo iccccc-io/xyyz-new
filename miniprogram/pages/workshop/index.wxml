@@ -1,7 +1,14 @@
 <!--pages/workshop/index.wxml-->
 <view class="workshop-container">
   <!-- 导航栏 -->
-  <nav-bar title="非遗工坊" showBack="{{true}}" />
+  <nav-bar
+    title="非遗工坊"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
 
   <view wx:if="{{!loading && workshopInfo}}">
     <!-- 工坊头部信息 -->
@@ -78,7 +85,7 @@
         </view>
       </view>
 
-      <!-- 商品瀑布流 -->
+      <!-- 商品列表 -->
       <view class="product-grid" wx:else>
         <view 
           class="product-item" 
@@ -87,12 +94,19 @@
           bindtap="navigateToProductDetail"
           data-id="{{item._id}}"
         >
-          <image class="product-image" src="{{item.cover_image}}" mode="aspectFill" />
+          <image class="product-image" src="{{item.cover_img}}" mode="aspectFill" />
+          <!-- 主理人可见：状态徽标 -->
+          <view class="status-badge status-on" wx:if="{{isOwner && item.status === 1}}">上架</view>
+          <view class="status-badge status-off" wx:if="{{isOwner && item.status !== 1}}">下架</view>
           <view class="product-info">
-            <text class="product-name">{{item.name}}</text>
+            <text class="product-name">{{item.title}}</text>
             <view class="product-footer">
-              <text class="product-price">¥{{item.price}}</text>
+              <text class="product-price">¥{{item.priceDisplay}}</text>
               <text class="product-sales">已售{{item.sales || 0}}</text>
+            </view>
+            <!-- 库存提示（仅主理人可见） -->
+            <view class="stock-tip" wx:if="{{isOwner && item.stock <= 5}}">
+              <text class="stock-warn">库存仅剩 {{item.stock}} 件</text>
             </view>
           </view>
         </view>

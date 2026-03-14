@@ -23,13 +23,19 @@ Page({
       }
     },
     viewsFormatted: '0',
+    // 买家订单统计（状态码与顶层设计一致：10/20/30/40/60）
     orderCounts: {
-      pending: 0,
-      toShip: 0,
-      toReceive: 0,
-      completed: 0,
-      refund: 0
+      pending: 0,    // 10: Pending_Pay
+      toShip: 0,     // 20: Pending_Ship
+      toReceive: 0,  // 30: Shipped
+      completed: 0,  // 40: Completed
+      refund: 0      // 60: After_Sale
     },
+    // 工坊数据（仅认证传承人可见）
+    workshopData: null,
+    workshopPendingOrders: 0,
+    // 钱包余额预览（元，保留两位小数的字符串）
+    walletBalance: null,
     userPosts: [],
     leftPosts: [],
     rightPosts: [],
@@ -90,6 +96,12 @@ Page({
       // 加载用户相关数据
       this.loadOrderCounts()
       this.loadUserPosts()
+      this.loadWalletBalance()
+
+      // 认证传承人：额外加载工坊管理数据
+      if (userInfo.is_certified && userInfo.workshop_id) {
+        this.loadWorkshopSummary(userInfo.workshop_id)
+      }
     } else {
       // 未登录，显示游客蒙版
       this.setData({
@@ -115,31 +127,62 @@ Page({
   /**
    * 加载订单统计
    */
+  /**
+   * 加载买家订单统计
+   * 状态码遵循顶层设计：10/20/30/40/50/60
+   */
   async loadOrderCounts() {
     if (!app.globalData.openid) return
-    
+
     try {
-      const ordersRes = await db.collection('orders')
-        .where({
-          _openid: app.globalData.openid
-        })
+      const ordersRes = await db.collection('shopping_orders')
+        .where({ _openid: app.globalData.openid })
+        .field({ status: true })
         .get()
 
       const orders = ordersRes.data || []
-      
-      const orderCounts = {
-        pending: orders.filter(o => o.status === 0).length,
-        toShip: orders.filter(o => o.status === 1).length,
-        toReceive: orders.filter(o => o.status === 2).length,
-        completed: orders.filter(o => o.status === 3).length,
-        refund: orders.filter(o => o.status === 4).length
-      }
 
-      this.setData({ orderCounts })
-      console.log('订单统计:', orderCounts)
-
+      this.setData({
+        orderCounts: {
+          pending: orders.filter(o => o.status === 10).length,   // Pending_Pay
+          toShip: orders.filter(o => o.status === 20).length,    // Pending_Ship
+          toReceive: orders.filter(o => o.status === 30).length, // Shipped
+          completed: orders.filter(o => o.status === 40).length, // Completed
+          refund: orders.filter(o => o.status === 60).length     // After_Sale
+        }
+      })
     } catch (err) {
       console.error('加载订单统计失败:', err)
+    }
+  },
+
+  /**
+   * 加载工坊核心数据（仅认证传承人调用）
+   * @param {string} workshopId - 工坊ID
+   */
+  async loadWorkshopSummary(workshopId) {
+    try {
+      // 工坊基础信息
+      const workshopRes = await db.collection('shopping_workshops')
+        .doc(workshopId)
+        .get()
+
+      if (!workshopRes.data) return
+
+      // 待发货订单数（卖家视角：status=20）
+      const pendingRes = await db.collection('shopping_orders')
+        .where({
+          'product_snapshot.workshop_id': workshopId,
+          status: 20
+        })
+        .count()
+
+      this.setData({
+        workshopData: workshopRes.data,
+        workshopPendingOrders: pendingRes.total || 0
+      })
+    } catch (err) {
+      console.error('加载工坊数据失败:', err)
     }
   },
 
@@ -340,30 +383,89 @@ Page({
    */
   goToOrders(e) {
     const status = e.currentTarget.dataset.status
-    wx.showToast({
-      title: '订单功能开发中',
-      icon: 'none'
-    })
+    // status 直接映射到订单状态码：10/20/30/40/60
+    const url = status ? `/pages/order/list?status=${status}` : '/pages/order/list'
+    wx.navigateTo({ url })
   },
 
   /**
    * 跳转到全部订单
    */
   goToAllOrders() {
-    wx.showToast({
-      title: '订单功能开发中',
-      icon: 'none'
-    })
+    wx.navigateTo({ url: '/pages/order/list' })
   },
 
   /**
    * 跳转到收货地址
    */
   goToAddress() {
-    wx.showToast({
-      title: '地址管理开发中',
-      icon: 'none'
-    })
+    wx.navigateTo({ url: '/pages/address/list' })
+  },
+
+  /**
+   * 加载钱包余额预览（仅展示，不做完整钱包逻辑）
+   */
+  async loadWalletBalance() {
+    const openid = app.globalData.openid
+    if (!openid) return
+    try {
+      const res = await db.collection('shopping_wallets')
+        .where({ _openid: openid })
+        .field({ balance: true })
+        .get()
+      if (res.data && res.data.length > 0) {
+        const bal = res.data[0].balance || 0
+        this.setData({ walletBalance: (bal / 100).toFixed(2) })
+      }
+    } catch (err) {
+      console.warn('加载余额预览失败:', err)
+    }
+  },
+
+  /**
+   * 跳转到钱包页
+   */
+  goToWallet() {
+    if (!this.data.isLoggedIn) { this.goToLogin(); return }
+    wx.navigateTo({ url: '/pages/wallet/index' })
+  },
+
+  /**
+   * 跳转到我的工坊（商品管理）
+   */
+  goToMyWorkshop() {
+    const { userInfo } = this.data
+    if (!userInfo.is_certified || !userInfo.workshop_id) {
+      wx.showToast({ title: '工坊信息异常', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: `/pages/workshop/index?id=${userInfo.workshop_id}` })
+  },
+
+  /**
+   * 跳转到发布商品页
+   */
+  goToPublish() {
+    if (!this.data.isLoggedIn) { this.goToLogin(); return }
+    wx.navigateTo({ url: '/pages/product/publish' })
+  },
+
+  /**
+   * 跳转到卖家待发货订单（第三阶段实现，暂提示）
+   */
+  goToSellerOrders() {
+    wx.navigateTo({ url: '/pages/order/seller-list' })
+  },
+
+  goToAftersaleCenter() {
+    wx.navigateTo({ url: '/pages/aftersale/seller-list' })
+  },
+
+  /**
+   * 跳转到工坊财务（第二阶段实现，暂提示）
+   */
+  goToWorkshopFinance() {
+    wx.showToast({ title: '财务中心（第二阶段开发中）', icon: 'none' })
   },
 
   /**
@@ -449,6 +551,9 @@ Page({
               completed: 0,
               refund: 0
             },
+            workshopData: null,
+            workshopPendingOrders: 0,
+            walletBalance: null,
             userPosts: [],
             leftPosts: [],
             rightPosts: [],

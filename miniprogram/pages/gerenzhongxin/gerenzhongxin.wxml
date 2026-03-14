@@ -53,6 +53,78 @@
 
   <!-- 核心功能区 (悬浮白色卡片) -->
   <view class="floating-body">
+
+    <!-- ===== 工坊管理中心（仅认证传承人 Role 1 可见）===== -->
+    <view class="workshop-studio-card" wx:if="{{isLoggedIn && userInfo.is_certified && workshopData}}">
+      <!-- 卡片头部 -->
+      <view class="studio-header">
+        <view class="studio-title-row">
+          <view class="studio-icon-wrap">
+            <van-icon name="shop-o" size="22" color="#fff" />
+          </view>
+          <text class="studio-title">工坊管理中心</text>
+          <van-tag type="warning" size="small" custom-style="margin-left:12rpx;">传承人</van-tag>
+        </view>
+        <view class="studio-workshop-name" bindtap="goToMyWorkshop">
+          <text>{{workshopData.name}}</text>
+          <van-icon name="arrow" size="14" color="#8B2E2A" />
+        </view>
+      </view>
+
+      <!-- 关键数据指标 -->
+      <view class="studio-stats">
+        <view class="studio-stat-item">
+          <text class="studio-stat-num">{{workshopData.product_count || 0}}</text>
+          <text class="studio-stat-label">在售商品</text>
+        </view>
+        <view class="studio-stat-divider"></view>
+        <view class="studio-stat-item">
+          <text class="studio-stat-num">{{workshopData.total_sales || 0}}</text>
+          <text class="studio-stat-label">累计销量</text>
+        </view>
+        <view class="studio-stat-divider"></view>
+        <view class="studio-stat-item">
+          <text class="studio-stat-num {{workshopPendingOrders > 0 ? 'studio-stat-alert' : ''}}">{{workshopPendingOrders}}</text>
+          <text class="studio-stat-label">待发货</text>
+        </view>
+      </view>
+
+      <!-- 快捷操作九宫格 -->
+      <view class="studio-actions">
+        <view class="studio-action-item" bindtap="goToPublish">
+          <view class="studio-action-icon publish-icon">
+            <van-icon name="plus" size="24" color="#fff" />
+          </view>
+          <text class="studio-action-label">发布商品</text>
+        </view>
+        <view class="studio-action-item" bindtap="goToMyWorkshop">
+          <view class="studio-action-icon manage-icon">
+            <van-icon name="orders-o" size="24" color="#fff" />
+          </view>
+          <text class="studio-action-label">商品管理</text>
+        </view>
+        <view class="studio-action-item" bindtap="goToSellerOrders">
+          <view class="studio-action-icon {{workshopPendingOrders > 0 ? 'order-icon-alert' : 'order-icon'}}">
+            <van-icon name="logistics" size="24" color="#fff" />
+            <view class="action-badge" wx:if="{{workshopPendingOrders > 0}}">{{workshopPendingOrders}}</view>
+          </view>
+          <text class="studio-action-label">待发货</text>
+        </view>
+        <view class="studio-action-item" bindtap="goToAftersaleCenter">
+          <view class="studio-action-icon aftersale-icon">
+            <van-icon name="service-o" size="24" color="#fff" />
+          </view>
+          <text class="studio-action-label">售后处理</text>
+        </view>
+        <view class="studio-action-item" bindtap="goToWorkshopFinance">
+          <view class="studio-action-icon finance-icon">
+            <van-icon name="balance-o" size="24" color="#fff" />
+          </view>
+          <text class="studio-action-label">工坊财务</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 我的订单 -->
     <view class="section-card">
       <view class="section-header">
@@ -63,34 +135,34 @@
         </view>
       </view>
       <view class="order-grid">
-        <view class="order-item" bindtap="goToOrders" data-status="0">
+        <view class="order-item" bindtap="goToOrders" data-status="10">
           <view class="order-icon-wrapper">
             <van-icon name="balance-o" size="28" color="#b63b36" />
             <view class="order-badge" wx:if="{{orderCounts.pending > 0}}">{{orderCounts.pending}}</view>
           </view>
           <text class="order-label">待支付</text>
         </view>
-        <view class="order-item" bindtap="goToOrders" data-status="1">
+        <view class="order-item" bindtap="goToOrders" data-status="20">
           <view class="order-icon-wrapper">
             <van-icon name="gift-o" size="28" color="#b63b36" />
             <view class="order-badge" wx:if="{{orderCounts.toShip > 0}}">{{orderCounts.toShip}}</view>
           </view>
           <text class="order-label">待发货</text>
         </view>
-        <view class="order-item" bindtap="goToOrders" data-status="2">
+        <view class="order-item" bindtap="goToOrders" data-status="30">
           <view class="order-icon-wrapper">
             <van-icon name="logistics" size="28" color="#b63b36" />
             <view class="order-badge" wx:if="{{orderCounts.toReceive > 0}}">{{orderCounts.toReceive}}</view>
           </view>
           <text class="order-label">待收货</text>
         </view>
-        <view class="order-item" bindtap="goToOrders" data-status="3">
+        <view class="order-item" bindtap="goToOrders" data-status="40">
           <view class="order-icon-wrapper">
             <van-icon name="passed" size="28" color="#b63b36" />
           </view>
           <text class="order-label">已完成</text>
         </view>
-        <view class="order-item" bindtap="goToOrders" data-status="4">
+        <view class="order-item" bindtap="goToOrders" data-status="60">
           <view class="order-icon-wrapper">
             <van-icon name="service-o" size="28" color="#b63b36" />
           </view>
@@ -105,6 +177,18 @@
         <text class="section-title">常用工具</text>
       </view>
       <van-cell-group border="{{false}}">
+        <!-- 我的钱包（含余额预览） -->
+        <van-cell
+          title="我的钱包"
+          icon="gold-coin-o"
+          is-link
+          bindtap="goToWallet"
+        >
+          <view slot="right-icon" class="wallet-preview-slot">
+            <text class="wallet-preview-balance" wx:if="{{walletBalance !== null}}">¥{{walletBalance}}</text>
+            <van-icon name="arrow" size="16" color="#ccc" />
+          </view>
+        </van-cell>
         <van-cell 
           title="收货地址" 
           icon="location-o" 

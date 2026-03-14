@@ -2,6 +2,19 @@
 const app = getApp()
 const db = wx.cloud.database()
 
+/**
+ * 将价格（分）格式化为可读的元字符串
+ * @param {number} fen - 价格（单位：分）
+ * @returns {string}
+ */
+function formatPrice(fen) {
+  if (!fen && fen !== 0) return '0.00'
+  const yuan = fen / 100
+  if (yuan >= 100000000) return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
+  if (yuan >= 10000) return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
+  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -10,11 +23,8 @@ Page({
     product: null,
     loading: true,
     currentImageIndex: 0,
-    // 购买数量
     quantity: 1,
-    // 是否已收藏
     isFavorite: false,
-    // 底部安全区高度
     safeAreaBottom: 0
   },
 
@@ -50,13 +60,18 @@ Page({
       const res = await db.collection('shopping_products').doc(id).get()
       
       if (res.data) {
-        // 处理图片数组
         const product = res.data
+
         if (!product.detail_imgs || product.detail_imgs.length === 0) {
           product.detail_imgs = [product.cover_img]
         }
-        
-        // 如果有工坊ID，查询工坊信息
+
+        // 价格格式化（分→元显示）
+        product.priceDisplay = formatPrice(product.price)
+        product.originalPriceDisplay = product.original_price ? formatPrice(product.original_price) : ''
+        // 顶层设计要求：商品页强制展示所属非遗项目，字段已有 related_project_name / related_project_id
+
+        // 查询工坊信息（卖家身份展示）
         if (product.workshop_id) {
           try {
             const workshopRes = await db.collection('shopping_workshops')
@@ -67,9 +82,7 @@ Page({
             console.log('工坊信息加载失败:', err)
           }
         }
-        
-        // 如果有非遗项目ID，可以在这里查询项目信息（预留）
-        
+
         this.setData({
           product: product,
           loading: false
@@ -139,6 +152,18 @@ Page({
   },
 
   /**
+   * 跳转到工坊主页
+   */
+  goToWorkshop() {
+    const { product } = this.data
+    if (product && product.workshop_id) {
+      wx.navigateTo({
+        url: `/pages/workshop/index?id=${product.workshop_id}`
+      })
+    }
+  },
+
+  /**
    * 跳转到关联的非遗项目
    */
   goToProject() {
@@ -176,122 +201,56 @@ Page({
 
   /**
    * 加入购物车（需要登录）
+   * 购物车使用本地存储，价格以分存储
    */
   addToCart() {
-    // 检查登录状态
     if (!app.checkLogin()) {
       app.requireLogin()
       return
     }
-    
+
     const { product, quantity } = this.data
-    
-    // 获取本地购物车
     let cart = wx.getStorageSync('cart') || []
-    
-    // 检查是否已在购物车中
     const existIndex = cart.findIndex(item => item.productId === product._id)
-    
+
     if (existIndex > -1) {
-      // 更新数量
       cart[existIndex].quantity += quantity
     } else {
-      // 添加新商品
       cart.push({
         productId: product._id,
         title: product.title,
         cover_img: product.cover_img,
-        price: product.price,
+        price: product.price,           // 分（整数）
+        priceDisplay: product.priceDisplay,
         quantity: quantity,
-        origin: product.origin
+        origin: product.origin,
+        related_project_name: product.related_project_name || ''
       })
     }
-    
+
     wx.setStorageSync('cart', cart)
-    
-    wx.showToast({
-      title: '已加入购物车',
-      icon: 'success'
-    })
+    wx.showToast({ title: '已加入购物车', icon: 'success' })
   },
 
   /**
-   * 立即购买（需要登录）
+   * 立即购买：跳转到下单确认页（含地址选择和支付键盘）
    */
   buyNow() {
-    // 检查登录状态
     if (!app.checkLogin()) {
       app.requireLogin()
       return
     }
-    
+
     const { product, quantity } = this.data
-    
-    // 检查库存
+
     if (product.stock < quantity) {
-      wx.showToast({
-        title: '库存不足',
-        icon: 'none'
-      })
+      wx.showToast({ title: '库存不足', icon: 'none' })
       return
     }
-    
-    // 模拟下单（实际项目中应跳转到订单确认页）
-    wx.showModal({
-      title: '确认下单',
-      content: `商品：${product.title}\n数量：${quantity}\n总价：¥${(product.price * quantity).toFixed(2)}`,
-      confirmText: '确认',
-      confirmColor: '#8B2E2A',
-      success: (res) => {
-        if (res.confirm) {
-          this.createOrder()
-        }
-      }
-    })
-  },
 
-  /**
-   * 创建订单
-   */
-  async createOrder() {
-    const { product, quantity } = this.data
-    
-    wx.showLoading({ title: '下单中...' })
-    
-    try {
-      await db.collection('orders').add({
-        data: {
-          status: 0, // 待付款
-          total_price: product.price * quantity,
-          product_snapshot: {
-            product_id: product._id,
-            title: product.title,
-            cover_img: product.cover_img,
-            price: product.price,
-            count: quantity
-          },
-          create_time: db.serverDate()
-        }
-      })
-      
-      wx.hideLoading()
-      wx.showToast({
-        title: '下单成功',
-        icon: 'success'
-      })
-      
-      // 延迟返回
-      setTimeout(() => {
-        wx.navigateBack()
-      }, 1500)
-    } catch (err) {
-      wx.hideLoading()
-      console.error('创建订单失败:', err)
-      wx.showToast({
-        title: '下单失败',
-        icon: 'none'
-      })
-    }
+    wx.navigateTo({
+      url: `/pages/mall/checkout?productId=${product._id}&quantity=${quantity}`
+    })
   },
 
   /**

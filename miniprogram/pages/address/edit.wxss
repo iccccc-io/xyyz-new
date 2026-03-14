@@ -1,0 +1,116 @@
+/* pages/address/edit.wxss */
+
+.edit-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+  padding-bottom: 140rpx;
+}
+
+/* ===== 表单卡片 ===== */
+.form-card {
+  margin: 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 8rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 0;
+}
+
+.form-item-textarea {
+  align-items: flex-start;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  width: 140rpx;
+  flex-shrink: 0;
+}
+
+.form-label.required::before {
+  content: '*';
+  color: #ee0a24;
+  margin-right: 4rpx;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  height: 48rpx;
+  line-height: 48rpx;
+}
+
+.form-textarea {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  min-height: 80rpx;
+  line-height: 1.6;
+}
+
+.form-divider {
+  height: 1rpx;
+  background: #f5f0e8;
+}
+
+/* 地区选择器 */
+.region-picker-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.region-picker-display.placeholder text {
+  color: #c8c8c8;
+}
+
+/* ===== 默认地址卡片 ===== */
+.default-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.default-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.default-text {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #aaa;
+  padding: 12rpx 48rpx;
+}
+
+/* ===== 底部保存 ===== */
+.save-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
+}

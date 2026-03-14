@@ -70,8 +70,8 @@
           <view class="row-footer">
             <view class="row-price">
               <text class="price-symbol">¥</text>
-              <text class="price-value">{{item.price}}</text>
-              <text class="price-original" wx:if="{{item.original_price}}">¥{{item.original_price}}</text>
+              <text class="price-value">{{item.priceDisplay}}</text>
+              <text class="price-original" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
             </view>
             <text class="row-sales">已售{{item.sales || 0}}</text>
           </view>

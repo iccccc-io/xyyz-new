@@ -32,8 +32,8 @@
       <view class="price-row">
         <view class="price-group">
           <text class="currency">¥</text>
-          <text class="current-price">{{product.price}}</text>
-          <text class="original-price" wx:if="{{product.original_price}}">¥{{product.original_price}}</text>
+          <text class="current-price">{{product.priceDisplay}}</text>
+          <text class="original-price" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
         </view>
         <view class="sales-info">
           <text class="sales-text">已售 {{product.sales || 0}}</text>
@@ -75,6 +75,23 @@
       </view>
       <view class="trace-right">
         <text class="trace-link">去了解</text>
+        <van-icon name="arrow" size="14" color="#8B2E2A" />
+      </view>
+    </view>
+
+    <!-- 工坊信息卡片 -->
+    <view class="workshop-card" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
+      <view class="workshop-left">
+        <image class="workshop-logo" src="{{product.workshop_info.logo || '/images/default-goods-image.png'}}" mode="aspectFill" />
+        <view class="workshop-text">
+          <text class="workshop-name">{{product.workshop_info.name}}</text>
+          <view class="workshop-category">
+            <van-tag type="danger" size="small">{{product.workshop_info.ich_category}}</van-tag>
+          </view>
+        </view>
+      </view>
+      <view class="workshop-right">
+        <text class="workshop-link">进店</text>
         <van-icon name="arrow" size="14" color="#8B2E2A" />
       </view>
     </view>
@@ -148,4 +165,5 @@
 <view class="loading-state" wx:if="{{loading}}">
   <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
 </view>
+
 

@@ -1,0 +1,116 @@
+/* pages/address/list.wxss */
+
+.address-list-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+  padding-bottom: 140rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+/* ===== 列表 ===== */
+.list-wrap {
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* 地址卡片 */
+.addr-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+  position: relative;
+}
+
+.default-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 24rpx;
+}
+
+.addr-body {
+  padding-bottom: 16rpx;
+}
+
+.addr-user-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.addr-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.addr-phone {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.addr-detail {
+  font-size: 26rpx;
+  color: #888;
+  line-height: 1.6;
+}
+
+/* 操作行 */
+.addr-actions {
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f5f0e8;
+}
+
+.addr-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.checked-text {
+  color: #8B2E2A;
+  font-weight: 500;
+}
+
+/* 滑动删除 */
+.swipe-delete-btn {
+  width: 130rpx;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ee0a24;
+  color: #fff;
+  gap: 6rpx;
+}
+
+.swipe-delete-text {
+  font-size: 22rpx;
+  color: #fff;
+}
+
+/* 底部新增按钮 */
+.footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
+}

@@ -2,6 +2,19 @@
 const app = getApp()
 const db = wx.cloud.database()
 
+/**
+ * 将价格（分）格式化为可读的元字符串
+ * @param {number} fen - 价格（单位：分）
+ * @returns {string}
+ */
+function formatPrice(fen) {
+  if (!fen && fen !== 0) return '0.00'
+  const yuan = fen / 100
+  if (yuan >= 100000000) return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
+  if (yuan >= 10000) return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
+  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -128,28 +141,37 @@ Page({
 
   /**
    * 加载商品列表
+   * 主理人可见全部（含下架），访客只看上架且有库存商品
    */
   async loadProducts() {
     try {
-      // 查询该工坊下的所有商品
+      const { workshopId, isOwner } = this.data
+      const _ = db.command
+
+      let whereCondition = { workshop_id: workshopId }
+      if (!isOwner) {
+        whereCondition.status = 1
+        whereCondition.stock = _.gt(0)
+      }
+
       const productRes = await db.collection('shopping_products')
-        .where({
-          workshop_id: this.data.workshopId,
-          status: 1 // 1表示已上架
-        })
+        .where(whereCondition)
         .orderBy('create_time', 'desc')
         .get()
 
+      const products = (productRes.data || []).map(item => ({
+        ...item,
+        priceDisplay: formatPrice(item.price),
+        originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : ''
+      }))
+
       this.setData({
-        products: productRes.data || [],
+        products,
         loading: false
       })
-
     } catch (err) {
       console.error('加载商品列表失败:', err)
-      this.setData({
-        loading: false
-      })
+      this.setData({ loading: false })
     }
   },
 

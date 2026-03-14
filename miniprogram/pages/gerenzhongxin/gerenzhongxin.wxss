@@ -512,3 +512,172 @@
   font-size: 26rpx;
   color: #8B2E2A;
 }
+
+/* ===== 钱包余额预览 ===== */
+.wallet-preview-slot {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.wallet-preview-balance {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #8B2E2A;
+}
+
+/* ============================================================
+   工坊管理中心（Workshop Studio Card）
+   ============================================================ */
+.workshop-studio-card {
+  margin: 0 28rpx 24rpx;
+  background: linear-gradient(135deg, #6B1F1C 0%, #8B2E2A 60%, #B63B36 100%);
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx 28rpx;
+  box-shadow: 0 12rpx 32rpx rgba(139,46,42,0.35);
+  color: #fff;
+}
+
+.studio-header {
+  margin-bottom: 28rpx;
+}
+
+.studio-title-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.studio-icon-wrap {
+  width: 52rpx;
+  height: 52rpx;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+}
+
+.studio-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1rpx;
+}
+
+.studio-workshop-name {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.85);
+  padding: 8rpx 0;
+}
+
+/* 数据指标行 */
+.studio-stats {
+  display: flex;
+  align-items: center;
+  background: rgba(0,0,0,0.18);
+  border-radius: 16rpx;
+  padding: 24rpx 0;
+  margin-bottom: 28rpx;
+}
+
+.studio-stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.studio-stat-divider {
+  width: 2rpx;
+  height: 40rpx;
+  background: rgba(255,255,255,0.25);
+}
+
+.studio-stat-num {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.studio-stat-alert {
+  color: #FFD700;
+}
+
+.studio-stat-label {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.75);
+}
+
+/* 快捷操作 */
+.studio-actions {
+  display: flex;
+  justify-content: space-around;
+}
+
+.studio-action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.studio-action-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.publish-icon {
+  background: rgba(255,255,255,0.25);
+}
+
+.manage-icon {
+  background: rgba(255,255,255,0.2);
+}
+
+.order-icon {
+  background: rgba(255,255,255,0.2);
+}
+
+.order-icon-alert {
+  background: rgba(255,215,0,0.35);
+}
+
+.aftersale-icon {
+  background: rgba(255,160,0,0.7);
+}
+.finance-icon {
+  background: rgba(255,255,255,0.2);
+}
+
+.studio-action-label {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.9);
+}
+
+.action-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  background: #FFD700;
+  color: #6B1F1C;
+  border-radius: 18rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6rpx;
+}

@@ -234,7 +234,35 @@ Page({
           }
         }
       })
-      
+
+      // 4. 初始化虚拟钱包（10000 分 = ¥100 测试金）
+      try {
+        await db.collection('shopping_wallets').add({
+          data: {
+            balance: 10000,
+            frozen_balance: 0,
+            pay_password: '',
+            status: 1,
+            create_time: db.serverDate(),
+            update_time: db.serverDate()
+          }
+        })
+        await db.collection('shopping_ledger').add({
+          data: {
+            order_id: '',
+            user_id: openid,
+            type: 'RECHARGE',
+            amount: 10000,
+            description: '新用户注册赠金 ¥100',
+            create_time: db.serverDate()
+          }
+        })
+        console.log('钱包初始化成功')
+      } catch (walletErr) {
+        // 钱包初始化失败不阻断注册流程
+        console.warn('钱包初始化失败（不影响注册）:', walletErr)
+      }
+
       const userInfo = {
         _id: addRes._id,
         _openid: openid,

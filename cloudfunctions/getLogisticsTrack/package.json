@@ -1,0 +1,9 @@
+{
+  "name": "getLogisticsTrack",
+  "version": "1.0.0",
+  "description": "快递100物流轨迹查询（含缓存和签名）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

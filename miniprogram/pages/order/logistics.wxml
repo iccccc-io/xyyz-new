@@ -1,0 +1,103 @@
+<!--pages/order/logistics.wxml-->
+<view class="logistics-page">
+  <nav-bar
+    title="物流详情"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">查询物流中...</van-loading>
+  </view>
+
+  <!-- 查询失败 -->
+  <view class="error-wrap" wx:elif="{{errorMsg}}">
+    <view class="error-card">
+      <van-icon name="warning-o" size="48" color="#ff9500" />
+      <text class="error-title">暂无物流信息</text>
+      <text class="error-desc">{{errorMsg}}</text>
+      <!-- 即使失败也显示单号信息 -->
+      <view class="error-tracking" wx:if="{{trackingNumber}}">
+        <text class="error-tracking-label">快递单号：</text>
+        <text class="error-tracking-no" bindtap="copyTracking">{{trackingNumber}}</text>
+        <van-icon name="copy-o" size="14" color="#8B6F47" />
+      </view>
+      <view class="error-btn" bindtap="retryQuery">
+        <van-icon name="replay" size="16" color="#8B2E2A" />
+        <text>重新查询</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 查询成功 -->
+  <block wx:elif="{{!loading && trackData.length > 0}}">
+
+    <!-- ===== 地图区域 ===== -->
+    <view class="map-section" wx:if="{{latestLocation.latitude}}">
+      <map
+        class="logistics-map"
+        latitude="{{latestLocation.latitude}}"
+        longitude="{{latestLocation.longitude}}"
+        scale="{{12}}"
+        markers="{{markers}}"
+        show-location="{{false}}"
+      />
+      <view class="map-overlay">
+        <text class="map-area">{{latestLocation.areaName}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 快递信息头部 ===== -->
+    <view class="header-card">
+      <view class="header-top">
+        <view class="carrier-info">
+          <text class="carrier-name">{{carrierName}}</text>
+          <van-tag round color="{{stateColor}}" size="medium">{{stateDesc}}</van-tag>
+        </view>
+        <view class="cache-hint" wx:if="{{isCache}}">
+          <van-icon name="clock-o" size="12" color="#aaa" />
+          <text>缓存</text>
+        </view>
+      </view>
+      <view class="tracking-row" bindtap="copyTracking">
+        <text class="tracking-label">运单号</text>
+        <text class="tracking-number">{{trackingNumber}}</text>
+        <van-icon name="copy-o" size="16" color="#8B6F47" />
+      </view>
+      <view class="notice-row" wx:if="{{notice}}">
+        <van-icon name="info-o" size="14" color="#ff9500" />
+        <text class="notice-text">{{notice}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 物流时间轴 ===== -->
+    <view class="timeline-card">
+      <view class="timeline-title">物流轨迹</view>
+      <view class="timeline">
+        <view
+          class="timeline-item {{index === 0 ? 'item-active' : ''}}"
+          wx:for="{{trackData}}"
+          wx:key="index"
+        >
+          <!-- 左侧时间轴线 -->
+          <view class="tl-left">
+            <view class="tl-dot {{index === 0 ? 'dot-active' : ''}}"></view>
+            <view class="tl-line" wx:if="{{index < trackData.length - 1}}"></view>
+          </view>
+          <!-- 右侧内容 -->
+          <view class="tl-content">
+            <text class="tl-context">{{item.context}}</text>
+            <view class="tl-meta">
+              <text class="tl-time">{{item.time}}</text>
+              <text class="tl-area" wx:if="{{item.areaName}}">{{item.areaName}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

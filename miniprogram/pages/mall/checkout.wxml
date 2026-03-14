@@ -1,0 +1,110 @@
+<!--pages/mall/checkout.wxml-->
+<view class="checkout-page" wx:if="{{!loading}}">
+  <nav-bar
+    title="确认订单"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- ===== 收货地址 ===== -->
+  <view class="address-card" bindtap="chooseAddress">
+    <!-- 未选择地址 -->
+    <view class="address-empty" wx:if="{{!address}}">
+      <van-icon name="location-o" size="24" color="#8B2E2A" />
+      <text class="address-empty-text">点击选择收货地址</text>
+      <van-icon name="arrow" size="16" color="#ccc" />
+    </view>
+    <!-- 已选择地址 -->
+    <view class="address-filled" wx:else>
+      <view class="address-icon-wrap">
+        <van-icon name="location-o" size="22" color="#8B2E2A" />
+      </view>
+      <view class="address-info">
+        <view class="address-user-row">
+          <text class="address-name">{{address.userName}}</text>
+          <text class="address-tel">{{address.telNumber}}</text>
+        </view>
+        <text class="address-detail">{{address.provinceName}}{{address.cityName}}{{address.countyName}} {{address.detailInfo}}</text>
+      </view>
+      <van-icon name="arrow" size="16" color="#ccc" />
+    </view>
+  </view>
+
+  <!-- ===== 商品信息 ===== -->
+  <view class="product-card" wx:if="{{product}}">
+    <view class="shop-row">
+      <van-icon name="shop-o" size="16" color="#8B6F47" />
+      <text class="shop-name">{{product.workshop_name || '湘韵遗珍文创商城'}}</text>
+    </view>
+    <view class="product-row">
+      <image class="product-img" src="{{product.cover_img}}" mode="aspectFill" />
+      <view class="product-info">
+        <text class="product-title">{{product.title}}</text>
+        <view class="product-tags" wx:if="{{product.related_project_name}}">
+          <van-tag plain color="#8B6F47" size="small">{{product.related_project_name}}</van-tag>
+        </view>
+        <view class="product-price-row">
+          <text class="product-price">¥{{product.priceDisplay}}</text>
+          <text class="product-qty">× {{quantity}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 订单金额汇总 ===== -->
+  <view class="summary-card">
+    <view class="summary-row">
+      <text class="summary-label">商品金额</text>
+      <text class="summary-value">¥{{totalDisplay}}</text>
+    </view>
+    <view class="summary-row">
+      <text class="summary-label">运费</text>
+      <text class="summary-value freight-free">包邮</text>
+    </view>
+    <view class="summary-divider"></view>
+    <view class="summary-row total-row">
+      <text class="summary-label summary-label-total">实付金额</text>
+      <view class="total-price-wrap">
+        <text class="total-symbol">¥</text>
+        <text class="total-value">{{totalDisplay}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 底部提交栏 ===== -->
+  <view class="checkout-footer">
+    <view class="footer-left">
+      <text class="footer-total-label">合计：</text>
+      <text class="footer-total-price">¥{{totalDisplay}}</text>
+    </view>
+    <van-button
+      type="primary"
+      round
+      color="#8B2E2A"
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bind:click="submitOrder"
+    >
+      提交订单
+    </van-button>
+  </view>
+</view>
+
+<!-- 加载中 -->
+<view class="loading-wrap" wx:if="{{loading}}">
+  <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+</view>
+
+<!-- 支付键盘 -->
+<pay-keyboard
+  id="payKeyboard"
+  show="{{showPayKeyboard}}"
+  title="确认支付"
+  amount-display="{{totalDisplay}}"
+  loading="{{paying}}"
+  bind:confirm="onPayConfirm"
+  bind:close="onPayKeyboardClose"
+/>

@@ -69,10 +69,18 @@ exports.main = async (event, context) => {
     }
   }
 
-  if (price <= 0 || stock <= 0) {
+  // price 单位为分（整数），最低1分；stock 为正整数
+  if (!Number.isInteger(price) || price < 1) {
     return {
       success: false,
-      message: '价格和库存必须大于0'
+      message: '价格参数异常（单位：分，最低1分）'
+    }
+  }
+
+  if (!Number.isInteger(stock) || stock < 1) {
+    return {
+      success: false,
+      message: '库存必须是正整数'
     }
   }
 

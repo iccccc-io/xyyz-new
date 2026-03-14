@@ -1,0 +1,9 @@
+{
+  "name": "send_notification",
+  "version": "1.0.0",
+  "description": "微信订阅消息发送",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

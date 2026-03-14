@@ -201,6 +201,42 @@
   color: #999;
 }
 
+/* 状态徽标（主理人视角） */
+.product-item {
+  position: relative;
+}
+
+.status-badge {
+  position: absolute;
+  top: 10rpx;
+  left: 10rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.status-on {
+  background: rgba(22, 163, 74, 0.85);
+  color: #fff;
+}
+
+.status-off {
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+/* 库存预警 */
+.stock-tip {
+  margin-top: 6rpx;
+}
+
+.stock-warn {
+  font-size: 22rpx;
+  color: #f59e0b;
+}
+
 /* 空状态 */
 .empty-state {
   padding: 80rpx 0;

@@ -1,0 +1,213 @@
+/* pages/order/seller-list.wxss */
+
+.seller-list-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+  padding-bottom: 40rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+/* ===== 订单列表 ===== */
+.orders-wrap {
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f5f0e8;
+  margin-bottom: 16rpx;
+}
+
+.order-no {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+
+.order-no-label {
+  font-size: 22rpx;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.order-no-val {
+  font-size: 22rpx;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-status-text { font-size: 26rpx; font-weight: 600; flex-shrink: 0; margin-left: 12rpx; }
+.status-pending-ship { color: #ff9500; }
+.status-shipped { color: #1989fa; }
+.status-done { color: #10b981; }
+
+/* 商品行 */
+.product-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.product-img {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.product-info { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
+
+.product-title {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.product-meta { display: flex; align-items: center; justify-content: space-between; }
+.product-price { font-size: 30rpx; font-weight: 700; color: #8B2E2A; }
+.product-qty { font-size: 26rpx; color: #999; }
+
+/* 地址行 */
+.address-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+  padding: 12rpx 0;
+  border-top: 1rpx solid #f5f0e8;
+}
+
+.address-text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* 物流行 */
+.logistics-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 0;
+  border-top: 1rpx solid #f5f0e8;
+}
+
+.logistics-text { font-size: 24rpx; color: #1989fa; flex: 1; }
+.ship-time { font-size: 22rpx; color: #aaa; }
+
+/* 总价行 */
+.total-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
+  padding: 12rpx 0;
+  border-top: 1rpx solid #f5f0e8;
+}
+
+.total-label { font-size: 24rpx; color: #999; }
+.total-price { font-size: 32rpx; font-weight: 700; color: #8B2E2A; }
+
+/* 操作区 */
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f5f0e8;
+  margin-top: 8rpx;
+}
+
+.waiting-hint { font-size: 26rpx; color: #999; }
+.done-hint { font-size: 26rpx; color: #10b981; }
+
+/* 底部 */
+.load-more, .no-more { text-align: center; padding: 30rpx 0; font-size: 26rpx; }
+.load-more { color: #8B6F47; }
+.no-more { color: #ccc; }
+
+/* ===== 发货弹窗 ===== */
+.ship-panel {
+  padding: 20rpx 32rpx 40rpx;
+}
+
+.ship-panel-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: #e0d6c8;
+  border-radius: 4rpx;
+  margin: 0 auto 24rpx;
+}
+
+.ship-panel-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.ship-field-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+
+/* 快递公司网格 */
+.carrier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.carrier-item {
+  padding: 14rpx 8rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #666;
+  background: #f5f0e8;
+  border-radius: 12rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.carrier-active {
+  color: #8B2E2A;
+  background: #fff4f4;
+  border-color: #8B2E2A;
+  font-weight: 600;
+}
+
+.ship-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}

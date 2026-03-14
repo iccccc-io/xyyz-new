@@ -1,0 +1,10 @@
+/* pages/webview/index.wxss */
+.webview-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+web-view {
+  flex: 1;
+}

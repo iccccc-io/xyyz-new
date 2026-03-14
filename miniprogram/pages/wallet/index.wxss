@@ -1,0 +1,327 @@
+/* pages/wallet/index.wxss */
+
+.wallet-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+}
+
+/* ===== 余额卡片 ===== */
+.balance-card {
+  margin: 24rpx 28rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #6B1F1C 0%, #8B2E2A 50%, #B63B36 100%);
+  box-shadow: 0 16rpx 48rpx rgba(139,46,42,0.4);
+}
+
+.balance-bg {
+  position: absolute;
+  top: -60rpx;
+  right: -60rpx;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+
+.balance-content {
+  padding: 48rpx 40rpx 40rpx;
+  position: relative;
+}
+
+.balance-label {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 12rpx;
+}
+
+.balance-amount-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.balance-symbol {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: 400;
+  margin-bottom: 10rpx;
+}
+
+.balance-value {
+  font-size: 80rpx;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -2rpx;
+}
+
+.frozen-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 32rpx;
+}
+
+.frozen-text {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.65);
+}
+
+.balance-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.balance-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 14rpx 28rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+}
+
+.recharge-btn {
+  background: #fff;
+  color: #8B2E2A;
+  font-weight: 600;
+}
+
+.pwd-btn {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.9);
+  border: 2rpx solid rgba(255,255,255,0.3);
+}
+
+/* ===== 加载 / 初始化 ===== */
+.loading-wrap,
+.init-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32rpx;
+  padding: 100rpx 0;
+}
+
+/* ===== 账单流水 ===== */
+.ledger-section {
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  min-height: 60vh;
+  padding: 32rpx 28rpx;
+}
+
+.ledger-header {
+  margin-bottom: 28rpx;
+}
+
+.ledger-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.ledger-line {
+  flex: 1;
+  height: 2rpx;
+  background: linear-gradient(to right, transparent, #e0d5c8);
+}
+
+.ledger-line:last-child {
+  background: linear-gradient(to left, transparent, #e0d5c8);
+}
+
+.ledger-title {
+  font-size: 28rpx;
+  color: #8B6F47;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ledger-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.ledger-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.ledger-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.ledger-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-pay      { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.icon-in       { background: linear-gradient(135deg, #10b981, #059669); }
+.icon-recharge { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.icon-other    { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.ledger-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.ledger-desc {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.ledger-time {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+.ledger-amount {
+  font-size: 32rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.amount-in  { color: #10b981; }
+.amount-out { color: #333; }
+
+/* ===== 设置/修改密码面板 ===== */
+.pwd-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+}
+
+.pwd-panel {
+  width: 100%;
+  background: #f7f8fa;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.pwd-panel-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: #ddd;
+  border-radius: 4rpx;
+  margin: 20rpx auto 0;
+}
+
+.pwd-panel-title {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  padding: 24rpx 0 8rpx;
+}
+
+.pwd-panel-desc {
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+  padding-bottom: 28rpx;
+}
+
+.pwd-step-label {
+  text-align: center;
+  font-size: 24rpx;
+  color: #8B6F47;
+  margin-bottom: 16rpx;
+}
+
+.pwd-dots-row {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 0 0 16rpx;
+}
+
+.pwd-dot {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 14rpx;
+  border: 2rpx solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwd-dot.dot-filled { border-color: #8B2E2A; }
+
+.pwd-dot .dot-inner {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: #333;
+}
+
+.pwd-msg-error {
+  text-align: center;
+  font-size: 24rpx;
+  color: #ee0a24;
+  min-height: 40rpx;
+  padding-bottom: 4rpx;
+}
+
+.mini-kb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rpx;
+  background: #e0e0e0;
+  border-top: 2rpx solid #e0e0e0;
+}
+
+.mini-kb-key {
+  background: #fff;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #333;
+}
+
+.mini-kb-key:active { background: #e8e8e8; }
+.mini-kb-empty { background: #f7f8fa; pointer-events: none; }
+
+.pwd-cancel-btn {
+  text-align: center;
+  padding: 28rpx 0;
+  font-size: 30rpx;
+  color: #8B2E2A;
+  background: #fff;
+  border-top: 2rpx solid #eee;
+}

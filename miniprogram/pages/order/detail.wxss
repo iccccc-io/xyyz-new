@@ -1,0 +1,338 @@
+/* pages/order/detail.wxss */
+
+.detail-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+  padding-bottom: 140rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+/* ===== 状态横幅 ===== */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 40rpx 32rpx;
+}
+
+/* 根据状态变色 */
+.banner-10 { background: linear-gradient(135deg, #ee0a24 0%, #ff4d4f 100%); }
+.banner-20 { background: linear-gradient(135deg, #ff9500 0%, #ffb340 100%); }
+.banner-30 { background: linear-gradient(135deg, #1989fa 0%, #4daeff 100%); }
+.banner-40 { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
+.banner-50 { background: linear-gradient(135deg, #aaa 0%, #ccc 100%); }
+.banner-60 { background: linear-gradient(135deg, #8B6F47 0%, #a08060 100%); }
+.banner-refunded { background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important; }
+
+.status-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.status-main {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.status-sub {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.85);
+}
+
+.countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 4rpx;
+}
+
+.countdown-text {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+}
+
+.countdown-row.expired .countdown-text {
+  color: rgba(255,255,255,0.7);
+}
+
+/* ===== 步骤条 ===== */
+.steps-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.steps-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 60rpx;
+  gap: 8rpx;
+}
+
+.step-dot {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #e0d6c8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dot-active {
+  background: #8B2E2A;
+  box-shadow: 0 0 0 6rpx rgba(139,46,42,0.2);
+}
+
+.dot-done {
+  background: #10b981;
+}
+
+.dot-num {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 700;
+}
+
+.step-label {
+  font-size: 22rpx;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.step-time {
+  font-size: 18rpx;
+  color: #aaa;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.step-line {
+  flex: 1;
+  height: 4rpx;
+  background: #e0d6c8;
+  margin-top: 16rpx;
+  border-radius: 2rpx;
+  transition: background 0.3s;
+}
+
+.line-done {
+  background: #10b981;
+}
+
+/* ===== 通用信息卡片 ===== */
+.info-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f5f0e8;
+}
+
+/* ===== 物流卡片 ===== */
+.logistics-card .card-title {
+  border-bottom: 1rpx solid #e8f4ff;
+}
+
+.logistics-query-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  color: #8B6F47;
+  font-size: 24rpx;
+  font-weight: normal;
+}
+
+.logistics-info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.logistics-badge {
+  background: #e8f4ff;
+  color: #1989fa;
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.logistics-no {
+  font-size: 28rpx;
+  color: #333;
+  font-family: monospace;
+  flex: 1;
+}
+
+.logistics-sub {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* ===== 地址 ===== */
+.address-user-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 10rpx;
+}
+
+.address-name { font-size: 30rpx; font-weight: 700; color: #333; }
+.address-tel { font-size: 26rpx; color: #666; }
+.address-detail { font-size: 26rpx; color: #888; line-height: 1.6; }
+
+/* ===== 商品行 ===== */
+.product-row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.product-img {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.product-title {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.product-tag-row { display: flex; }
+.product-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.product-price { font-size: 32rpx; font-weight: 700; color: #8B2E2A; }
+.product-qty { font-size: 26rpx; color: #999; }
+
+/* ===== 订单信息列表 ===== */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f9f5ef;
+}
+
+.info-row:last-child { border-bottom: none; }
+
+.info-label { font-size: 26rpx; color: #999; }
+.info-val { font-size: 26rpx; color: #333; }
+
+.info-val-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  max-width: 360rpx;
+}
+
+.order-id-text {
+  font-size: 22rpx;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320rpx;
+}
+
+.total-row-info { border-top: 2rpx solid #f5f0e8; padding-top: 16rpx; }
+.total-val { font-size: 36rpx; font-weight: 700; color: #8B2E2A; }
+
+/* 售后日志卡片 */
+.aftersale-log-card .card-title { display: flex; align-items: center; gap: 8rpx; }
+.as-log-row { display: flex; align-items: flex-start; padding: 8rpx 0; }
+.as-log-label { font-size: 24rpx; color: #999; width: 140rpx; flex-shrink: 0; }
+.as-log-val { font-size: 24rpx; color: #333; flex: 1; }
+.as-log-price { color: #8B2E2A; font-weight: 600; }
+.as-log-timeline {
+  margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #f5f0e8;
+}
+.as-log-tl {
+  display: flex; gap: 12rpx; padding: 10rpx 0;
+}
+.as-tl-dot { width: 12rpx; height: 12rpx; border-radius: 50%; background: #1989fa; flex-shrink: 0; margin-top: 8rpx; }
+.as-tl-dot.dot-red { background: #8B2E2A; }
+.as-tl-dot.dot-orange { background: #ff9500; }
+.as-tl-content { flex: 1; }
+.as-tl-role { font-size: 20rpx; font-weight: 600; color: #8B6F47; margin-right: 8rpx; }
+.as-tl-text { font-size: 22rpx; color: #666; line-height: 1.5; display: block; }
+.as-tl-time { font-size: 20rpx; color: #bbb; display: block; margin-top: 4rpx; }
+.as-log-link {
+  display: flex; align-items: center; justify-content: center; gap: 8rpx;
+  margin-top: 16rpx; padding: 16rpx; background: #f9f5ef; border-radius: 12rpx;
+  font-size: 26rpx; color: #8B6F47;
+}
+
+/* 售后提示卡片 */
+.aftersale-hint-card {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin: 20rpx 24rpx 0;
+  padding: 16rpx 24rpx;
+  background: #fff8f0;
+  border: 1rpx solid #ffe8cc;
+  border-radius: 12rpx;
+}
+.as-hint-text { font-size: 24rpx; color: #ff9500; }
+
+/* ===== 底部操作栏 ===== */
+.detail-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
+}

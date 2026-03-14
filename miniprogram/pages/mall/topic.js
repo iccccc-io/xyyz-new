@@ -1,6 +1,19 @@
 // pages/mall/topic.js
 const db = wx.cloud.database()
 
+/**
+ * 将价格（分）格式化为可读的元字符串
+ * @param {number} fen - 价格（单位：分）
+ * @returns {string}
+ */
+function formatPrice(fen) {
+  if (!fen && fen !== 0) return '0.00'
+  const yuan = fen / 100
+  if (yuan >= 100000000) return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
+  if (yuan >= 10000) return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
+  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -105,19 +118,24 @@ Page({
     try {
       const { keyword, page, pageSize } = this.data
       
-      // 关键查询：按 tags 数组筛选
-      // 在小程序云开发中，这会自动匹配数组中包含该值的记录
-      const res = await db.collection('products')
+      const _ = db.command
+      const res = await db.collection('shopping_products')
         .where({
-          tags: keyword
+          tags: keyword,
+          status: 1,
+          stock: _.gt(0)
         })
         .skip(page * pageSize)
         .limit(pageSize)
         .orderBy('sales', 'desc')
         .get()
-      
-      const products = res.data
-      
+
+      const products = res.data.map(item => ({
+        ...item,
+        priceDisplay: formatPrice(item.price),
+        originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : ''
+      }))
+
       if (products.length < pageSize) {
         this.setData({ noMore: true })
       }
@@ -126,7 +144,7 @@ Page({
       const { leftColumn, rightColumn } = this.data
       let left = refresh ? [] : [...leftColumn]
       let right = refresh ? [] : [...rightColumn]
-      
+
       products.forEach((item) => {
         if (left.length <= right.length) {
           left.push(item)

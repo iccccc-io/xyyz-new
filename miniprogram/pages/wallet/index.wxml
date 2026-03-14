@@ -1,0 +1,121 @@
+<!--pages/wallet/index.wxml-->
+<view class="wallet-page">
+  <nav-bar
+    title="我的钱包"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- ===== 余额卡片 ===== -->
+  <view class="balance-card" wx:if="{{wallet}}">
+    <view class="balance-bg"></view>
+    <view class="balance-content">
+      <view class="balance-label">可用余额（元）</view>
+      <view class="balance-amount-row">
+        <text class="balance-symbol">¥</text>
+        <text class="balance-value">{{wallet.balanceDisplay}}</text>
+      </view>
+      <view class="frozen-row" wx:if="{{wallet.frozen_balance > 0}}">
+        <van-icon name="lock" size="14" color="rgba(255,255,255,0.7)" />
+        <text class="frozen-text">担保冻结 ¥{{wallet.frozenDisplay}}</text>
+      </view>
+      <view class="balance-actions">
+        <view class="balance-btn recharge-btn" bindtap="onRecharge">
+          <van-icon name="plus" size="18" color="#8B2E2A" />
+          <text>模拟充值</text>
+        </view>
+        <view class="balance-btn pwd-btn" bindtap="onChangePwd">
+          <van-icon name="shield-o" size="18" color="rgba(255,255,255,0.9)" />
+          <text>{{wallet.pay_password ? '修改密码' : '设置密码'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <!-- 未初始化（理论上不会出现，保底） -->
+  <view class="init-card" wx:if="{{!loading && !wallet}}">
+    <van-empty description="钱包未初始化" />
+    <van-button round type="primary" color="#8B2E2A" bindtap="initWallet">初始化钱包</van-button>
+  </view>
+
+  <!-- ===== 账单流水 ===== -->
+  <view class="ledger-section" wx:if="{{!loading && wallet}}">
+    <view class="ledger-header">
+      <view class="ledger-title-row">
+        <view class="ledger-line"></view>
+        <text class="ledger-title">账单流水</text>
+        <view class="ledger-line"></view>
+      </view>
+    </view>
+
+    <!-- 流水列表加载 -->
+    <view class="ledger-loading" wx:if="{{ledgerLoading}}">
+      <van-loading size="20px" color="#8B2E2A" />
+    </view>
+
+    <!-- 空流水 -->
+    <van-empty
+      wx:elif="{{ledgerList.length === 0}}"
+      image="search"
+      description="暂无交易记录"
+    />
+
+    <!-- 流水列表 -->
+    <view class="ledger-list" wx:else>
+      <view class="ledger-item" wx:for="{{ledgerList}}" wx:key="_id">
+        <!-- 左侧图标 -->
+        <view class="ledger-icon {{item.type === 'PAYMENT' ? 'icon-pay' : item.type === 'SETTLEMENT' ? 'icon-in' : item.type === 'RECHARGE' ? 'icon-recharge' : 'icon-other'}}">
+          <van-icon
+            name="{{item.type === 'PAYMENT' ? 'balance-o' : item.type === 'SETTLEMENT' ? 'after-sale' : item.type === 'RECHARGE' ? 'gold-coin-o' : 'refund-o'}}"
+            size="22"
+            color="#fff"
+          />
+        </view>
+        <!-- 中间信息 -->
+        <view class="ledger-info">
+          <text class="ledger-desc">{{item.description}}</text>
+          <text class="ledger-time">{{item.timeDisplay}}</text>
+        </view>
+        <!-- 右侧金额 -->
+        <text class="ledger-amount {{item.amount > 0 ? 'amount-in' : 'amount-out'}}">
+          {{item.amount > 0 ? '+' : ''}}{{item.amountDisplay}}
+        </text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 设置/修改支付密码弹窗 ===== -->
+  <view class="pwd-mask" wx:if="{{showPwdPanel}}" bindtap="closePwdPanel">
+    <view class="pwd-panel" catchtap>
+      <view class="pwd-panel-handle"></view>
+      <view class="pwd-panel-title">{{isNewPwd ? '设置支付密码' : '修改支付密码'}}</view>
+      <view class="pwd-panel-desc">
+        {{isNewPwd ? '首次设置，请输入 6 位数字密码' : '请输入当前旧密码验证身份'}}
+      </view>
+      <!-- 步骤一：输入旧密码（修改时）/ 直接输入新密码（设置时） -->
+      <view class="pwd-step-label">{{isNewPwd ? '新密码' : pwdStep === 1 ? '旧密码' : pwdStep === 2 ? '新密码' : '确认新密码'}}</view>
+      <view class="pwd-dots-row">
+        <view class="pwd-dot {{pwdInputArr.length > idx ? 'dot-filled' : 'dot-empty'}}" wx:for="{{dotIndexes}}" wx:key="idx" wx:for-item="idx">
+          <view class="dot-inner" wx:if="{{pwdInputArr.length > idx}}"></view>
+        </view>
+      </view>
+      <view class="pwd-msg-error" wx:if="{{pwdError}}">{{pwdError}}</view>
+      <!-- 迷你键盘 -->
+      <view class="mini-kb-grid">
+        <view class="mini-kb-key {{item === '' ? 'mini-kb-empty' : ''}}" wx:for="{{keys}}" wx:key="index" bindtap="onPwdKeyTap" data-key="{{item}}">
+          <van-icon wx:if="{{item === 'del'}}" name="arrow-left" size="20" color="#333" />
+          <text wx:elif="{{item !== ''}}">{{item}}</text>
+        </view>
+      </view>
+      <view class="pwd-cancel-btn" bindtap="closePwdPanel">取消</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,88 @@
+/* pages/aftersale/apply.wxss */
+.apply-page {
+  min-height: 100vh;
+  background: #f6f0e8;
+  padding-bottom: 140rpx;
+}
+
+.product-card {
+  display: flex;
+  gap: 20rpx;
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+.product-img { width: 160rpx; height: 160rpx; border-radius: 12rpx; flex-shrink: 0; }
+.product-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.product-title { font-size: 28rpx; color: #333; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-meta { display: flex; align-items: center; justify-content: space-between; }
+.product-price { font-size: 30rpx; color: #8B2E2A; font-weight: 700; }
+.product-qty { font-size: 24rpx; color: #999; }
+
+.section-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+.section-title { font-size: 28rpx; font-weight: 700; color: #333; margin-bottom: 20rpx; display: flex; align-items: center; gap: 8rpx; }
+.section-sub { font-size: 22rpx; color: #999; font-weight: 400; }
+
+/* 售后类型 */
+.type-options { display: flex; gap: 20rpx; }
+.type-option {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 8rpx;
+  padding: 24rpx 16rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 16rpx;
+  transition: all 0.2s;
+}
+.type-active { border-color: #8B2E2A; background: #fef5f5; }
+.type-label { font-size: 28rpx; font-weight: 600; color: #333; }
+.type-desc { font-size: 22rpx; color: #999; }
+
+/* 原因标签 */
+.reason-tags { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 20rpx; }
+.reason-tag {
+  padding: 12rpx 24rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 40rpx;
+  font-size: 24rpx;
+  color: #666;
+  transition: all 0.2s;
+}
+.tag-active { border-color: #8B2E2A; color: #8B2E2A; background: #fef5f5; }
+.reason-input {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 16rpx;
+  border: 2rpx solid #f0ebe3;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-sizing: border-box;
+  background: #faf8f4;
+}
+
+/* 退款信息 */
+.refund-card { }
+.refund-row { display: flex; align-items: center; justify-content: space-between; }
+.refund-label { font-size: 28rpx; color: #333; }
+.refund-amount { font-size: 36rpx; font-weight: 700; color: #8B2E2A; }
+.refund-hint { font-size: 22rpx; color: #999; margin-top: 8rpx; display: block; }
+
+/* 底部提交 */
+.submit-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.06);
+}

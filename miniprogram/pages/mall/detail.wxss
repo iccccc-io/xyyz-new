@@ -400,6 +400,51 @@ page {
   color: #ffffff;
 }
 
+/* ========== 工坊信息卡片 ========== */
+.workshop-card {
+  margin: 0 32rpx 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+
+.workshop-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.workshop-logo {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  border: 2rpx solid #f0e8e0;
+}
+
+.workshop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.workshop-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.workshop-right {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  color: #8B2E2A;
+  font-size: 26rpx;
+}
+
 /* ========== 加载状态 ========== */
 .loading-state {
   display: flex;

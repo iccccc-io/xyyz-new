@@ -2,57 +2,26 @@
 const db = wx.cloud.database()
 
 /**
- * 格式化价格（处理大数字）
- * 数据库存的是元（整数），直接格式化显示
- * 层级：万 → 千万 → 亿 → 百亿 → 万亿
- * @param {number} price - 价格（单位：元）
- * @returns {string} 格式化后的价格字符串
+ * 将价格（分）格式化为可读的元字符串
+ * 数据库统一存储为分（整数），此函数先除以100转为元再格式化
+ * @param {number} fen - 价格（单位：分）
+ * @returns {string} 格式化后的价格字符串（元）
  */
-function formatPrice(price) {
-  if (!price && price !== 0) return '0'
-  
-  // 确保是数字
-  price = Number(price)
-  if (isNaN(price) || !isFinite(price)) return '0'
-  
-  // >= 1万亿 (10^12)，显示为"x万亿"
-  if (price >= 1000000000000) {
-    const wanYi = price / 1000000000000
-    if (wanYi >= 10) {
-      return Math.floor(wanYi) + '万亿'
-    }
-    return wanYi.toFixed(1).replace(/\.0$/, '') + '万亿'
+function formatPrice(fen) {
+  if (!fen && fen !== 0) return '0.00'
+  fen = Number(fen)
+  if (isNaN(fen) || !isFinite(fen)) return '0.00'
+
+  const yuan = fen / 100
+
+  if (yuan >= 100000000) {
+    return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
   }
-  
-  // >= 100亿 (10^10)，显示为"xxx亿"
-  if (price >= 10000000000) {
-    const yi = price / 100000000
-    return Math.floor(yi) + '亿'
+  if (yuan >= 10000) {
+    return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
   }
-  
-  // >= 1亿 (10^8)，显示为"x.x亿"
-  if (price >= 100000000) {
-    const yi = price / 100000000
-    return yi.toFixed(1).replace(/\.0$/, '') + '亿'
-  }
-  
-  // >= 1000万 (10^7)，显示为"xxxx万"
-  if (price >= 10000000) {
-    const wan = price / 10000
-    return Math.floor(wan) + '万'
-  }
-  
-  // >= 1万 (10^4)，显示为"x.x万"
-  if (price >= 10000) {
-    const wan = price / 10000
-    return wan.toFixed(1).replace(/\.0$/, '') + '万'
-  }
-  
-  // 小于1万，正常显示
-  if (Number.isInteger(price)) {
-    return price.toString()
-  }
-  return price.toFixed(2).replace(/\.?0+$/, '')
+  // 小于1万：保留两位小数，去掉末尾无效零
+  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
 }
 
 /**

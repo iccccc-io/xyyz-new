@@ -294,15 +294,15 @@ Page({
       return false
     }
     if (!price || price <= 0) {
-      wx.showToast({ title: '请输入正确的现价', icon: 'none' })
+      wx.showToast({ title: '请输入正确的现价（元）', icon: 'none' })
       return false
     }
-    if (this.data.originalPrice && (!originalPrice || originalPrice <= 0)) {
-      wx.showToast({ title: '请输入正确的原价', icon: 'none' })
+    if (this.data.originalPrice && (!originalPrice || originalPrice < price)) {
+      wx.showToast({ title: '原价应不低于现价', icon: 'none' })
       return false
     }
     if (!stock || stock <= 0 || !Number.isInteger(stock)) {
-      wx.showToast({ title: '请输入正确的库存数量', icon: 'none' })
+      wx.showToast({ title: '请输入正确的库存数量（正整数）', icon: 'none' })
       return false
     }
     if (!this.data.projectId) {
@@ -348,11 +348,11 @@ Page({
         .filter((tag) => tag.selected)
         .map((tag) => tag.name)
 
-      // 价格直接存储为元（整数或小数）
-      const price = Number(this.data.price)
-      const originalPrice = this.data.originalPrice
-        ? Number(this.data.originalPrice)
-        : price
+      // 用户输入元，存储统一使用分（×100），严格遵守顶层设计规范
+      const priceYuan = Number(this.data.price)
+      const originalPriceYuan = this.data.originalPrice ? Number(this.data.originalPrice) : priceYuan
+      const priceFen = Math.round(priceYuan * 100)
+      const originalPriceFen = Math.round(originalPriceYuan * 100)
 
       const result = await wx.cloud.callFunction({
         name: 'add_shopping_product',
@@ -360,8 +360,8 @@ Page({
           title: this.data.title.trim(),
           intro: this.data.intro.trim(),
           category: this.data.category,
-          price,
-          original_price: originalPrice,
+          price: priceFen,
+          original_price: originalPriceFen,
           stock: Number(this.data.stock),
           cover_img: this.data.imageFiles[0].url,
           detail_imgs: this.data.imageFiles.map((file) => file.url),

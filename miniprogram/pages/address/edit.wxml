@@ -1,0 +1,102 @@
+<!--pages/address/edit.wxml-->
+<view class="edit-page">
+  <nav-bar
+    title="{{isEdit ? '编辑地址' : '新增地址'}}"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="form-card">
+    <!-- 收货人 -->
+    <view class="form-item">
+      <text class="form-label required">收货人</text>
+      <input
+        class="form-input"
+        value="{{form.name}}"
+        placeholder="请输入收货人姓名"
+        maxlength="20"
+        bindinput="onNameInput"
+      />
+    </view>
+
+    <view class="form-divider"></view>
+
+    <!-- 手机号 -->
+    <view class="form-item">
+      <text class="form-label required">手机号</text>
+      <input
+        class="form-input"
+        value="{{form.phone}}"
+        type="number"
+        maxlength="11"
+        placeholder="请输入手机号码"
+        bindinput="onPhoneInput"
+      />
+    </view>
+
+    <view class="form-divider"></view>
+
+    <!-- 所在地区（使用微信内置省市区选择器） -->
+    <view class="form-item">
+      <text class="form-label required">所在地区</text>
+      <picker
+        mode="region"
+        value="{{regionValue}}"
+        bindchange="onRegionChange"
+      >
+        <view class="region-picker-display {{regionDisplay ? '' : 'placeholder'}}">
+          <text>{{regionDisplay || '请选择省/市/区'}}</text>
+          <van-icon name="arrow" size="14" color="#ccc" />
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-divider"></view>
+
+    <!-- 详细地址 -->
+    <view class="form-item form-item-textarea">
+      <text class="form-label required">详细地址</text>
+      <textarea
+        class="form-textarea"
+        value="{{form.detail}}"
+        placeholder="街道、门牌号、小区、楼栋等"
+        maxlength="200"
+        auto-height
+        bindinput="onDetailInput"
+      />
+    </view>
+  </view>
+
+  <!-- 默认地址开关 -->
+  <view class="default-card">
+    <view class="default-left">
+      <van-icon name="location-o" size="20" color="#8B2E2A" />
+      <text class="default-text">设为默认地址</text>
+    </view>
+    <van-switch
+      checked="{{form.is_default}}"
+      active-color="#8B2E2A"
+      size="22px"
+      bind:change="onDefaultChange"
+    />
+  </view>
+  <text class="tip-text">下单时将自动填充默认地址</text>
+
+  <!-- 保存按钮 -->
+  <view class="save-bar">
+    <van-button
+      block
+      round
+      type="primary"
+      color="#8B2E2A"
+      loading="{{saving}}"
+      disabled="{{saving}}"
+      bind:click="saveAddress"
+    >
+      保存地址
+    </van-button>
+  </view>
+</view>

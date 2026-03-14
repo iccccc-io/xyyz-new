@@ -1,0 +1,65 @@
+<!--pages/aftersale/seller-list.wxml-->
+<view class="seller-as-page">
+  <nav-bar
+    title="售后处理中心"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#8B2E2A" title-active-color="#8B2E2A" sticky>
+    <van-tab title="待处理 {{pendingCount ? '('+pendingCount+')' : ''}}">
+      <view class="tab-content">
+        <view class="loading-wrap" wx:if="{{loading}}">
+          <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+        </view>
+        <van-empty wx:elif="{{list.length === 0}}" description="暂无待处理的售后" />
+        <view class="as-card" wx:for="{{list}}" wx:key="_id" bindtap="goDetail" data-id="{{item._id}}">
+          <view class="as-card-header">
+            <van-tag color="{{item.statusColor}}" plain size="medium">{{item.statusText}}</van-tag>
+            <text class="as-time">{{item.applyTimeDisplay}}</text>
+          </view>
+          <view class="as-card-body">
+            <image class="as-product-img" src="{{item.orderInfo.cover_img}}" mode="aspectFill" />
+            <view class="as-product-info">
+              <text class="as-product-title">{{item.orderInfo.title}}</text>
+              <text class="as-type">{{item.type === 'refund_only' ? '仅退款' : '退货退款'}}</text>
+              <text class="as-reason">{{item.reason}}</text>
+            </view>
+            <text class="as-amount">¥{{item.refundDisplay}}</text>
+          </view>
+          <view class="as-card-footer" wx:if="{{item.status === 0}}">
+            <van-button size="mini" round color="#10b981" catchtap="goDetail" data-id="{{item._id}}">去处理</van-button>
+          </view>
+          <view class="as-card-footer" wx:elif="{{item.status === 2}}">
+            <van-button size="mini" round color="#8B2E2A" catchtap="goDetail" data-id="{{item._id}}">去验收</van-button>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+    <van-tab title="已完结">
+      <view class="tab-content">
+        <view class="loading-wrap" wx:if="{{loading}}">
+          <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+        </view>
+        <van-empty wx:elif="{{closedList.length === 0}}" description="暂无已完结的售后" />
+        <view class="as-card" wx:for="{{closedList}}" wx:key="_id" bindtap="goDetail" data-id="{{item._id}}">
+          <view class="as-card-header">
+            <van-tag color="{{item.statusColor}}" plain size="medium">{{item.statusText}}</van-tag>
+            <text class="as-time">{{item.applyTimeDisplay}}</text>
+          </view>
+          <view class="as-card-body">
+            <image class="as-product-img" src="{{item.orderInfo.cover_img}}" mode="aspectFill" />
+            <view class="as-product-info">
+              <text class="as-product-title">{{item.orderInfo.title}}</text>
+              <text class="as-type">{{item.type === 'refund_only' ? '仅退款' : '退货退款'}}</text>
+            </view>
+            <text class="as-amount">¥{{item.refundDisplay}}</text>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+  </van-tabs>
+</view>

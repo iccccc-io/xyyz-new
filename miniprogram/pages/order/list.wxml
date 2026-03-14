@@ -1,0 +1,161 @@
+<!--pages/order/list.wxml-->
+<view class="order-list-page">
+  <nav-bar
+    title="我的订单"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- Tab 切换 -->
+  <van-tabs
+    active="{{activeTab}}"
+    color="#8B2E2A"
+    title-active-color="#8B2E2A"
+    bind:click="onTabChange"
+    sticky
+    offset-top="{{navBarHeight}}"
+    class="order-tabs"
+  >
+    <van-tab title="全部" name="all" />
+    <van-tab title="待付款" name="10" />
+    <van-tab title="待发货" name="20" />
+    <van-tab title="待收货" name="30" />
+    <van-tab title="已完成" name="40" />
+    <van-tab title="售后" name="60" />
+  </van-tabs>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <van-empty
+    wx:elif="{{!loading && orders.length === 0}}"
+    image="order"
+    description="暂无相关订单"
+  >
+    <van-button round type="primary" color="#8B2E2A" size="small" bind:click="goToMall">
+      去逛逛
+    </van-button>
+  </van-empty>
+
+  <!-- 订单列表 -->
+  <view class="orders-wrap" wx:else>
+    <view class="order-card" wx:for="{{orders}}" wx:key="_id">
+
+      <!-- 卡片头部：商品分类/状态 -->
+      <view class="card-header">
+        <view class="header-left">
+          <van-icon name="shop-o" size="16" color="#8B6F47" />
+          <text class="shop-name">{{item.product_snapshot.workshop_name || '湘韵遗珍文创商城'}}</text>
+        </view>
+        <text class="order-status-text {{item.statusStyle}}">{{item.statusText}}</text>
+      </view>
+
+      <!-- 商品信息行 -->
+      <view class="product-row" bindtap="goToDetail" data-id="{{item._id}}">
+        <image class="product-img" src="{{item.product_snapshot.cover_img}}" mode="aspectFill" />
+        <view class="product-info">
+          <text class="product-title">{{item.product_snapshot.title}}</text>
+          <view class="product-meta">
+            <text class="product-price">¥{{item.productPriceDisplay}}</text>
+            <text class="product-qty">× {{item.quantity}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 总计 + 待付款倒计时 -->
+      <view class="total-row">
+        <text class="total-label">共 {{item.quantity}} 件，实付：</text>
+        <text class="total-price">¥{{item.totalDisplay}}</text>
+      </view>
+
+      <!-- 待付款超时倒计时提示 -->
+      <view class="countdown-tip" wx:if="{{item.status === 10 && item.countdownDisplay}}">
+        <van-icon name="clock-o" size="14" color="#ee0a24" />
+        <text class="countdown-tip-text">{{item.countdown > 0 ? '剩余支付时间 ' + item.countdownDisplay : '已超时，即将自动取消'}}</text>
+      </view>
+
+      <!-- 物流信息（已发货时显示） -->
+      <view class="logistics-row" wx:if="{{item.status === 30 && item.tracking_number}}">
+        <van-icon name="logistics" size="16" color="#8B6F47" />
+        <text class="logistics-text">{{item.carrier_code}} {{item.tracking_number}}</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="card-actions">
+        <!-- 待付款：取消 + 去支付 -->
+        <block wx:if="{{item.status === 10}}">
+          <van-button size="small" round plain color="#999" bind:click="cancelOrder" data-id="{{item._id}}" data-idx="{{index}}">
+            取消订单
+          </van-button>
+          <van-button size="small" round color="#8B2E2A" bind:click="payOrder" data-id="{{item._id}}" data-total="{{item.totalDisplay}}" data-idx="{{index}}">
+            去支付
+          </van-button>
+        </block>
+        <!-- 待发货：提示等待 -->
+        <block wx:elif="{{item.status === 20}}">
+          <van-button size="small" round plain color="#8B6F47" disabled>
+            等待卖家发货
+          </van-button>
+        </block>
+        <!-- 待收货：查看物流 + 确认收货 -->
+        <block wx:elif="{{item.status === 30}}">
+          <van-button size="small" round plain color="#1989fa" bind:click="viewLogistics" data-id="{{item._id}}">
+            查看物流
+          </van-button>
+          <van-button size="small" round color="#8B2E2A" bind:click="confirmReceipt" data-id="{{item._id}}" data-idx="{{index}}">
+            确认收货
+          </van-button>
+        </block>
+        <!-- 已完成（有活跃售后 → 显示售后入口） -->
+        <block wx:elif="{{item.status === 40 && item.has_aftersale}}">
+          <van-button size="small" round plain color="#ff9500" bind:click="viewAftersale" data-id="{{item._id}}">
+            查看售后进度
+          </van-button>
+        </block>
+        <!-- 已完成（正常） -->
+        <block wx:elif="{{item.status === 40}}">
+          <van-button size="small" round plain color="#1989fa" bind:click="viewLogistics" data-id="{{item._id}}" wx:if="{{item.tracking_number}}">
+            查看物流
+          </van-button>
+          <van-button size="small" round plain color="#8B6F47" bind:click="goToDetail" data-id="{{item._id}}">
+            查看详情
+          </van-button>
+        </block>
+        <!-- 售后中 -->
+        <block wx:elif="{{item.status === 60}}">
+          <van-button size="small" round plain color="#ff9500" bind:click="viewAftersale" data-id="{{item._id}}">
+            查看售后进度
+          </van-button>
+          <van-button size="small" round plain color="#8B6F47" bind:click="goToDetail" data-id="{{item._id}}">
+            查看详情
+          </van-button>
+        </block>
+      </view>
+    </view>
+
+    <!-- 底部加载更多 -->
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">
+      <text>加载更多</text>
+    </view>
+    <view class="no-more" wx:elif="{{orders.length > 0 && !hasMore}}">
+      <text>— 没有更多了 —</text>
+    </view>
+  </view>
+</view>
+
+<!-- 支付键盘（为待付款订单补充支付） -->
+<pay-keyboard
+  id="payKeyboard"
+  show="{{showPayKeyboard}}"
+  title="补充支付"
+  amount-display="{{payAmountDisplay}}"
+  loading="{{paying}}"
+  bind:confirm="onPayConfirm"
+  bind:close="closePayKeyboard"
+/>

@@ -1,0 +1,109 @@
+<!--pages/aftersale/apply.wxml-->
+<view class="apply-page">
+  <nav-bar
+    title="{{isReapply ? '修改售后申请' : '申请售后'}}"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <!-- 商品信息快照 -->
+  <view class="product-card" wx:if="{{order}}">
+    <image class="product-img" src="{{order.product_snapshot.cover_img}}" mode="aspectFill" />
+    <view class="product-info">
+      <text class="product-title">{{order.product_snapshot.title}}</text>
+      <view class="product-meta">
+        <text class="product-price">¥{{totalDisplay}}</text>
+        <text class="product-qty">× {{order.quantity}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 售后类型选择 -->
+  <view class="section-card">
+    <view class="section-title">售后类型</view>
+    <view class="type-options">
+      <view
+        class="type-option {{type === 'return_refund' ? 'type-active' : ''}}"
+        bindtap="selectType"
+        data-type="return_refund"
+      >
+        <van-icon name="revoke" size="28" color="{{type === 'return_refund' ? '#8B2E2A' : '#999'}}" />
+        <text class="type-label">退货退款</text>
+        <text class="type-desc">需退回商品</text>
+      </view>
+      <view
+        class="type-option {{type === 'refund_only' ? 'type-active' : ''}}"
+        bindtap="selectType"
+        data-type="refund_only"
+      >
+        <van-icon name="balance-o" size="28" color="{{type === 'refund_only' ? '#8B2E2A' : '#999'}}" />
+        <text class="type-label">仅退款</text>
+        <text class="type-desc">无需退货</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 原因描述 -->
+  <view class="section-card">
+    <view class="section-title">退货原因</view>
+    <view class="reason-tags">
+      <view
+        class="reason-tag {{reason === item ? 'tag-active' : ''}}"
+        wx:for="{{reasonOptions}}"
+        wx:key="index"
+        bindtap="selectReason"
+        data-reason="{{item}}"
+      >{{item}}</view>
+    </view>
+    <textarea
+      class="reason-input"
+      placeholder="请补充详细说明（选填）"
+      value="{{reasonDetail}}"
+      bindinput="onReasonInput"
+      maxlength="200"
+    />
+  </view>
+
+  <!-- 图片凭证 -->
+  <view class="section-card">
+    <view class="section-title">
+      <text>图片凭证</text>
+      <text class="section-sub">（最多6张，建议附上问题照片）</text>
+    </view>
+    <van-uploader
+      file-list="{{fileList}}"
+      bind:after-read="onAfterRead"
+      bind:delete="onDeleteImg"
+      max-count="{{6}}"
+      accept="image"
+      preview-size="160rpx"
+    />
+  </view>
+
+  <!-- 退款金额 -->
+  <view class="section-card refund-card">
+    <view class="refund-row">
+      <text class="refund-label">退款金额</text>
+      <text class="refund-amount">¥{{totalDisplay}}</text>
+    </view>
+    <text class="refund-hint">退款将原路退回至您的钱包余额</text>
+    <text class="refund-hint" wx:if="{{type === 'return_refund'}}">退货邮费需与卖家协商自理</text>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-bar">
+    <van-button
+      round
+      block
+      color="#8B2E2A"
+      loading="{{submitting}}"
+      disabled="{{!reason}}"
+      bind:click="submitApply"
+    >
+      {{isReapply ? '修改并重新提交' : '提交售后申请'}}
+    </van-button>
+  </view>
+</view>
