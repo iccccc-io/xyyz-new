@@ -9,6 +9,7 @@
     "pages/resource/list",
     "pages/resource/project-detail",
     "pages/resource/inheritor-detail",
+    "pages/resource/news-detail",
     "pages/venue/list",
     "pages/venue/detail",
     "pages/community/detail",

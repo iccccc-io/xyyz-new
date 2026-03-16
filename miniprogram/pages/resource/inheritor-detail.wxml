@@ -1,76 +1,79 @@
-<!--pages/resource/inheritor-detail.wxml-->
-<view class="inheritor-detail-container">
-  <block wx:if="{{inheritorData}}">
-    <!-- 个人档案卡片 -->
-    <view class="profile-card">
-      <view class="profile-header">
-        <image class="profile-photo" src="{{inheritorData.photo}}" mode="aspectFill" />
-        <view class="profile-info">
-          <view class="profile-name">{{inheritorData.name}}</view>
-          <view class="profile-detail">性别：{{inheritorData.gender}}</view>
-          <view class="profile-detail">民族：{{inheritorData.ethnicity}}</view>
-        </view>
-      </view>
-    </view>
+<!-- 自定义导航栏 -->
+<nav-bar
+  title="{{inheritorData.name || '传承人详情'}}"
+  showTitle="{{showNavTitle}}"
+  background="{{showNavTitle ? 'solid' : 'transparent'}}"
+  dark="{{showNavTitle}}"
+  placeholder="{{false}}"
+/>
 
-    <!-- 代表性项目 -->
-    <view class="detail-card">
-      <view class="card-title">
-        <view class="title-icon"></view>
-        <text>代表性项目</text>
-      </view>
-      <van-cell-group>
-        <van-cell 
-          title="代表性项目" 
-          value="{{inheritorData.project_name}}" 
-          is-link
-          bindtap="goToProject"
-        />
-        <van-cell 
-          title="申报地区" 
-          value="{{inheritorData.region}}" 
-        />
-      </van-cell-group>
-    </view>
-
-    <!-- 相关资料 -->
-    <view class="detail-card" wx:if="{{inheritorData.media_list && inheritorData.media_list.length > 0}}">
-      <view class="card-title">
-        <view class="title-icon"></view>
-        <text>相关资料</text>
-      </view>
-      <view class="media-list">
-        <block wx:for="{{inheritorData.media_list}}" wx:key="index">
-          <!-- 视频 -->
-          <video 
-            wx:if="{{item.type === 'video'}}"
-            class="media-video"
-            src="{{item.url}}"
-            controls
-            show-center-play-btn
-          />
-          <!-- 图片 -->
-          <image 
-            wx:if="{{item.type === 'image'}}"
-            class="media-image"
-            src="{{item.url}}"
-            mode="aspectFill"
-            bindtap="previewImage"
-            data-url="{{item.url}}"
-          />
-        </block>
-      </view>
-    </view>
-  </block>
-
+<view class="detail-container">
   <!-- 加载状态 -->
   <view class="loading-wrapper" wx:if="{{loading}}">
     <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-wrapper" wx:if="{{!loading && !inheritorData}}">
-    <van-empty description="传承人不存在" />
-  </view>
-</view>
+  <van-empty wx:if="{{!loading && !inheritorData}}" description="传承人不存在" />
 
+  <block wx:if="{{inheritorData}}">
+    <!-- 个人档案头部 -->
+    <view class="profile-hero">
+      <view class="profile-bg"></view>
+      <view class="profile-content">
+        <image class="profile-avatar" src="{{inheritorData.cover}}" mode="aspectFill" bindtap="previewAvatar" />
+        <view class="profile-name">{{inheritorData.name}}</view>
+        <view class="profile-level" wx:if="{{inheritorData.level}}">
+          <van-tag color="rgba(255,255,255,0.25)" text-color="#fff" size="large">{{inheritorData.level}}</van-tag>
+        </view>
+      </view>
+    </view>
+
+    <!-- 所属非遗项目 -->
+    <view class="section-card project-link-card" wx:if="{{inheritorData.works_at && inheritorData.works_at.project_id}}" bindtap="goToProject">
+      <view class="link-card-left">
+        <view class="link-icon-wrapper">
+          <van-icon name="bookmark-o" size="22" color="#b63b36" />
+        </view>
+        <view class="link-card-info">
+          <text class="link-label">所属非遗项目</text>
+          <text class="link-name">{{inheritorData.works_at.project_name}}</text>
+        </view>
+      </view>
+      <van-icon name="arrow" size="16" color="#ccc" />
+    </view>
+
+    <!-- 个人简介 (富文本) -->
+    <view class="section-card" wx:if="{{inheritorData._processedContent}}">
+      <view class="section-header">
+        <view class="section-bar"></view>
+        <text>个人简介</text>
+      </view>
+      <view class="rich-content">
+        <rich-text nodes="{{inheritorData._processedContent}}"></rich-text>
+      </view>
+    </view>
+
+    <!-- 相关资讯 -->
+    <view class="section-card" wx:if="{{newsList.length > 0}}">
+      <view class="section-header">
+        <view class="section-bar"></view>
+        <text>相关资讯</text>
+      </view>
+      <view class="news-list">
+        <view class="news-item"
+          wx:for="{{newsList}}" wx:key="news_id"
+          bindtap="goToNews" data-id="{{item.news_id}}">
+          <view class="news-content">
+            <view class="news-title">{{item.title}}</view>
+            <van-tag plain color="{{item.category === '非遗快讯' ? '#1989fa' : '#8b6f47'}}" size="medium">{{item.category}}</van-tag>
+          </view>
+          <van-icon name="arrow" size="14" color="#ccc" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom"></view>
+  </block>
+</view>

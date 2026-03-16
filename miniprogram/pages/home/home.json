@@ -1,8 +1,8 @@
 {
   "usingComponents": {
-    "van-grid": "@vant/weapp/grid/index",
-    "van-grid-item": "@vant/weapp/grid-item/index",
+    "ec-canvas": "../../components/ec-canvas/ec-canvas",
     "van-icon": "@vant/weapp/icon/index",
-    "nav-bar": "/components/nav-bar/index"
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index"
   }
 }

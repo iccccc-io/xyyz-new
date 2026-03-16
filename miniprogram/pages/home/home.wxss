@@ -1,230 +1,443 @@
 /* pages/home/home.wxss */
-/* 沉浸式首页样式 */
 
+/* ═════════════════════════════════════════════
+   全局容器：锁定视口，禁止页面滚动
+   ═════════════════════════════════════════════ */
 page {
-  background: #b63b36;
-  min-height: 100vh;
-}
-
-.home-container {
-  min-height: 100vh;
-}
-
-/* ========== 沉浸式顶部区域 ========== */
-.hero-section {
-  position: relative;
-  padding-bottom: 60rpx;
+  background: #f0e6cf;
+  height: 100vh;
   overflow: hidden;
 }
 
-/* 背景 */
-.hero-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #c94843 0%, #b63b36 50%, #8b2e2a 100%);
-}
-
-/* 装饰性覆盖层 */
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.15) 0%, transparent 60%);
-}
-
-/* 状态栏占位 */
-.status-bar-placeholder {
-  width: 100%;
-}
-
-/* 顶部内容 */
-.hero-content {
+.page {
   position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32rpx 40rpx 60rpx;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(170deg, #fdf4e3 0%, #f0e8d0 55%, #e5d9b8 100%);
 }
 
-.title-group {
+/* ═════════════════════════════════════════════
+   底层：地图探索区
+   ═════════════════════════════════════════════ */
+.base-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
 }
 
-.title {
-  font-size: 60rpx;
+/* ─── 顶部品牌栏 ─── */
+.top-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-left: 40rpx;
+  padding-right: 40rpx;
+  padding-bottom: 12rpx;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.brand-name {
+  font-size: 44rpx;
   font-weight: bold;
-  color: #ffffff;
+  color: #3a1a0a;
   letter-spacing: 8rpx;
-  text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
 }
 
-.subtitle {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 16rpx;
-  letter-spacing: 4rpx;
+.brand-tagline {
+  font-size: 22rpx;
+  color: #8b6f47;
+  letter-spacing: 3rpx;
 }
 
-.user-entry {
-  width: 80rpx;
-  height: 80rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.user-icon-btn {
+  width: 72rpx;
+  height: 72rpx;
+  background: rgba(139, 111, 71, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  border: 1.5rpx solid rgba(139, 111, 71, 0.25);
+  transition: all 0.15s ease;
 }
 
-.user-entry:active {
-  transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.3);
+.user-icon-btn:active {
+  background: rgba(139, 111, 71, 0.22);
+  transform: scale(0.94);
 }
 
-/* ========== 白色内容卡片 ========== */
-.content-card {
+/* ─── 地图容器 ─── */
+.map-wrap {
   position: relative;
-  background: #f5f5f5;
-  border-radius: 40rpx 40rpx 0 0;
-  margin-top: -40rpx;
-  padding: 40rpx 30rpx;
-  min-height: 800rpx;
-  z-index: 20;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-/* ========== 导航区块 ========== */
-.nav-section {
-  background: #ffffff;
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
-  padding: 32rpx 24rpx;
-  margin-bottom: 24rpx;
+.ec-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.section-title {
-  font-size: 32rpx;
+/* 地图加载遮罩 */
+.map-loading-cover {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(253, 244, 227, 0.85);
+  gap: 16rpx;
+}
+
+.map-loading-text {
+  font-size: 24rpx;
+  color: #8b6f47;
+}
+
+/* canvas 被 wx:if 移除时的占位 */
+.map-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(170deg, #fdf4e3 0%, #f0e8d0 55%, #e5d9b8 100%);
+}
+
+.map-placeholder-text {
+  font-size: 26rpx;
+  color: #c4b08a;
+  letter-spacing: 4rpx;
+}
+
+/* 选中城市角标 */
+.map-city-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 24rpx;
+  background: #b63b36;
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 500;
+  padding: 8rpx 20rpx 8rpx 18rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.map-city-badge:active {
+  transform: scale(0.94);
+}
+
+/* ─── 数据概览区 ─── */
+.stats-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 16rpx 40rpx;
+  min-height: 100rpx;
+}
+
+.stats-loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.stats-content {
+  width: 100%;
+}
+
+.stats-region-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 14rpx;
+}
+
+.region-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #b63b36;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4rpx rgba(182, 59, 54, 0.2);
+}
+
+.region-name {
+  font-size: 34rpx;
   font-weight: bold;
-  color: #333333;
-  text-align: center;
-  margin-bottom: 24rpx;
-  position: relative;
-  padding-bottom: 16rpx;
+  color: #3a1a0a;
+  letter-spacing: 2rpx;
 }
 
-.section-title::after {
-  content: '';
+.region-hint {
+  font-size: 22rpx;
+  color: #a08868;
+}
+
+.stats-numbers-row {
+  display: flex;
+  align-items: center;
+  gap: 36rpx;
+}
+
+.stat-block {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.stat-num {
+  font-size: 58rpx;
+  font-weight: bold;
+  color: #b63b36;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #8b6f47;
+  font-weight: 500;
+}
+
+.stat-sep {
+  width: 2rpx;
+  height: 52rpx;
+  background: rgba(139, 111, 71, 0.25);
+  border-radius: 1rpx;
+}
+
+/* ─── 快捷导航胶囊 ─── */
+.quick-nav-row {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 40rpx 28rpx;
+  flex-shrink: 0;
+}
+
+.nav-capsule {
+  flex: 1;
+  height: 84rpx;
+  border-radius: 42rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.nav-capsule:active {
+  transform: scale(0.95);
+  opacity: 0.85;
+}
+
+.nav-capsule--primary {
+  background: linear-gradient(135deg, #d4534a 0%, #b63b36 100%);
+  color: #ffffff;
+  box-shadow: 0 8rpx 28rpx rgba(182, 59, 54, 0.38);
+}
+
+.nav-capsule--secondary {
+  background: rgba(255, 255, 255, 0.7);
+  color: #8b6f47;
+  border: 1.5rpx solid rgba(139, 111, 71, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+/* ═════════════════════════════════════════════
+   遮罩层
+   ═════════════════════════════════════════════ */
+.backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+  transition: opacity 0.35s ease;
+}
+
+/* ═════════════════════════════════════════════
+   顶层：底部资讯面板（Bottom Sheet）
+   ═════════════════════════════════════════════ */
+.bottom-sheet {
+  position: fixed;
+  /* bottom 由 WXML 内联样式动态设置（= tabBarHeight），此处不写 bottom: 0 */
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 40rpx 40rpx 0 0;
+  box-shadow: 0 -10rpx 30rpx rgba(0, 0, 0, 0.1);
+  /* 必须高于 TabBar 的 z-index:999，否则面板永远在 TabBar 下方不可见 */
+  z-index: 1000;
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── 可拖拽头部 ─── */
+.sheet-header {
+  flex-shrink: 0;
+  background: #ffffff;
+  border-radius: 40rpx 40rpx 0 0;
+  /* 使头部在 z 轴上置于 scroll-view 之上 */
+  position: relative;
+  z-index: 2;
+}
+
+/* 拖拽指示条 */
+.drag-indicator-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 16rpx 0 10rpx;
+}
+
+.drag-indicator {
+  width: 72rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: #ddd5c8;
+}
+
+/* Tab 栏 */
+.news-tab-bar {
+  display: flex;
+  padding: 0 40rpx 0;
+  border-bottom: 1.5rpx solid #f0ebe3;
+  gap: 8rpx;
+}
+
+.news-tab {
+  position: relative;
+  padding: 12rpx 24rpx 20rpx;
+  font-size: 28rpx;
+  color: #9a8878;
+  font-weight: 400;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.news-tab--active {
+  color: #2c1a0e;
+  font-weight: 600;
+}
+
+.tab-underline {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 60rpx;
-  height: 6rpx;
-  background: linear-gradient(to right, #b63b36, #d4574f);
-  border-radius: 3rpx;
+  width: 44rpx;
+  height: 5rpx;
+  border-radius: 2.5rpx;
+  background: #b63b36;
 }
 
-/* Vant Grid 自定义样式 */
-.van-grid-item__content {
-  padding: 24rpx 16rpx !important;
-  background: #fafafa;
-  border-radius: 16rpx;
-  transition: all 0.2s ease;
+/* ─── 资讯滚动列表 ─── */
+.news-scroll {
+  flex: 1;
+  overflow: hidden;
+  background: #faf8f4;
 }
 
-.van-grid-item__content:active {
-  background: #f0f0f0;
-  transform: scale(0.96);
-}
-
-.van-grid-item__icon {
-  font-size: 44rpx !important;
-  margin-bottom: 12rpx;
-}
-
-.van-grid-item__text {
-  font-size: 26rpx !important;
-  color: #333333 !important;
-  margin-top: 6rpx;
-  font-weight: 500;
-}
-
-/* ========== Banner 通用样式 ========== */
-.community-banner,
-.mall-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 20rpx;
-  padding: 32rpx;
-  margin-top: 16rpx;
-  transition: all 0.2s;
-}
-
-.community-banner:active,
-.mall-banner:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-/* 社区入口 */
-.community-banner {
-  background: linear-gradient(135deg, #8b6f47 0%, #6d5636 100%);
-}
-
-/* 商城入口 */
-.mall-banner {
-  background: linear-gradient(135deg, #b63b36 0%, #8b2e2a 100%);
-}
-
-.banner-content {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
-
-.banner-icon {
-  width: 88rpx;
-  height: 88rpx;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.banner-text {
+/* 加载状态 */
+.news-loading-wrap {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 40rpx;
+  gap: 20rpx;
 }
 
-.banner-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.banner-desc {
+.news-loading-text {
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.8);
+  color: #9a8878;
 }
 
-.mall-icon {
-  background: rgba(255, 215, 160, 0.3);
+/* ─── 资讯列表项 ─── */
+.news-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+  padding: 32rpx 40rpx;
+  background: #ffffff;
+  border-bottom: 1.5rpx solid #f5f0e8;
+  transition: background 0.15s ease;
 }
 
-/* ========== 安全区域 ========== */
-.safe-area-bottom {
+.news-item:active {
+  background: #fdf8f0;
+}
+
+.news-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.news-category-tag {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4rpx 18rpx;
+  background: rgba(182, 59, 54, 0.08);
+  color: #b63b36;
+  font-size: 20rpx;
+  font-weight: 500;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(182, 59, 54, 0.2);
+  letter-spacing: 1rpx;
+}
+
+.news-title {
+  font-size: 28rpx;
+  color: #2c1a0e;
+  line-height: 1.65;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-meta {
+  font-size: 22rpx;
+  color: #b0a090;
+}
+
+.news-thumb {
+  width: 168rpx;
+  height: 120rpx;
+  border-radius: 14rpx;
+  flex-shrink: 0;
+  background: #f0ebe3;
+  object-fit: cover;
+}
+
+/* 列表底部安全区 */
+.list-bottom-safe {
   height: calc(40rpx + env(safe-area-inset-bottom));
 }

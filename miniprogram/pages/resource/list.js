@@ -1,360 +1,200 @@
-// pages/resource/list.js
 const db = wx.cloud.database()
 
 Page({
-  /**
-   * 页面的初始数据
-   */
   data: {
-    // 当前 Tab: 'project' | 'inheritor'
+    statusBarHeight: 20,
     currentTab: 'project',
-    
-    // 列表数据
+    newsCategory: '',
     dataList: [],
-    
-    // 搜索关键词
     searchKeyword: '',
-    
-    // 加载状态
     loading: false,
-    
-    // 筛选弹窗显示状态
+    noMore: false,
+    pageSize: 20,
     showFilter: false,
-    
-    // 筛选条件
     filterData: {
-      region: '',
+      city: '',
       category: '',
-      level: ''
+      level: '',
+      batch: ''
     },
-    
-    // 顶部高度（用于动态计算）
     headerHeight: 200,
-    
-    // 硬编码筛选选项 - 湖南地区
-    regionOptions: [
-      '长沙市',
-      '株洲市',
-      '湘潭市',
-      '衡阳市',
-      '邵阳市',
-      '岳阳市',
-      '常德市',
-      '张家界市',
-      '益阳市',
-      '郴州市',
-      '永州市',
-      '怀化市',
-      '娄底市',
-      '湘西土家族苗族自治州'
+    cityOptions: [
+      '长沙市', '株洲市', '湘潭市', '衡阳市', '邵阳市', '岳阳市',
+      '常德市', '张家界市', '益阳市', '郴州市', '永州市', '怀化市',
+      '娄底市', '湘西土家族苗族自治州'
     ],
-    
-    // 硬编码筛选选项 - 非遗类别
     categoryOptions: [
-      '民间文学',
-      '传统音乐',
-      '传统舞蹈',
-      '传统戏剧',
-      '曲艺',
-      '传统体育、游艺与杂技',
-      '传统美术',
-      '传统技艺',
-      '传统医药',
-      '民俗'
+      '民间文学', '传统音乐', '传统舞蹈', '传统戏剧', '曲艺',
+      '传统体育', '传统美术', '传统技艺', '传统医药', '民俗'
     ],
-    
-    // 硬编码筛选选项 - 级别
-    levelOptions: [
-      '联合国教科文组织非遗名录',
-      '国家级',
-      '省级',
-      '市级'
+    levelOptions: ['国家级', '省级', '市级', '县级'],
+    batchOptions: [
+      '第一批', '第二批', '第三批', '第四批', '第五批',
+      '第六批', '第七批', '第八批', '第九批', '第十批'
     ]
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
   onLoad(options) {
-    // 初始化云开发环境
-    if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
-      wx.showToast({
-        title: '云开发初始化失败',
-        icon: 'none',
-        duration: 3000
-      })
-      return
+    const sysInfo = wx.getSystemInfoSync()
+    this.setData({ statusBarHeight: sysInfo.statusBarHeight || 20 })
+
+    if (options.tab) {
+      this.setData({ currentTab: options.tab })
     }
-    
-    // 输出云开发环境信息（调试用）
-    console.log('云开发环境已初始化')
-    console.log('当前云环境 ID:', wx.cloud.CloudID)
-    
-    // 计算固定头部高度
+    // 支持从首页地图带城市参数跳转，自动预设城市筛选
+    if (options.city) {
+      this.setData({ filterData: { ...this.data.filterData, city: decodeURIComponent(options.city) } })
+    }
     this.calculateHeaderHeight()
-    
-    // 加载初始数据
     this.loadData()
   },
 
-  /**
-   * 计算固定头部高度
-   */
   calculateHeaderHeight() {
-    const query = wx.createSelectorQuery()
-    query.select('.fixed-header').boundingClientRect()
-    query.exec((res) => {
-      if (res[0]) {
-        this.setData({
-          headerHeight: res[0].height
-        })
-      }
+    setTimeout(() => {
+      const query = wx.createSelectorQuery()
+      query.select('.fixed-header').boundingClientRect()
+      query.exec((res) => {
+        if (res[0]) {
+          this.setData({ headerHeight: res[0].height })
+        }
+      })
+    }, 150)
+  },
+
+  goBack() {
+    wx.navigateBack({
+      fail: () => { wx.switchTab({ url: '/pages/home/home' }) }
     })
   },
 
-  /**
-   * 切换 Tab
-   */
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     if (tab === this.data.currentTab) return
-    
     this.setData({
       currentTab: tab,
       dataList: [],
       searchKeyword: '',
-      filterData: {
-        region: '',
-        category: '',
-        level: ''
-      }
+      newsCategory: '',
+      noMore: false,
+      filterData: { city: '', category: '', level: '', batch: '' }
     })
-    
+    this.calculateHeaderHeight()
     this.loadData()
   },
 
-  /**
-   * 搜索框内容变化
-   */
+  switchNewsCategory(e) {
+    const cat = e.currentTarget.dataset.category
+    if (cat === this.data.newsCategory) return
+    this.setData({ newsCategory: cat, dataList: [], noMore: false })
+    this.loadData()
+  },
+
   onSearchChange(e) {
-    this.setData({
-      searchKeyword: e.detail
-    })
+    this.setData({ searchKeyword: e.detail })
   },
 
-  /**
-   * 执行搜索
-   */
   onSearch() {
+    this.setData({ dataList: [], noMore: false })
     this.loadData()
   },
 
-  /**
-   * 打开筛选弹窗
-   */
   openFilter() {
-    this.setData({
-      showFilter: true
-    })
+    this.setData({ showFilter: true })
   },
 
-  /**
-   * 关闭筛选弹窗
-   */
   closeFilter() {
-    this.setData({
-      showFilter: false
-    })
+    this.setData({ showFilter: false })
   },
 
-  /**
-   * 选择筛选项
-   */
   selectFilter(e) {
     const { type, value } = e.currentTarget.dataset
-    this.setData({
-      [`filterData.${type}`]: value
-    })
+    this.setData({ [`filterData.${type}`]: value })
   },
 
-  /**
-   * 重置筛选
-   */
   resetFilter() {
     this.setData({
-      filterData: {
-        region: '',
-        category: '',
-        level: ''
-      }
+      filterData: { city: '', category: '', level: '', batch: '' }
     })
   },
 
-  /**
-   * 确定筛选
-   */
   confirmFilter() {
     this.closeFilter()
+    this.setData({ dataList: [], noMore: false })
     this.loadData()
   },
 
-  /**
-   * 加载数据
-   */
-  async loadData() {
+  async loadData(loadMore = false) {
+    if (this.data.loading || (loadMore && this.data.noMore)) return
     this.setData({ loading: true })
 
     try {
-      const collectionName = this.data.currentTab === 'project' ? 'ich_projects' : 'ich_inheritors'
-      
-      console.log('=== 开始查询数据库 ===')
-      console.log('集合名称:', collectionName)
-      
-      // 构建查询条件
+      const { currentTab, searchKeyword, filterData, newsCategory, dataList, pageSize } = this.data
+      let collectionName
       let query = {}
-      
-      // 搜索关键词
-      if (this.data.searchKeyword) {
-        const keyword = this.data.searchKeyword
-        if (this.data.currentTab === 'project') {
-          // 项目搜索标题
-          query.title = db.RegExp({
-            regexp: keyword,
-            options: 'i'
-          })
-        } else {
-          // 传承人搜索姓名
-          query.name = db.RegExp({
-            regexp: keyword,
-            options: 'i'
-          })
+
+      if (currentTab === 'project') {
+        collectionName = 'ich_projects'
+        if (searchKeyword) {
+          query.name = db.RegExp({ regexp: searchKeyword, options: 'i' })
         }
-      }
-      
-      // 筛选条件
-      if (this.data.filterData.region) {
-        query.region = this.data.filterData.region
-      }
-      
-      if (this.data.filterData.category) {
-        query.category = this.data.filterData.category
-      }
-      
-      if (this.data.filterData.level) {
-        query.level = this.data.filterData.level
+        if (filterData.city) query.city = filterData.city
+        if (filterData.category) query.category = filterData.category
+        if (filterData.level) query.level = filterData.level
+        if (filterData.batch) query.batch = filterData.batch
+      } else if (currentTab === 'inheritor') {
+        collectionName = 'ich_inheritors'
+        if (searchKeyword) {
+          query.name = db.RegExp({ regexp: searchKeyword, options: 'i' })
+        }
+        if (filterData.level) query.level = filterData.level
+      } else {
+        collectionName = 'ich_news'
+        if (searchKeyword) {
+          query.title = db.RegExp({ regexp: searchKeyword, options: 'i' })
+        }
+        if (newsCategory) query.category = newsCategory
       }
 
-      console.log('查询条件:', query)
-
-      // 查询数据库
+      const skip = loadMore ? dataList.length : 0
       const res = await db.collection(collectionName)
         .where(query)
-        .limit(100)
+        .skip(skip)
+        .limit(pageSize)
         .get()
 
-      console.log('查询结果:', res)
-      console.log('数据条数:', res.data.length)
-
+      const newList = loadMore ? [...dataList, ...res.data] : res.data
       this.setData({
-        dataList: res.data,
-        loading: false
+        dataList: newList,
+        loading: false,
+        noMore: res.data.length < pageSize
       })
-
-      // 如果没有数据，给出更详细的提示
-      if (res.data.length === 0) {
-        console.warn('⚠️ 数据库返回为空，请检查：')
-        console.warn('1. 云开发环境 ID 是否正确配置')
-        console.warn('2. 数据库集合名称是否正确:', collectionName)
-        console.warn('3. 数据库权限是否设置为"所有用户可读"')
-        console.warn('4. 数据是否已正确导入')
-        
-        wx.showModal({
-          title: '数据为空',
-          content: `集合 ${collectionName} 中没有数据。\n\n请检查：\n1. 云开发控制台是否已添加数据\n2. 数据库权限是否正确\n3. 集合名称是否匹配`,
-          showCancel: false
-        })
-      }
-      
     } catch (err) {
-      console.error('❌ 加载数据失败:', err)
-      console.error('错误详情:', err.errMsg || err.message)
+      console.error('加载数据失败:', err)
       this.setData({ loading: false })
-      
-      wx.showModal({
-        title: '加载失败',
-        content: `错误信息：${err.errMsg || err.message}\n\n可能原因：\n1. 云开发环境未初始化\n2. 数据库权限设置错误\n3. 网络连接问题`,
-        showCancel: false
-      })
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' })
     }
   },
 
-  /**
-   * 跳转到详情页
-   */
   goToDetail(e) {
     const { id, type } = e.currentTarget.dataset
-    
-    if (type === 'project') {
-      wx.navigateTo({
-        url: `/pages/resource/project-detail?id=${id}`
-      })
-    } else {
-      wx.navigateTo({
-        url: `/pages/resource/inheritor-detail?id=${id}`
-      })
+    const urlMap = {
+      project: `/pages/resource/project-detail?id=${id}`,
+      inheritor: `/pages/resource/inheritor-detail?id=${id}`,
+      news: `/pages/resource/news-detail?id=${id}`
     }
+    wx.navigateTo({ url: urlMap[type] })
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
   onPullDownRefresh() {
-    this.loadData().then(() => {
-      wx.stopPullDownRefresh()
-    })
+    this.setData({ dataList: [], noMore: false })
+    this.loadData().then(() => wx.stopPullDownRefresh())
   },
 
-  /**
-   * 页面上拉触底事件的处理函数
-   */
   onReachBottom() {
-
+    this.loadData(true)
   },
 
-  /**
-   * 用户点击右上角分享
-   */
   onShareAppMessage() {
-
+    return { title: '湘韵遗珍 - 非遗百科', path: '/pages/resource/list' }
   }
 })
-

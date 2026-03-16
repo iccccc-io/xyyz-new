@@ -1,152 +1,111 @@
-// pages/resource/inheritor-detail.js
 const db = wx.cloud.database()
 
 Page({
-  /**
-   * 页面的初始数据
-   */
   data: {
     inheritorId: '',
     inheritorData: null,
-    loading: true
+    newsList: [],
+    loading: true,
+    showNavTitle: false
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  async onLoad(options) {
+  onLoad(options) {
     if (!options.id) {
-      wx.showToast({
-        title: '参数错误',
-        icon: 'none'
-      })
+      wx.showToast({ title: '参数错误', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 1500)
       return
     }
-
-    this.setData({
-      inheritorId: options.id
-    })
-
-    await this.loadInheritorDetail()
+    this.setData({ inheritorId: options.id })
+    this.loadDetail()
   },
 
-  /**
-   * 加载传承人详情
-   */
-  async loadInheritorDetail() {
+  async loadDetail() {
     this.setData({ loading: true })
-
     try {
-      // 查询传承人信息
-      const inheritorRes = await db.collection('ich_inheritors')
-        .doc(this.data.inheritorId)
+      const res = await db.collection('ich_inheritors')
+        .where({ inheritor_id: this.data.inheritorId })
+        .limit(1)
         .get()
 
-      if (!inheritorRes.data) {
+      if (!res.data || res.data.length === 0) {
         this.setData({ loading: false })
-        wx.showToast({
-          title: '传承人不存在',
-          icon: 'none'
-        })
+        wx.showToast({ title: '传承人不存在', icon: 'none' })
         return
       }
 
-      this.setData({
-        inheritorData: inheritorRes.data,
-        loading: false
-      })
+      const inheritorData = res.data[0]
+      if (inheritorData.content) {
+        inheritorData._processedContent = this.processHtml(inheritorData.content)
+      }
+      this.setData({ inheritorData, loading: false })
 
-      console.log('传承人详情:', inheritorRes.data)
-
+      this.loadRelatedNews()
     } catch (err) {
       console.error('加载传承人详情失败:', err)
       this.setData({ loading: false })
-      wx.showToast({
-        title: '加载失败',
-        icon: 'none'
-      })
+      wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
 
-  /**
-   * 跳转到项目详情
-   */
+  async loadRelatedNews() {
+    try {
+      const res = await db.collection('ich_news')
+        .where({ 'related_inheritors.inheritor_id': this.data.inheritorId })
+        .limit(10)
+        .get()
+      if (res.data && res.data.length > 0) {
+        this.setData({ newsList: res.data })
+      }
+    } catch (err) {
+      console.warn('查询关联资讯失败:', err)
+    }
+  },
+
+  processHtml(html) {
+    if (!html) return ''
+    return html
+      .replace(/http:\/\//gi, 'https://')
+      .replace(/<img/gi, '<img style="max-width:100%;height:auto;display:block;margin:10px auto;"')
+      .replace(/<table/gi, '<table style="max-width:100%;border-collapse:collapse;font-size:14px;"')
+  },
+
   goToProject() {
-    if (!this.data.inheritorData.project_id) {
-      wx.showToast({
-        title: '项目信息不存在',
-        icon: 'none'
-      })
+    const worksAt = this.data.inheritorData && this.data.inheritorData.works_at
+    if (!worksAt || !worksAt.project_id) {
+      wx.showToast({ title: '暂无关联项目', icon: 'none' })
       return
     }
-    
     wx.navigateTo({
-      url: `/pages/resource/project-detail?id=${this.data.inheritorData.project_id}`
+      url: `/pages/resource/project-detail?id=${worksAt.project_id}`
     })
   },
 
-  /**
-   * 预览图片
-   */
-  previewImage(e) {
-    const url = e.currentTarget.dataset.url
-    const imageUrls = this.data.inheritorData.media_list
-      .filter(item => item.type === 'image')
-      .map(item => item.url)
-    
-    wx.previewImage({
-      current: url,
-      urls: imageUrls
-    })
+  goToNews(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/resource/news-detail?id=${id}` })
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
+  onPageScroll(e) {
+    const show = e.scrollTop > 200
+    if (show !== this.data.showNavTitle) {
+      this.setData({ showNavTitle: show })
+    }
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-
+  previewAvatar() {
+    if (this.data.inheritorData && this.data.inheritorData.cover) {
+      wx.previewImage({
+        current: this.data.inheritorData.cover,
+        urls: [this.data.inheritorData.cover]
+      })
+    }
   },
 
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
   onShareAppMessage() {
-
+    const d = this.data.inheritorData
+    return {
+      title: d ? `${d.name} - 非遗传承人` : '非遗传承人详情',
+      path: `/pages/resource/inheritor-detail?id=${this.data.inheritorId}`
+    }
   }
 })
-
