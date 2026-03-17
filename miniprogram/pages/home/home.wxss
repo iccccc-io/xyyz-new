@@ -50,11 +50,12 @@ page {
   letter-spacing: 3rpx;
 }
 
-/* ─── 地图 ─── */
+/* ─── 地图：flex:1 自动填充剩余空间 ─── */
 .map-wrap {
   position: relative;
   width: 100%;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 400rpx;
   overflow: visible;
 }
 
@@ -87,14 +88,20 @@ page {
   background: linear-gradient(170deg, #fdf4e3 0%, #f0e8d0 55%, #e5d9b8 100%);
 }
 
-/* ─── 数据概览 ─── */
-.stats-zone {
-  flex: 1;
+/* ─── 数据概览：固定内容高度，紧贴地图下方 ─── */
+/* .stats-zone {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 30rpx 40rpx 10rpx;
-  min-height: 0;
+  padding: 16rpx 40rpx 16rpx;
+  overflow: hidden;
+} */
+.stats-zone {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx 40rpx 50rpx;
+  background: transparent;
   overflow: hidden;
 }
 
@@ -169,15 +176,33 @@ page {
 
 .stat-block {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   gap: 8rpx;
 }
 
-.stat-num {
+/* ─── 机械翻页滚轮计数器 ─── */
+.roll-number {
+  display: flex;
+  align-items: flex-end;
+}
+
+.roll-digit-wrap {
+  height: 60rpx;
+  overflow: hidden;
+}
+
+.roll-digit-col {
+  transition: transform 0.6s cubic-bezier(0.22, 0.68, 0.35, 1);
+}
+
+.roll-d {
+  display: block;
+  height: 60rpx;
+  line-height: 60rpx;
   font-size: 52rpx;
   font-weight: bold;
   color: #b63b36;
-  line-height: 1;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
@@ -185,11 +210,13 @@ page {
   font-size: 22rpx;
   color: #8b6f47;
   font-weight: 500;
+  line-height: 60rpx;
 }
 
 .stat-sep {
   width: 2rpx;
-  height: 44rpx;
+  height: 48rpx;
+  margin-bottom: 6rpx;
   background: rgba(139, 111, 71, 0.25);
   border-radius: 1rpx;
 }
@@ -214,6 +241,7 @@ page {
 /* ─── 文化名片 ─── */
 .quote-zone {
   margin-top: 14rpx;
+  min-height: 84rpx;
   opacity: 0;
   transition: opacity 0.35s ease;
   display: flex;
@@ -247,7 +275,7 @@ page {
 .quick-nav-row {
   display: flex;
   gap: 20rpx;
-  padding: 0 40rpx 20rpx;
+  padding: 0 40rpx 36rpx;
   flex-shrink: 0;
 }
 
@@ -322,7 +350,7 @@ page {
   padding: 20rpx 0 10rpx;
 }
 
-/* 双线条对称 V 形向上箭头 */
+/* 双线条对称 V 形箭头（默认朝上，展开后朝下，过渡经过水平横杠态） */
 .swipe-up-chevron {
   display: flex;
   align-items: flex-end;
@@ -334,15 +362,24 @@ page {
   height: 6rpx;
   background: #bfb5a2;
   border-radius: 3rpx;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .chevron-left {
   transform-origin: right center;
-  transform: rotate(18deg);
+  transform: rotate(-18deg);
 }
 
 .chevron-right {
   transform-origin: left center;
+  transform: rotate(18deg);
+}
+
+.chevron-expanded .chevron-left {
+  transform: rotate(18deg);
+}
+
+.chevron-expanded .chevron-right {
   transform: rotate(-18deg);
 }
 

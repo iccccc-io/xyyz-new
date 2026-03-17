@@ -30,7 +30,6 @@ Page({
     statusBarHeight: 20,
     windowHeight: 750,
     windowWidth: 375,
-    mapHeight: 300,
     mapLoading: true,
     ec: { lazyLoad: true },
     showCanvas: true,
@@ -40,6 +39,9 @@ Page({
     statsLoading: true,
     totalStats: { projectCount: 0, inheritorCount: 0 },
     statsData: { projectCount: 0, inheritorCount: 0 },
+    projectDigits: [0],
+    inheritorDigits: [0],
+    digitSlots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
     cityStats: {},
 
     cityQuote: DEFAULT_QUOTE,
@@ -77,14 +79,13 @@ Page({
     const rpx2px = windowWidth / 750;
     const tabBarHeight = Math.round(100 * rpx2px);
     const sheetPeekHeight = Math.round(SHEET_PEEK_RPX * rpx2px);
-    const mapHeight = Math.round(windowHeight * 0.42);
     const sheetHeight = Math.round(windowHeight * 0.83) - tabBarHeight;
     const sheetCollapsedOffset = sheetHeight - sheetPeekHeight;
 
     this._sheetCollapsedOffset = sheetCollapsedOffset;
     this._sheetPeekHeight = sheetPeekHeight;
     this.setData({
-      statusBarHeight, windowHeight, windowWidth, mapHeight, sheetHeight,
+      statusBarHeight, windowHeight, windowWidth, sheetHeight,
       sheetTranslateY: sheetCollapsedOffset,
       newsScrollHeight: sheetHeight - sheetPeekHeight,
       tabBarHeight,
@@ -252,13 +253,19 @@ Page({
   },
 
   _updateStatsDisplay(cityName) {
-    if (!cityName) {
-      this.setData({ statsData: this.data.totalStats });
-    } else {
-      this.setData({
-        statsData: this.data.cityStats[cityName] || { projectCount: 0, inheritorCount: 0 },
-      });
-    }
+    const target = !cityName
+      ? this.data.totalStats
+      : (this.data.cityStats[cityName] || { projectCount: 0, inheritorCount: 0 });
+    this.setData({
+      statsData: target,
+      projectDigits: this._numToDigits(target.projectCount),
+      inheritorDigits: this._numToDigits(target.inheritorCount),
+    });
+  },
+
+  _numToDigits(num) {
+    if (!num || num <= 0) return [0];
+    return String(num).split('').map(Number);
   },
 
   _updateMapSeriesData(cityStats) {
@@ -320,7 +327,11 @@ Page({
         projectCount: projRes.total || 0,
         inheritorCount: inheRes.total || 0,
       };
-      this.setData({ statsLoading: false, totalStats: t, statsData: t });
+      this.setData({
+        statsLoading: false, totalStats: t, statsData: t,
+        projectDigits: this._numToDigits(t.projectCount),
+        inheritorDigits: this._numToDigits(t.inheritorCount),
+      });
     }).catch(err => {
       console.error('[home] count() 失败:', err);
       this.setData({ statsLoading: false });

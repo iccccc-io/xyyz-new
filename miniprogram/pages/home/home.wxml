@@ -15,8 +15,8 @@
       </view>
     </view>
 
-    <!-- 地图区域 -->
-    <view class="map-wrap" style="height: {{mapHeight}}px;">
+    <!-- 地图区域：flex:1 自动填充剩余空间 -->
+    <view class="map-wrap">
 
       <view class="map-loading-cover" wx:if="{{mapLoading}}">
         <van-loading type="spinner" size="26px" color="#b63b36" />
@@ -51,12 +51,26 @@
         </view>
         <view class="stats-numbers-row">
           <view class="stat-block">
-            <text class="stat-num">{{statsData.projectCount}}</text>
+            <!-- 机械翻页滚轮：非遗项目数 -->
+            <view class="roll-number">
+              <view class="roll-digit-wrap" wx:for="{{projectDigits}}" wx:for-item="digit" wx:key="index">
+                <view class="roll-digit-col" style="transform: translateY(-{{digit * 10}}%);">
+                  <text class="roll-d" wx:for="{{digitSlots}}" wx:for-item="n" wx:key="*this">{{n}}</text>
+                </view>
+              </view>
+            </view>
             <text class="stat-label">非遗项目</text>
           </view>
           <view class="stat-sep"></view>
           <view class="stat-block">
-            <text class="stat-num">{{statsData.inheritorCount}}</text>
+            <!-- 机械翻页滚轮：传承人数 -->
+            <view class="roll-number">
+              <view class="roll-digit-wrap" wx:for="{{inheritorDigits}}" wx:for-item="digit" wx:key="index">
+                <view class="roll-digit-col" style="transform: translateY(-{{digit * 10}}%);">
+                  <text class="roll-d" wx:for="{{digitSlots}}" wx:for-item="n" wx:key="*this">{{n}}</text>
+                </view>
+              </view>
+            </view>
             <text class="stat-label">传承人</text>
           </view>
           <view class="stat-view-all" wx:if="{{selectedCity}}" bindtap="goToProjects">
@@ -100,10 +114,13 @@
     class="bottom-sheet"
     style="transform: translateY({{sheetTranslateY}}px); transition: {{sheetTransition}}; height: {{sheetHeight}}px; bottom: {{tabBarHeight}}px;"
   >
-    <view class="sheet-header">
+    <view class="sheet-header"
+      bindtouchstart="onPageSwipeStart"
+      bindtouchend="onPageSwipeEnd"
+    >
       <!-- 扁平向上箭头，引导用户上划 -->
       <view class="swipe-hint-wrap">
-        <view class="swipe-up-chevron">
+        <view class="swipe-up-chevron {{isExpanded ? 'chevron-expanded' : ''}}">
           <view class="chevron-line chevron-left"></view>
           <view class="chevron-line chevron-right"></view>
         </view>
