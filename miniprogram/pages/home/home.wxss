@@ -1,8 +1,5 @@
 /* pages/home/home.wxss */
 
-/* ═════════════════════════════════════════════
-   全局容器：锁定视口，禁止页面滚动
-   ═════════════════════════════════════════════ */
 page {
   background: #f0e6cf;
   height: 100vh;
@@ -17,9 +14,6 @@ page {
   background: linear-gradient(170deg, #fdf4e3 0%, #f0e8d0 55%, #e5d9b8 100%);
 }
 
-/* ═════════════════════════════════════════════
-   底层：地图探索区
-   ═════════════════════════════════════════════ */
 .base-layer {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -33,9 +27,7 @@ page {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding-left: 40rpx;
-  padding-right: 40rpx;
-  padding-bottom: 12rpx;
+  padding: 0 40rpx 12rpx;
   flex-shrink: 0;
 }
 
@@ -58,29 +50,12 @@ page {
   letter-spacing: 3rpx;
 }
 
-.user-icon-btn {
-  width: 72rpx;
-  height: 72rpx;
-  background: rgba(139, 111, 71, 0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5rpx solid rgba(139, 111, 71, 0.25);
-  transition: all 0.15s ease;
-}
-
-.user-icon-btn:active {
-  background: rgba(139, 111, 71, 0.22);
-  transform: scale(0.94);
-}
-
-/* ─── 地图容器 ─── */
+/* ─── 地图 ─── */
 .map-wrap {
   position: relative;
   width: 100%;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .ec-canvas {
@@ -89,7 +64,6 @@ page {
   display: block;
 }
 
-/* 地图加载遮罩 */
 .map-loading-cover {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -107,51 +81,21 @@ page {
   color: #8b6f47;
 }
 
-/* canvas 被 wx:if 移除时的占位 */
 .map-placeholder {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: linear-gradient(170deg, #fdf4e3 0%, #f0e8d0 55%, #e5d9b8 100%);
 }
 
-.map-placeholder-text {
-  font-size: 26rpx;
-  color: #c4b08a;
-  letter-spacing: 4rpx;
-}
-
-/* 选中城市角标 */
-.map-city-badge {
-  position: absolute;
-  top: 20rpx;
-  right: 24rpx;
-  background: #b63b36;
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 500;
-  padding: 8rpx 20rpx 8rpx 18rpx;
-  border-radius: 40rpx;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.4);
-  transition: transform 0.15s ease;
-}
-
-.map-city-badge:active {
-  transform: scale(0.94);
-}
-
-/* ─── 数据概览区 ─── */
+/* ─── 数据概览 ─── */
 .stats-zone {
   flex: 1;
   display: flex;
-  align-items: center;
-  padding: 16rpx 40rpx;
-  min-height: 100rpx;
+  flex-direction: column;
+  justify-content: center;
+  padding: 30rpx 40rpx 10rpx;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .stats-loading-wrap {
@@ -169,7 +113,8 @@ page {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-bottom: 14rpx;
+  margin-bottom: 10rpx;
+  flex-wrap: wrap;
 }
 
 .region-dot {
@@ -193,10 +138,33 @@ page {
   color: #a08868;
 }
 
+.region-clear-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40rpx;
+  padding: 0 16rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(182, 59, 54, 0.3);
+  background: rgba(182, 59, 54, 0.06);
+}
+
+.region-clear-btn:active {
+  background: rgba(182, 59, 54, 0.15);
+}
+
+.region-clear-btn text {
+  font-size: 20rpx;
+  color: #b63b36;
+  line-height: 1;
+}
+
 .stats-numbers-row {
   display: flex;
   align-items: center;
   gap: 36rpx;
+  flex-wrap: wrap;
 }
 
 .stat-block {
@@ -206,7 +174,7 @@ page {
 }
 
 .stat-num {
-  font-size: 58rpx;
+  font-size: 52rpx;
   font-weight: bold;
   color: #b63b36;
   line-height: 1;
@@ -221,16 +189,65 @@ page {
 
 .stat-sep {
   width: 2rpx;
-  height: 52rpx;
+  height: 44rpx;
   background: rgba(139, 111, 71, 0.25);
   border-radius: 1rpx;
 }
 
-/* ─── 快捷导航胶囊 ─── */
+.stat-view-all {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.stat-view-all text {
+  font-size: 24rpx;
+  color: #b63b36;
+  font-weight: 500;
+}
+
+.stat-view-all:active {
+  opacity: 0.6;
+}
+
+/* ─── 文化名片 ─── */
+.quote-zone {
+  margin-top: 14rpx;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 4rpx;
+}
+
+.quote-zone.quote-visible {
+  opacity: 1;
+}
+
+.quote-icon {
+  font-size: 32rpx;
+  color: #c4a882;
+  line-height: 1;
+  margin-top: -4rpx;
+  flex-shrink: 0;
+  font-family: Georgia, serif;
+}
+
+.quote-text {
+  font-size: 24rpx;
+  color: #8b7d6b;
+  font-style: italic;
+  line-height: 1.7;
+  letter-spacing: 1rpx;
+  flex: 1;
+}
+
+/* ─── 快捷导航 ─── */
 .quick-nav-row {
   display: flex;
   gap: 20rpx;
-  padding: 0 40rpx 28rpx;
+  padding: 0 40rpx 20rpx;
   flex-shrink: 0;
 }
 
@@ -266,9 +283,7 @@ page {
   backdrop-filter: blur(8px);
 }
 
-/* ═════════════════════════════════════════════
-   遮罩层
-   ═════════════════════════════════════════════ */
+/* ═══════════ 遮罩 ═══════════ */
 .backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -277,18 +292,13 @@ page {
   transition: opacity 0.35s ease;
 }
 
-/* ═════════════════════════════════════════════
-   顶层：底部资讯面板（Bottom Sheet）
-   ═════════════════════════════════════════════ */
+/* ═══════════ 底部资讯面板 ═══════════ */
 .bottom-sheet {
   position: fixed;
-  /* bottom 由 WXML 内联样式动态设置（= tabBarHeight），此处不写 bottom: 0 */
-  left: 0;
-  right: 0;
+  left: 0; right: 0;
   background: #ffffff;
   border-radius: 40rpx 40rpx 0 0;
   box-shadow: 0 -10rpx 30rpx rgba(0, 0, 0, 0.1);
-  /* 必须高于 TabBar 的 z-index:999，否则面板永远在 TabBar 下方不可见 */
   z-index: 1000;
   will-change: transform;
   display: flex;
@@ -296,34 +306,49 @@ page {
   overflow: hidden;
 }
 
-/* ─── 可拖拽头部 ─── */
 .sheet-header {
   flex-shrink: 0;
   background: #ffffff;
   border-radius: 40rpx 40rpx 0 0;
-  /* 使头部在 z 轴上置于 scroll-view 之上 */
   position: relative;
   z-index: 2;
 }
 
-/* 拖拽指示条 */
-.drag-indicator-wrap {
+/* 上划引导箭头区域 */
+.swipe-hint-wrap {
   display: flex;
   justify-content: center;
-  padding: 16rpx 0 10rpx;
+  align-items: center;
+  padding: 20rpx 0 10rpx;
 }
 
-.drag-indicator {
-  width: 72rpx;
-  height: 8rpx;
-  border-radius: 4rpx;
-  background: #ddd5c8;
+/* 双线条对称 V 形向上箭头 */
+.swipe-up-chevron {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-/* Tab 栏 */
+.chevron-line {
+  width: 26rpx;
+  height: 6rpx;
+  background: #bfb5a2;
+  border-radius: 3rpx;
+}
+
+.chevron-left {
+  transform-origin: right center;
+  transform: rotate(18deg);
+}
+
+.chevron-right {
+  transform-origin: left center;
+  transform: rotate(-18deg);
+}
+
 .news-tab-bar {
   display: flex;
-  padding: 0 40rpx 0;
+  padding: 0 40rpx;
   border-bottom: 1.5rpx solid #f0ebe3;
   gap: 8rpx;
 }
@@ -335,7 +360,6 @@ page {
   color: #9a8878;
   font-weight: 400;
   transition: color 0.2s ease;
-  user-select: none;
 }
 
 .news-tab--active {
@@ -354,14 +378,12 @@ page {
   background: #b63b36;
 }
 
-/* ─── 资讯滚动列表 ─── */
 .news-scroll {
   flex: 1;
   overflow: hidden;
   background: #faf8f4;
 }
 
-/* 加载状态 */
 .news-loading-wrap {
   display: flex;
   flex-direction: column;
@@ -376,12 +398,11 @@ page {
   color: #9a8878;
 }
 
-/* ─── 资讯列表项 ─── */
 .news-item {
   display: flex;
   align-items: flex-start;
   gap: 24rpx;
-  padding: 32rpx 40rpx;
+  padding: 28rpx 40rpx;
   background: #ffffff;
   border-bottom: 1.5rpx solid #f5f0e8;
   transition: background 0.15s ease;
@@ -396,20 +417,7 @@ page {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-}
-
-.news-category-tag {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 4rpx 18rpx;
-  background: rgba(182, 59, 54, 0.08);
-  color: #b63b36;
-  font-size: 20rpx;
-  font-weight: 500;
-  border-radius: 20rpx;
-  border: 1rpx solid rgba(182, 59, 54, 0.2);
-  letter-spacing: 1rpx;
+  gap: 10rpx;
 }
 
 .news-title {
@@ -423,9 +431,19 @@ page {
   overflow: hidden;
 }
 
+.news-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .news-meta {
   font-size: 22rpx;
   color: #b0a090;
+}
+
+.news-meta--source {
+  color: #c4a882;
 }
 
 .news-thumb {
@@ -437,7 +455,6 @@ page {
   object-fit: cover;
 }
 
-/* 列表底部安全区 */
 .list-bottom-safe {
   height: calc(40rpx + env(safe-area-inset-bottom));
 }

@@ -2,35 +2,27 @@
 
 <view class="page">
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!--  底层：湖南非遗地图探索区（Base Layer）           -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <view class="base-layer">
+  <!-- ═══════════ 底层：地图探索区（全屏上划手势绑定在此） ═══════════ -->
+  <view class="base-layer"
+    bindtouchstart="onPageSwipeStart"
+    bindtouchend="onPageSwipeEnd"
+  >
 
-    <!-- 沉浸式顶部栏 -->
     <view class="top-bar" style="padding-top: {{statusBarHeight}}px;">
       <view class="brand">
         <text class="brand-name">湘韵遗珍</text>
         <text class="brand-tagline">湖南非遗地图</text>
       </view>
-      <view class="user-icon-btn" bindtap="navigateToUser">
-        <van-icon name="manager-o" size="22" color="#8b6f47" />
-      </view>
     </view>
 
-    <!-- ECharts 地图区域 -->
+    <!-- 地图区域 -->
     <view class="map-wrap" style="height: {{mapHeight}}px;">
-      <!-- 地图加载遮罩 -->
+
       <view class="map-loading-cover" wx:if="{{mapLoading}}">
         <van-loading type="spinner" size="26px" color="#b63b36" />
         <text class="map-loading-text">地图加载中...</text>
       </view>
 
-      <!--
-        wx:if 是解决 canvas 原生层穿透的唯一可靠方案。
-        hidden / opacity / z-index / cover-view 对原生 canvas 层均无效。
-        showCanvas=false 时，ec-canvas 从 DOM 中彻底移除，原生层消失。
-      -->
       <ec-canvas
         wx:if="{{showCanvas}}"
         id="hunan-map"
@@ -39,19 +31,11 @@
         class="ec-canvas"
       ></ec-canvas>
 
-      <!-- canvas 被移除时显示的静态占位，保持视觉连续性 -->
-      <view wx:if="{{!showCanvas}}" class="map-placeholder">
-        <text class="map-placeholder-text">湖南省非遗分布</text>
-      </view>
+      <view wx:if="{{!showCanvas}}" class="map-placeholder"></view>
 
-      <!-- 选中城市角标 -->
-      <view class="map-city-badge" wx:if="{{selectedCity && showCanvas}}" bindtap="clearCitySelect">
-        <text>{{selectedCity}}</text>
-        <van-icon name="cross" size="11" color="#fff" />
-      </view>
     </view>
 
-    <!-- 数据概览区 -->
+    <!-- 数据概览 -->
     <view class="stats-zone">
       <view class="stats-loading-wrap" wx:if="{{statsLoading}}">
         <van-loading type="spinner" size="18px" color="#b63b36" />
@@ -61,6 +45,9 @@
           <view class="region-dot"></view>
           <text class="region-name">{{selectedCity || '湖南省'}}</text>
           <text class="region-hint">非遗概览</text>
+          <view class="region-clear-btn" wx:if="{{selectedCity}}" bindtap="_deselectCity">
+            <text>✕ 清除</text>
+          </view>
         </view>
         <view class="stats-numbers-row">
           <view class="stat-block">
@@ -72,11 +59,20 @@
             <text class="stat-num">{{statsData.inheritorCount}}</text>
             <text class="stat-label">传承人</text>
           </view>
+          <view class="stat-view-all" wx:if="{{selectedCity}}" bindtap="goToProjects">
+            <text>查看全部</text>
+            <van-icon name="arrow" size="12" color="#b63b36" />
+          </view>
+        </view>
+
+        <view class="quote-zone {{quoteVisible ? 'quote-visible' : ''}}">
+          <text class="quote-icon">"</text>
+          <text class="quote-text">{{cityQuote}}</text>
         </view>
       </view>
     </view>
 
-    <!-- 快捷导航胶囊按钮 -->
+    <!-- 快捷导航 -->
     <view class="quick-nav-row">
       <view class="nav-capsule nav-capsule--primary" bindtap="goToProjects">
         <van-icon name="records-o" size="18" color="#ffffff" />
@@ -88,14 +84,10 @@
       </view>
     </view>
 
-    <!-- 底部留白：TabBar 高度 + 面板收起露出高度，防止内容被遮挡 -->
     <view style="height: {{baseBottomSpace}}px; flex-shrink: 0;"></view>
-
   </view>
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!--  黑色半透明遮罩（面板上升时出现）                 -->
-  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ═══════════ 遮罩 ═══════════ -->
   <view
     class="backdrop"
     wx:if="{{showBackdrop}}"
@@ -103,95 +95,51 @@
     bindtap="collapseSheet"
   ></view>
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!--  顶层：可拖拽资讯面板（Bottom Sheet）             -->
-  <!-- ═══════════════════════════════════════════════ -->
+  <!-- ═══════════ 底部资讯面板 ═══════════ -->
   <view
     class="bottom-sheet"
     style="transform: translateY({{sheetTranslateY}}px); transition: {{sheetTransition}}; height: {{sheetHeight}}px; bottom: {{tabBarHeight}}px;"
   >
-
-    <!-- 可拖拽头部：仅此区域触发拖拽手势 -->
-    <view
-      class="sheet-header"
-      catchtouchstart="onSheetTouchStart"
-      catchtouchmove="onSheetTouchMove"
-      catchtouchend="onSheetTouchEnd"
-    >
-      <!-- 拖拽指示条 -->
-      <view class="drag-indicator-wrap">
-        <view class="drag-indicator"></view>
+    <view class="sheet-header">
+      <!-- 扁平向上箭头，引导用户上划 -->
+      <view class="swipe-hint-wrap">
+        <view class="swipe-up-chevron">
+          <view class="chevron-line chevron-left"></view>
+          <view class="chevron-line chevron-right"></view>
+        </view>
       </view>
-
-      <!-- Tab 栏 -->
       <view class="news-tab-bar">
-        <view
-          class="news-tab {{activeTab === 'flash' ? 'news-tab--active' : ''}}"
-          bindtap="switchTab"
-          data-tab="flash"
-        >
+        <view class="news-tab {{activeTab === 'flash' ? 'news-tab--active' : ''}}" bindtap="switchTab" data-tab="flash">
           <text>非遗快讯</text>
           <view class="tab-underline" wx:if="{{activeTab === 'flash'}}"></view>
         </view>
-        <view
-          class="news-tab {{activeTab === 'policy' ? 'news-tab--active' : ''}}"
-          bindtap="switchTab"
-          data-tab="policy"
-        >
+        <view class="news-tab {{activeTab === 'policy' ? 'news-tab--active' : ''}}" bindtap="switchTab" data-tab="policy">
           <text>政策法规</text>
           <view class="tab-underline" wx:if="{{activeTab === 'policy'}}"></view>
         </view>
       </view>
     </view>
 
-    <!-- 资讯滚动列表 -->
-    <scroll-view
-      class="news-scroll"
-      style="height: {{newsScrollHeight}}px;"
-      scroll-y="{{isExpanded}}"
-      show-scrollbar="{{false}}"
-      bindscroll="onNewsScroll"
-      enhanced
-    >
-      <!-- 加载中 -->
+    <scroll-view class="news-scroll" style="height: {{newsScrollHeight}}px;" scroll-y="{{isExpanded}}" show-scrollbar="{{false}}" enhanced>
       <view class="news-loading-wrap" wx:if="{{newsLoading}}">
         <van-loading type="spinner" size="28px" color="#b63b36" />
         <text class="news-loading-text">加载资讯中...</text>
       </view>
-
-      <!-- 空状态 -->
-      <van-empty
-        wx:elif="{{!newsLoading && newsList.length === 0}}"
-        description="暂无相关资讯"
-      />
-
-      <!-- 资讯列表 -->
+      <van-empty wx:elif="{{!newsLoading && newsList.length === 0}}" description="暂无相关资讯" />
       <block wx:else>
-        <view
-          class="news-item"
-          wx:for="{{newsList}}"
-          wx:key="_id"
-          bindtap="goToNewsDetail"
-          data-id="{{item._id}}"
-        >
+        <view class="news-item" wx:for="{{newsList}}" wx:key="_id" bindtap="goToNewsDetail" data-id="{{item.news_id}}">
           <view class="news-item-main">
-            <view class="news-category-tag">{{item.category || '资讯'}}</view>
             <text class="news-title">{{item.title}}</text>
-            <text class="news-meta">{{item.publish_date_str || item.publish_date}}</text>
+            <view class="news-meta-row">
+              <text class="news-meta">{{item.publish_date_str}}</text>
+              <text class="news-meta news-meta--source" wx:if="{{item.source}}">来源：{{item.source}}</text>
+            </view>
           </view>
-          <image
-            wx:if="{{item.cover_image}}"
-            class="news-thumb"
-            src="{{item.cover_image}}"
-            mode="aspectFill"
-            lazy-load
-          />
+          <image wx:if="{{item.cover_image}}" class="news-thumb" src="{{item.cover_image}}" mode="aspectFill" lazy-load />
         </view>
-        <!-- 列表底部留白，防止被 tabBar 遮挡 -->
         <view class="list-bottom-safe"></view>
       </block>
     </scroll-view>
-
   </view>
 
 </view>
