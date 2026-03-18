@@ -103,7 +103,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(0);
     }
-    if (!this.data.showCanvas) {
+    if (!this.data.showCanvas && !this.data.isExpanded) {
       setTimeout(() => this._showAndReinitCanvas(), 400);
     }
   },
