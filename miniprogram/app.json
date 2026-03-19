@@ -10,6 +10,7 @@
     "pages/resource/project-detail",
     "pages/resource/inheritor-detail",
     "pages/resource/news-detail",
+    "pages/ai-chat/index",
     "pages/venue/list",
     "pages/venue/detail",
     "pages/community/detail",

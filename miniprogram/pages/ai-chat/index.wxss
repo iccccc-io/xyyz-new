@@ -1,0 +1,359 @@
+page {
+  height: 100%;
+  background: #f5f1eb;
+  overflow: hidden;
+}
+
+.page {
+  height: 100%;
+  position: relative;
+}
+
+/* ========== 导航栏 ========== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(245, 241, 235, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.06);
+}
+
+.nav-content {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+}
+
+.back-btn,
+.clear-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.back-btn:active,
+.clear-btn:active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.nav-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.nav-sub {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== 消息列表 ========== */
+.msg-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+.msg-scroll-inner {
+  padding: 20rpx 24rpx;
+  min-height: 100%;
+}
+
+/* ========== 欢迎卡片 ========== */
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 60rpx 20rpx 40rpx;
+  padding: 60rpx 48rpx;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 28rpx;
+  box-shadow: 0 8rpx 40rpx rgba(139, 111, 71, 0.06);
+}
+
+.welcome-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(182, 59, 54, 0.25);
+}
+
+.welcome-avatar-text {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.welcome-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #b63b36;
+  margin-bottom: 20rpx;
+}
+
+.welcome-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+  text-align: center;
+  white-space: pre-wrap;
+}
+
+/* ========== 消息行 ========== */
+.msg-row {
+  display: flex;
+  margin-bottom: 28rpx;
+  animation: msgSlideIn 0.3s ease-out;
+}
+
+@keyframes msgSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg-self {
+  justify-content: flex-end;
+  padding-left: 100rpx;
+}
+
+.msg-ai {
+  justify-content: flex-start;
+  padding-right: 100rpx;
+  gap: 16rpx;
+  align-items: flex-start;
+}
+
+/* ========== AI 头像 ========== */
+.ai-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx rgba(182, 59, 54, 0.25);
+}
+
+.ai-avatar-text {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 1rpx;
+}
+
+/* ========== 气泡 ========== */
+.bubble {
+  padding: 20rpx 28rpx;
+  max-width: 100%;
+  word-break: break-all;
+}
+
+.bubble-user {
+  background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
+  border-radius: 28rpx 28rpx 8rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.18);
+}
+
+.bubble-user .bubble-text {
+  color: #fff;
+  font-size: 30rpx;
+  line-height: 1.7;
+}
+
+.bubble-ai {
+  background: #fff;
+  border-radius: 8rpx 28rpx 28rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.bubble-ai .bubble-text {
+  color: #333;
+  font-size: 30rpx;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.error-bubble .bubble-text {
+  color: #e74c3c;
+}
+
+/* ========== 正在思考指示器 ========== */
+.typing-bubble {
+  padding: 24rpx 36rpx;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  height: 32rpx;
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #b63b36;
+  animation: dotBounce 1.4s infinite ease-in-out;
+}
+
+.dot-1 {
+  animation-delay: 0s;
+}
+
+.dot-2 {
+  animation-delay: 0.2s;
+}
+
+.dot-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ========== 底部区域 ========== */
+.bottom-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(245, 241, 235, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+/* ========== 快捷引导短语 ========== */
+.quick-bar {
+  white-space: nowrap;
+  padding: 0 24rpx;
+  height: 84rpx;
+}
+
+.quick-inner {
+  display: inline-flex;
+  align-items: center;
+  height: 84rpx;
+  gap: 16rpx;
+}
+
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  background: rgba(182, 59, 54, 0.08);
+  color: #b63b36;
+  font-size: 26rpx;
+  border-radius: 32rpx;
+  border: 1rpx solid rgba(182, 59, 54, 0.12);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.quick-chip:active {
+  background: rgba(182, 59, 54, 0.16);
+  transform: scale(0.96);
+}
+
+/* ========== 输入行 ========== */
+.input-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 24rpx 16rpx;
+  gap: 16rpx;
+}
+
+.input-capsule {
+  flex: 1;
+  height: 76rpx;
+  background: #fff;
+  border-radius: 38rpx;
+  padding: 0 28rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.input-field {
+  flex: 1;
+  height: 76rpx;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.input-placeholder {
+  color: #bbb;
+}
+
+.send-btn {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: #d1d1d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.send-btn.active {
+  background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.3);
+}
+
+.send-btn:active {
+  transform: scale(0.88);
+}

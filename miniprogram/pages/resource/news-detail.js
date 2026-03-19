@@ -69,6 +69,14 @@ Page({
     }
   },
 
+  goToAiChat() {
+    const { newsData, newsId } = this.data
+    if (!newsData) return
+    wx.navigateTo({
+      url: `/pages/ai-chat/index?source_type=news&source_name=${encodeURIComponent(newsData.title)}&source_id=${newsId}`
+    })
+  },
+
   onShareAppMessage() {
     const d = this.data.newsData
     return {

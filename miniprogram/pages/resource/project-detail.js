@@ -111,6 +111,14 @@ Page({
     }
   },
 
+  goToAiChat() {
+    const { projectData, projectId } = this.data
+    if (!projectData) return
+    wx.navigateTo({
+      url: `/pages/ai-chat/index?source_type=project&source_name=${encodeURIComponent(projectData.name)}&source_id=${projectId}`
+    })
+  },
+
   onShareAppMessage() {
     const p = this.data.projectData
     return {

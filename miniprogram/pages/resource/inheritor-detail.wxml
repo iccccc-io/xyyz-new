@@ -75,5 +75,10 @@
 
     <!-- 底部安全区 -->
     <view class="safe-bottom"></view>
+
+    <!-- AI 对话悬浮按钮 -->
+    <view class="ai-fab" bindtap="goToAiChat">
+      <text class="ai-fab-text">AI</text>
+    </view>
   </block>
 </view>

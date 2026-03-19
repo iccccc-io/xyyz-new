@@ -101,6 +101,14 @@ Page({
     }
   },
 
+  goToAiChat() {
+    const { inheritorData, inheritorId } = this.data
+    if (!inheritorData) return
+    wx.navigateTo({
+      url: `/pages/ai-chat/index?source_type=inheritor&source_name=${encodeURIComponent(inheritorData.name)}&source_id=${inheritorId}`
+    })
+  },
+
   onShareAppMessage() {
     const d = this.data.inheritorData
     return {

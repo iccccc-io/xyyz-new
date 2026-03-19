@@ -1,0 +1,121 @@
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="back-btn" bindtap="goBack">
+        <van-icon name="arrow-left" size="18" color="#333" />
+      </view>
+      <view class="nav-info" bindtap="goToSource">
+        <text class="nav-title">非遗智答</text>
+        <text class="nav-sub" wx:if="{{sourceName}}">与「{{sourceName}}」交流中</text>
+      </view>
+      <view class="clear-btn" bindtap="onClearHistory">
+        <van-icon name="delete-o" size="18" color="#999" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view
+    class="msg-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    scroll-into-view="{{scrollToView}}"
+    scroll-with-animation
+    style="top: {{navHeight}}px; bottom: {{scrollBottom}}px;"
+  >
+    <view class="msg-scroll-inner">
+      <!-- 欢迎卡片 -->
+      <view class="welcome-card" wx:if="{{messages.length === 0 && !loading}}">
+        <view class="welcome-avatar">
+          <text class="welcome-avatar-text">AI</text>
+        </view>
+        <text class="welcome-title">非遗智答</text>
+        <text class="welcome-desc">{{welcomeText}}</text>
+      </view>
+
+      <!-- 消息气泡 -->
+      <block wx:for="{{messages}}" wx:key="_id">
+        <!-- 用户消息 -->
+        <view class="msg-row msg-self" wx:if="{{item.role === 'user'}}" id="msg-{{index}}">
+          <view class="bubble bubble-user">
+            <text class="bubble-text" user-select>{{item.content}}</text>
+          </view>
+        </view>
+        <!-- AI 消息 -->
+        <view class="msg-row msg-ai" wx:else id="msg-{{index}}">
+          <view class="ai-avatar">
+            <text class="ai-avatar-text">AI</text>
+          </view>
+          <view
+            class="bubble bubble-ai {{item.isError ? 'error-bubble' : ''}}"
+            bindlongpress="onLongPressBubble"
+            data-content="{{item.content}}"
+          >
+            <text class="bubble-text" user-select>{{item.content}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- AI 正在思考指示器 -->
+      <view class="msg-row msg-ai" wx:if="{{loading}}" id="msg-loading">
+        <view class="ai-avatar">
+          <text class="ai-avatar-text">AI</text>
+        </view>
+        <view class="bubble bubble-ai typing-bubble">
+          <view class="typing-dots">
+            <view class="dot dot-1"></view>
+            <view class="dot dot-2"></view>
+            <view class="dot dot-3"></view>
+          </view>
+        </view>
+      </view>
+
+      <view id="scroll-bottom" style="height: 1px;"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部输入区 -->
+  <view class="bottom-area" style="bottom: {{keyboardHeight}}px;">
+    <!-- 快捷引导短语 -->
+    <scroll-view scroll-x class="quick-bar" wx:if="{{keyboardHeight === 0}}">
+      <view class="quick-inner">
+        <view
+          class="quick-chip"
+          wx:for="{{quickReplies}}"
+          wx:key="*this"
+          bindtap="onQuickReply"
+          data-text="{{item}}"
+        >{{item}}</view>
+      </view>
+    </scroll-view>
+
+    <!-- 输入行 -->
+    <view class="input-row">
+      <view class="input-capsule">
+        <input
+          class="input-field"
+          value="{{inputValue}}"
+          placeholder="输入你想问的问题..."
+          placeholder-class="input-placeholder"
+          confirm-type="send"
+          bindinput="onInputChange"
+          bindconfirm="sendMessage"
+          adjust-position="{{false}}"
+          cursor-spacing="20"
+          disabled="{{isSending}}"
+        />
+      </view>
+      <view
+        class="send-btn {{inputValue ? 'active' : ''}}"
+        bindtap="sendMessage"
+      >
+        <van-icon name="arrow" size="16" color="#fff" />
+      </view>
+    </view>
+
+    <!-- 安全区 -->
+    <view wx:if="{{keyboardHeight === 0}}" style="height: {{safeAreaBottom}}px;"></view>
+  </view>
+</view>

@@ -205,3 +205,43 @@ page {
 .safe-bottom {
   height: calc(40rpx + env(safe-area-inset-bottom));
 }
+
+/* ========== AI 悬浮按钮 ========== */
+.ai-fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: calc(120rpx + env(safe-area-inset-bottom));
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 28rpx rgba(182, 59, 54, 0.45);
+  z-index: 50;
+  transition: transform 0.2s ease;
+  animation: fabFadeIn 0.4s ease-out;
+}
+
+.ai-fab:active {
+  transform: scale(0.9);
+}
+
+.ai-fab-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
+@keyframes fabFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
