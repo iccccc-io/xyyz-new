@@ -1,0 +1,10 @@
+{
+  "name": "sync_dify_knowledge",
+  "version": "1.0.0",
+  "description": "同步社区帖子到 Dify 知识库（创建/更新/删除）",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "wx-server-sdk": "~2.6.3"
+  }
+}

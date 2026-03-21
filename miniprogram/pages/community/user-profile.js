@@ -254,6 +254,11 @@ Page({
 
       const posts = postsRes.data || []
 
+      // 归一化 images 格式（兼容新对象数组和旧字符串数组）
+      posts.forEach(post => {
+        post.images = (post.images || []).map(img => typeof img === 'string' ? img : (img.url || ''))
+      })
+
       // 分配到两列
       const leftPosts = []
       const rightPosts = []

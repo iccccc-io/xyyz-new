@@ -19,7 +19,8 @@ Page({
     // 编辑模式相关
     isEditMode: false,      // 是否为编辑模式
     editPostId: '',         // 编辑的帖子ID
-    originalImages: [],     // 原始图片列表（用于判断是否有删除）
+    originalImages: [],     // 原始图片 URL 列表
+    originalImageObjects: [],// 原始 images 对象数组（含 ai_description, process_status）
     
     // 记录新创建的话题（发布时需要入库）
     newTopics: [],
@@ -83,20 +84,33 @@ Page({
         return
       }
 
-      // 转换图片格式为 fileList
-      const fileList = (post.images || []).map(url => ({
-        url: url,
-        tempFilePath: url,
-        status: 'done',
-        isCloud: true  // 标记为云存储图片
-      }))
+      // 转换图片格式为 fileList（兼容新对象数组和旧字符串数组）
+      const fileList = (post.images || []).map(img => {
+        const url = typeof img === 'string' ? img : img.url
+        return {
+          url: url,
+          tempFilePath: url,
+          status: 'done',
+          isCloud: true
+        }
+      })
+
+      // 保存原始 images 完整对象（用于编辑时差异对比）
+      const rawImages = post.images || []
+      const originalImageObjects = rawImages.map(img => {
+        if (typeof img === 'string') {
+          return { url: img, ai_description: '', process_status: 1 }
+        }
+        return { ...img }
+      })
 
       // 填充表单数据
       this.setData({
         title: post.title || '',
         content: post.content || '',
         fileList: fileList,
-        originalImages: post.images || [],
+        originalImages: originalImageObjects.map(img => img.url),
+        originalImageObjects: originalImageObjects,
         selectedTags: post.tags || [],
         selectedProject: post.related_projects && post.related_projects.length > 0 
           ? post.related_projects[0].name 
@@ -135,30 +149,13 @@ Page({
   },
 
   /**
-   * 删除图片（仅发布模式可用）
+   * 删除图片
    */
   deleteImage(event) {
-    // 编辑模式禁止删除图片
-    if (this.data.isEditMode) {
-      wx.showToast({ title: '编辑模式下不可修改图片', icon: 'none' })
-      return
-    }
     const { index } = event.detail
     const fileList = [...this.data.fileList]
     fileList.splice(index, 1)
     this.setData({ fileList })
-  },
-
-  /**
-   * 预览编辑模式下的图片
-   */
-  previewEditImage(e) {
-    const index = e.currentTarget.dataset.index
-    const urls = this.data.fileList.map(f => f.url)
-    wx.previewImage({
-      current: urls[index],
-      urls: urls
-    })
   },
 
   /**
@@ -421,13 +418,36 @@ Page({
       await this.syncTopicsToDatabase()
 
       if (isEditMode) {
-        // ========== 编辑模式：更新帖子（图片不可修改）==========
-        
-        // 构建更新数据（不包含 images，保持原有图片不变）
+        // ========== 编辑模式：差异对比 + 管线重启 ==========
+        const editPostId = this.data.editPostId
+        const originalUrls = this.data.originalImages
+        const originalImageObjects = this.data.originalImageObjects
+
+        // --- 图片差异对比（Diff）---
+        const newImagesArray = []
+        const keptUrlSet = new Set()
+        let hasNewImages = false
+
+        for (const cloudUrl of uploadedImages) {
+          if (originalUrls.includes(cloudUrl)) {
+            // 用户保留的旧图：复用原始 ai_description 和 process_status
+            keptUrlSet.add(cloudUrl)
+            const origObj = originalImageObjects.find(img => img.url === cloudUrl)
+            newImagesArray.push(origObj || { url: cloudUrl, ai_description: '', process_status: 0 })
+          } else {
+            // 用户新增的图片：初始化 process_status=0
+            hasNewImages = true
+            newImagesArray.push({ url: cloudUrl, ai_description: '', process_status: 0 })
+          }
+        }
+
+        // 被用户删除的旧图（孤儿文件，需清理云存储）
+        const deletedUrls = originalUrls.filter(url => !keptUrlSet.has(url))
+
         const updateData = {
           title: this.data.title || '分享一下',
           content: this.data.content || '',
-          // 注意：编辑模式不修改 images 字段
+          images: newImagesArray,
           location: {
             name: this.data.location.name,
             latitude: this.data.location.latitude,
@@ -435,10 +455,8 @@ Page({
           },
           related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
           tags: this.data.selectedTags,
-          // 编辑记录
           is_edited: true,
           last_edit_time: db.serverDate(),
-          // 更新作者信息（可能头像昵称有变化）
           author_info: {
             nickname: userInfo.nickname,
             avatar_file_id: userInfo.avatar_url,
@@ -446,8 +464,13 @@ Page({
           }
         }
 
-        // 更新数据库
-        await db.collection('community_posts').doc(this.data.editPostId).update({
+        // 有新图片时，重置管线状态以触发视觉增量解析（规范 4.2）
+        if (hasNewImages) {
+          updateData.pipeline_status = 'pending'
+        }
+
+        // 写入数据库
+        await db.collection('community_posts').doc(editPostId).update({
           data: updateData
         })
 
@@ -456,6 +479,43 @@ Page({
           title: '保存成功',
           icon: 'success'
         })
+
+        // 清理被删除的孤儿云存储图片
+        if (deletedUrls.length > 0) {
+          const cloudUrls = deletedUrls.filter(u => u.startsWith('cloud://'))
+          if (cloudUrls.length > 0) {
+            wx.cloud.deleteFile({
+              fileList: cloudUrls
+            }).then(() => {
+              console.log(`[清理] 已删除 ${cloudUrls.length} 张旧图片`)
+            }).catch(err => {
+              console.warn('[清理] 旧图片删除失败:', err)
+            })
+          }
+        }
+
+        // 触发对应管线
+        if (hasNewImages) {
+          // 有新图片 → 走视觉管线（自动跳过旧图，仅解析 process_status=0 的新图）
+          wx.cloud.callFunction({
+            name: 'trigger_ai_pipeline',
+            data: { post_id: editPostId }
+          }).then(res => {
+            console.log('[管线] trigger_ai_pipeline 调用成功:', res.result)
+          }).catch(err => {
+            console.error('[管线] trigger_ai_pipeline 调用失败:', err)
+          })
+        } else {
+          // 仅文字/删图变更 → 直接 Dify 同步（覆盖更新 or 首次创建）
+          wx.cloud.callFunction({
+            name: 'sync_dify_knowledge',
+            data: { post_id: editPostId }
+          }).then(res => {
+            console.log('[同步] sync_dify_knowledge 调用成功:', res.result)
+          }).catch(err => {
+            console.error('[同步] sync_dify_knowledge 调用失败:', err)
+          })
+        }
 
         // 通知详情页刷新
         const pages = getCurrentPages()
@@ -466,12 +526,19 @@ Page({
 
       } else {
         // ========== 新建模式：发布帖子 ==========
+
+        // 将图片路径转换为带状态标记的对象数组
+        const imageObjects = uploadedImages.map(url => ({
+          url: url,
+          ai_description: '',
+          process_status: 0
+        }))
         
         // 构建帖子数据
         const postData = {
           title: this.data.title || '分享一下',
           content: this.data.content || '',
-          images: uploadedImages,
+          images: imageObjects,
           location: {
             name: this.data.location.name,
             latitude: this.data.location.latitude,
@@ -483,10 +550,12 @@ Page({
           likes: 0,
           comment_count: 0,
           collection_count: 0,
-          status: 0,           // 0: 公开
-          comment_status: true, // 默认允许评论
-          is_top: false,       // 默认不置顶
-          is_edited: false,    // 默认未编辑过
+          status: 0,
+          comment_status: true,
+          is_top: false,
+          is_edited: false,
+          pipeline_status: 'pending',
+          dify_doc_id: '',
           author_id: userInfo._id,
           author_info: {
             nickname: userInfo.nickname,
@@ -495,8 +564,8 @@ Page({
           }
         }
 
-        // 写入数据库
-        await db.collection('community_posts').add({
+        // 极速入库
+        const addRes = await db.collection('community_posts').add({
           data: postData
         })
 
@@ -504,6 +573,16 @@ Page({
         wx.showToast({
           title: '发布成功',
           icon: 'success'
+        })
+
+        // 静默触发 AI 管线（用户无需等待）
+        wx.cloud.callFunction({
+          name: 'trigger_ai_pipeline',
+          data: { post_id: addRes._id }
+        }).then(res => {
+          console.log('[管线] trigger_ai_pipeline 调用成功:', res.result)
+        }).catch(err => {
+          console.error('[管线] trigger_ai_pipeline 调用失败:', err)
         })
       }
 

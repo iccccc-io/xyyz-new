@@ -64,6 +64,11 @@ Page({
         return post._openid === myOpenid
       }).slice(0, 50)  // 只取前50条
 
+      // 归一化 images 格式（兼容新对象数组和旧字符串数组）
+      postList.forEach(post => {
+        post.images = (post.images || []).map(img => typeof img === 'string' ? img : (img.url || ''))
+      })
+
       // 3. 批量查询当前用户的点赞状态
       if (myOpenid && postList.length > 0) {
         const postIds = postList.map(item => item._id)

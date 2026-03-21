@@ -69,36 +69,64 @@ exports.main = async (event, context) => {
     let logMessage = ''
 
     switch (action) {
-      case 'privacy':
-        // 权限设置：0=公开，1=私密
+      case 'privacy': {
         if (value !== 0 && value !== 1) {
-          return {
-            success: false,
-            message: '参数错误：status 值无效'
-          }
+          return { success: false, message: '参数错误：status 值无效' }
         }
-        
-        // 获取当前状态
-        const currentStatus = post.status || 0  // 默认公开
+
+        const currentStatus = post.status || 0
         const newStatus = value
         const tags = post.tags || []
-        
-        // 状态发生变化且帖子有标签时，更新话题计数
+
         if (currentStatus !== newStatus && tags.length > 0) {
           if (newStatus === 1) {
-            // 公开 -> 私密：话题 count - 1
             console.log(`[帖子管理] 帖子 ${postId} 设为私密，减少 ${tags.length} 个话题计数`)
             await updateTopicCounts(tags, -1)
           } else {
-            // 私密 -> 公开：话题 count + 1
             console.log(`[帖子管理] 帖子 ${postId} 设为公开，增加 ${tags.length} 个话题计数`)
             await updateTopicCounts(tags, 1)
           }
         }
-        
-        updateData.status = value
-        logMessage = value === 1 ? '设为私密' : '设为公开'
-        break
+
+        // 先落库，保证用户侧状态即时生效
+        await db.collection('community_posts').doc(postId).update({
+          data: { status: value, update_time: db.serverDate() }
+        })
+        console.log(`[帖子管理] 用户 ${openid} 对帖子 ${postId} 执行了「${value === 1 ? '设为私密' : '设为公开'}」操作`)
+
+        // Dify 知识库同步：公开→私密直接删文档，私密→公开重建文档
+        if (currentStatus !== newStatus) {
+          if (newStatus === 1 && post.dify_doc_id) {
+            try {
+              await Promise.race([
+                cloud.callFunction({
+                  name: 'sync_dify_knowledge',
+                  data: { post_id: postId, action: 'delete' }
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+              ])
+              console.log(`[帖子管理] Dify 文档已删除（帖子设为私密）`)
+            } catch (syncErr) {
+              console.warn(`[帖子管理] Dify 删除失败或超时(不影响用户):`, syncErr.message || syncErr)
+            }
+          } else if (newStatus === 0) {
+            try {
+              await Promise.race([
+                cloud.callFunction({
+                  name: 'sync_dify_knowledge',
+                  data: { post_id: postId }
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+              ])
+              console.log(`[帖子管理] Dify 文档已重建（帖子恢复公开）`)
+            } catch (syncErr) {
+              console.warn(`[帖子管理] Dify 重建失败或超时(不影响用户):`, syncErr.message || syncErr)
+            }
+          }
+        }
+
+        return { success: true, message: '操作成功' }
+      }
 
       case 'comment_toggle':
         // 评论开关

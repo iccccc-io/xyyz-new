@@ -118,6 +118,8 @@ Page({
       }
 
       const postData = postRes.data
+      // 归一化 images 格式（兼容新对象数组和旧字符串数组）
+      postData.images = (postData.images || []).map(img => typeof img === 'string' ? img : (img.url || ''))
       const myOpenid = app.globalData.openid
 
       // 权限检查：私密帖子只有作者可见

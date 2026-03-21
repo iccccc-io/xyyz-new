@@ -141,8 +141,9 @@ Page({
         .get()
 
       if (res.data && res.data.length > 0 && res.data[0].images && res.data[0].images.length > 0) {
+        const firstImg = res.data[0].images[0]
         this.setData({
-          heroImage: res.data[0].images[0]
+          heroImage: typeof firstImg === 'string' ? firstImg : (firstImg.url || '')
         })
       }
     } catch (err) {
@@ -206,9 +207,10 @@ Page({
       const res = await query.limit(PAGE_SIZE).get()
       const newPosts = res.data || []
 
-      // 格式化帖子数据
+      // 格式化帖子数据（归一化 images 格式）
       const formattedPosts = newPosts.map(post => ({
         ...post,
+        images: (post.images || []).map(img => typeof img === 'string' ? img : (img.url || '')),
         likesFormatted: this.formatCount(post.likes || 0)
       }))
 
