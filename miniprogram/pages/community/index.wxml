@@ -1,149 +1,285 @@
 <!--pages/community/index.wxml-->
-<!-- 沉浸式社区列表页 -->
 
 <!-- 固定顶部区域 -->
 <view class="fixed-header" style="padding-top: {{statusBarHeight}}px;">
-  <view class="header-content">
-    <view class="header-left">
-      <text class="header-title">非遗社区</text>
+  <!-- 第一行：发现 | 关注 | 问一问 全部靠左 -->
+  <view class="tab-row">
+    <view class="tab-item {{activeTab === 'discover' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="discover">
+      <text class="tab-label">发现</text>
+      <view class="tab-ink" wx:if="{{activeTab === 'discover'}}"></view>
     </view>
-    <view class="header-right">
-      <view class="ai-ask-btn" bindtap="goToAiChat">
-        <text class="ai-ask-icon">🤖</text>
-        <text class="ai-ask-text">问一问</text>
+    <text class="tab-sep">|</text>
+    <view class="tab-item {{activeTab === 'follow' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="follow">
+      <text class="tab-label">关注</text>
+      <view class="tab-ink" wx:if="{{activeTab === 'follow'}}"></view>
+    </view>
+    <text class="tab-sep">|</text>
+    <!-- 问一问入口：打开抽屉 -->
+    <view class="tab-item ai-tab-item {{aiDrawerOpen ? 'tab-active' : ''}}" bindtap="toggleAiDrawer">
+      <view class="ai-tab-content">
+        <view class="ai-round-inner {{aiDrawerOpen ? 'pulsing' : ''}}">
+          <text class="ai-star-big">✦</text>
+          <text class="ai-star-small">✦</text>
+        </view>
+        <!-- 文字用 relative 容器包裹，横杠在此容器内居中 -->
+        <view class="ai-label-wrap">
+          <text class="ai-round-label {{aiDrawerOpen ? 'ai-label-active' : ''}}">问一问</text>
+          <view class="tab-ink" wx:if="{{aiDrawerOpen}}"></view>
+        </view>
       </view>
-      <view class="search-btn" bindtap="goToSearch">
-        <van-icon name="search" size="22px" color="#333" />
-      </view>
+    </view>
+  </view>
+
+  <!-- 第二行：搜索框（可折叠） -->
+  <view class="search-row {{searchCollapsed ? 'search-collapsed' : ''}}">
+    <view class="search-bar" bindtap="goToSearch">
+      <van-icon name="search" size="16" color="#b8a898" />
+      <text class="search-placeholder">搜索帖子、话题、用户...</text>
     </view>
   </view>
 </view>
 
 <!-- 占位元素 -->
-<view class="header-placeholder" style="height: {{statusBarHeight + 50}}px;"></view>
+<view class="header-placeholder" style="height: {{headerBaseHeight}}px;"></view>
 
 <view class="community-container">
-  <!-- 页面标题 -->
-  <view class="page-header">
-    <text class="header-subtitle">分享非遗生活方式</text>
+  <!-- 关注页面占位 -->
+  <view class="follow-empty" wx:if="{{activeTab === 'follow'}}">
+    <van-empty description="关注功能即将上线" />
   </view>
 
-  <!-- 瀑布流列表 -->
-  <view class="waterfall-container" wx:if="{{postList.length > 0}}">
-    <!-- 左列 -->
-    <view class="waterfall-column left-column">
-      <view 
-        class="post-card"
-        wx:for="{{leftColumn}}"
-        wx:key="_id"
-        bindtap="goToDetail"
-        data-id="{{item._id}}"
-        data-isliked="{{item.isLiked}}"
-      >
-        <view class="card-cover">
-          <image 
-            class="cover-image" 
-            src="{{item.images[0]}}" 
-            mode="widthFix"
-            lazy-load
-          />
-          <view class="image-count" wx:if="{{item.images.length > 1}}">
-            <van-icon name="photo-o" size="12" color="#fff" />
-            <text class="count-text">{{item.images.length}}</text>
+  <!-- 发现页：瀑布流列表 -->
+  <block wx:if="{{activeTab === 'discover'}}">
+    <view class="waterfall-container" wx:if="{{postList.length > 0}}">
+      <!-- 左列 -->
+      <view class="waterfall-column left-column">
+        <view
+          class="post-card"
+          wx:for="{{leftColumn}}"
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-isliked="{{item.isLiked}}"
+        >
+          <view class="card-cover">
+            <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+            <view class="image-count" wx:if="{{item.images.length > 1}}">
+              <van-icon name="photo-o" size="12" color="#fff" />
+              <text class="count-text">{{item.images.length}}</text>
+            </view>
+          </view>
+          <view class="card-content">
+            <view class="title-row">
+              <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+            </view>
+            <view class="card-footer">
+              <view class="author-info">
+                <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+              </view>
+              <view class="like-info">
+                <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+                <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+              </view>
+            </view>
           </view>
         </view>
-
-        <view class="card-content">
-          <view class="title-row">
-            <text 
-              class="project-tag" 
-              wx:if="{{item.related_projects && item.related_projects.length > 0}}"
-            >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-          </view>
-
-          <view class="card-footer">
-            <view class="author-info">
-              <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
-              <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+      </view>
+      <!-- 右列 -->
+      <view class="waterfall-column right-column">
+        <view
+          class="post-card"
+          wx:for="{{rightColumn}}"
+          wx:key="_id"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+          data-isliked="{{item.isLiked}}"
+        >
+          <view class="card-cover">
+            <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+            <view class="image-count" wx:if="{{item.images.length > 1}}">
+              <van-icon name="photo-o" size="12" color="#fff" />
+              <text class="count-text">{{item.images.length}}</text>
             </view>
-            <view class="like-info">
-              <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
-              <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+          </view>
+          <view class="card-content">
+            <view class="title-row">
+              <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+            </view>
+            <view class="card-footer">
+              <view class="author-info">
+                <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+              </view>
+              <view class="like-info">
+                <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+                <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 右列 -->
-    <view class="waterfall-column right-column">
-      <view 
-        class="post-card"
-        wx:for="{{rightColumn}}"
-        wx:key="_id"
-        bindtap="goToDetail"
-        data-id="{{item._id}}"
-        data-isliked="{{item.isLiked}}"
-      >
-        <view class="card-cover">
-          <image 
-            class="cover-image" 
-            src="{{item.images[0]}}" 
-            mode="widthFix"
-            lazy-load
-          />
-          <view class="image-count" wx:if="{{item.images.length > 1}}">
-            <van-icon name="photo-o" size="12" color="#fff" />
-            <text class="count-text">{{item.images.length}}</text>
-          </view>
-        </view>
-
-        <view class="card-content">
-          <view class="title-row">
-            <text 
-              class="project-tag" 
-              wx:if="{{item.related_projects && item.related_projects.length > 0}}"
-            >{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-          </view>
-
-          <view class="card-footer">
-            <view class="author-info">
-              <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
-              <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
-            </view>
-            <view class="like-info">
-              <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
-              <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
+    <view class="end-tip" wx:if="{{postList.length > 0 && !loading}}">
+      <view class="end-line"></view>
+      <text class="end-text">已经到底啦~</text>
+      <view class="end-line"></view>
     </view>
-  </view>
-
-  <!-- 到底提示 -->
-  <view class="end-tip" wx:if="{{postList.length > 0 && !loading}}">
-    <view class="end-line"></view>
-    <text class="end-text">已经到底啦~</text>
-    <view class="end-line"></view>
-  </view>
-
-  <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{postList.length === 0 && !loading}}">
-    <van-empty description="暂无帖子" />
-  </view>
-
-  <!-- 加载状态 -->
-  <view class="loading-state" wx:if="{{loading}}">
-    <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
-  </view>
+    <view class="empty-state" wx:if="{{postList.length === 0 && !loading}}">
+      <van-empty description="暂无帖子" />
+    </view>
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+    </view>
+  </block>
 </view>
 
-<!-- 底部浮动发布按钮 -->
-<view class="fab-button" bindtap="goToPost">
+<!-- 底部浮动发布按钮（抽屉关闭时显示） -->
+<view class="fab-button {{aiDrawerOpen ? 'fab-hidden' : ''}}" bindtap="goToPost">
   <van-icon name="edit" size="22" color="#fff" />
   <text class="fab-text">发笔记</text>
 </view>
 
-<!-- 底部安全区域（给 tabbar 留空） -->
+<!-- ===== AI 问一问抽屉 ===== -->
+<view
+  class="ai-drawer {{aiDrawerOpen ? 'ai-drawer-open' : ''}}"
+  style="top: {{drawerTop}}px; bottom: {{drawerBottom}}px;"
+  catch:touchmove="catchTouchMove"
+>
+  <!-- 消息滚动区：高度动态计算，依赖 chatAreaHeight -->
+  <scroll-view
+    class="chat-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    scroll-into-view="{{chatScrollToView}}"
+    scroll-with-animation
+    style="height: {{chatAreaHeight}}px;"
+  >
+    <view class="chat-scroll-inner">
+      <!-- 欢迎卡片 -->
+      <view class="chat-welcome" wx:if="{{chatMessages.length === 0 && !chatLoading}}">
+        <view class="chat-welcome-icon">
+          <view class="welcome-rainbow-circle">
+            <text class="welcome-star-big">✦</text>
+            <text class="welcome-star-small">✦</text>
+          </view>
+        </view>
+        <text class="chat-welcome-title">非遗智答</text>
+        <text class="chat-welcome-desc">{{chatWelcomeText}}</text>
+        <!-- 快捷引导 -->
+        <view class="chat-quick-bar" wx:if="{{chatQuickReplies.length > 0}}">
+          <view
+            class="chat-quick-chip"
+            wx:for="{{chatQuickReplies}}"
+            wx:key="*this"
+            bindtap="onChatQuickReply"
+            data-text="{{item}}"
+          >{{item}}</view>
+        </view>
+      </view>
+
+      <!-- 消息列表 -->
+      <block wx:for="{{chatMessages}}" wx:key="_id" wx:for-index="msgIdx">
+        <!-- 用户消息 -->
+        <view class="chat-row chat-row-self" wx:if="{{item.role === 'user'}}" id="cmsg-{{msgIdx}}">
+          <view class="chat-bubble chat-bubble-user">
+            <text class="chat-bubble-text">{{item.content}}</text>
+          </view>
+        </view>
+        <!-- AI 消息 -->
+        <view class="chat-row-wrap" wx:else id="cmsg-{{msgIdx}}">
+          <view class="chat-row chat-row-ai">
+            <view class="chat-ai-avatar">
+              <text class="chat-ai-avatar-text">AI</text>
+            </view>
+            <view class="chat-bubble chat-bubble-ai {{item.isError ? 'chat-bubble-error' : ''}}">
+              <view wx:if="{{item.segments && item.segments.length > 0}}">
+                <block wx:for="{{item.segments}}" wx:for-item="seg" wx:for-index="si" wx:key="si">
+                  <text wx:if="{{seg.type === 'text'}}" class="chat-bubble-text">{{seg.text}}</text>
+                  <text wx:elif="{{seg.type === 'ref'}}" class="chat-citation-mark" bindtap="onChatCitationTap" data-type="{{seg.targetType}}" data-id="{{seg.targetId}}">[{{seg.refId}}]</text>
+                </block>
+              </view>
+              <text wx:else class="chat-bubble-text">{{item.content}}</text>
+            </view>
+          </view>
+          <!-- 引用来源卡片列表 -->
+          <view class="chat-citation-list" wx:if="{{item.citations && item.citations.length > 0}}">
+            <scroll-view scroll-x class="chat-citation-scroll">
+              <view class="chat-citation-scroll-inner">
+                <view
+                  class="chat-citation-card"
+                  wx:for="{{item.citations}}"
+                  wx:for-item="cite"
+                  wx:for-index="ci"
+                  wx:key="ci"
+                  bindtap="onChatCitationTap"
+                  data-type="{{cite.type}}"
+                  data-id="{{cite.target_id}}"
+                >
+                  <text class="chat-citation-icon">{{cite.type === 'ich_project' ? '🏛️' : cite.type === 'ich_inheritor' ? '👤' : cite.type === 'ich_news' ? '📰' : '📝'}}</text>
+                  <text class="chat-citation-title">[{{cite.ref_id}}] {{cite.title}}</text>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+
+          <!-- 追问建议（仅最后一条 AI 消息） -->
+          <view class="chat-suggested" wx:if="{{msgIdx === chatMessages.length - 1 && item.suggested_questions && item.suggested_questions.length > 0 && !chatLoading}}">
+            <view
+              class="chat-suggested-chip"
+              wx:for="{{item.suggested_questions}}"
+              wx:for-item="sq"
+              wx:for-index="qi"
+              wx:key="qi"
+              bindtap="onChatSuggestedTap"
+              data-text="{{sq}}"
+            >{{sq}}</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 思考中 -->
+      <view class="chat-row chat-row-ai" wx:if="{{chatLoading}}">
+        <view class="chat-ai-avatar">
+          <text class="chat-ai-avatar-text">AI</text>
+        </view>
+        <view class="chat-bubble chat-bubble-ai chat-typing-bubble">
+          <view class="typing-dots">
+            <view class="dot dot-1"></view>
+            <view class="dot dot-2"></view>
+            <view class="dot dot-3"></view>
+          </view>
+        </view>
+      </view>
+      <view id="chat-scroll-end" style="height: 1px;"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部输入区（flex 流式，无 absolute 定位） -->
+  <view class="chat-input-area">
+    <view class="chat-input-row">
+      <view class="chat-input-capsule">
+        <input
+          class="chat-input-field"
+          value="{{chatInputValue}}"
+          placeholder="问问非遗智答..."
+          placeholder-class="chat-input-placeholder"
+          confirm-type="send"
+          bindinput="onChatInput"
+          bindconfirm="sendChatMessage"
+          adjust-position="{{false}}"
+          cursor-spacing="20"
+          disabled="{{chatIsSending}}"
+        />
+      </view>
+      <view class="chat-send-btn {{chatInputValue ? 'chat-send-active' : ''}}" bindtap="sendChatMessage">
+        <van-icon name="arrow" size="16" color="#fff" />
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 底部安全区域 -->
 <view class="safe-area-bottom"></view>

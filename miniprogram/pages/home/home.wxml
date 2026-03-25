@@ -89,11 +89,11 @@
     <!-- 快捷导航 -->
     <view class="quick-nav-row">
       <view class="nav-capsule nav-capsule--primary" bindtap="goToProjects">
-        <van-icon name="records-o" size="18" color="#ffffff" />
+        <van-icon name="records-o" size="20" color="#79665B" />
         <text>非遗项目</text>
       </view>
       <view class="nav-capsule nav-capsule--secondary" bindtap="goToInheritors">
-        <van-icon name="friends-o" size="18" color="#8b6f47" />
+        <van-icon name="friends-o" size="20" color="#79665B" />
         <text>非遗传承人</text>
       </view>
     </view>

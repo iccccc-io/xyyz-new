@@ -1,5 +1,4 @@
 /* pages/community/index.wxss */
-/* 沉浸式社区列表页样式 */
 
 page {
   background-color: #f5f5f5;
@@ -16,74 +15,181 @@ page {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
-.header-content {
+/* --- 标签行 --- */
+.tab-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 100rpx;
+  justify-content: flex-start;
+  height: 96rpx;
   padding: 0 32rpx;
+  gap: 0;
 }
 
-.header-left {
-  flex: 1;
-}
-
-.header-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333333;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.ai-ask-btn {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  height: 60rpx;
-  padding: 0 20rpx;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  border-radius: 30rpx;
-  box-shadow: 0 4rpx 12rpx rgba(109, 40, 217, 0.3);
-  transition: all 0.2s;
-}
-
-.ai-ask-btn:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 8rpx rgba(109, 40, 217, 0.2);
-}
-
-.ai-ask-icon {
+.tab-sep {
   font-size: 28rpx;
+  color: #ddd;
+  margin: 0 20rpx;
+  line-height: 1;
 }
 
-.ai-ask-text {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #ffffff;
+.tab-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10rpx 0;
 }
 
-.search-btn {
-  width: 72rpx;
-  height: 72rpx;
+.tab-label {
+  font-size: 32rpx;
+  color: #aaa;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-active .tab-label {
+  font-size: 36rpx;
+  color: #1a1a1a;
+  font-weight: bold;
+}
+
+.tab-ink {
+  position: absolute;
+  bottom: 0;
+  width: 36rpx;
+  height: 5rpx;
+  border-radius: 3rpx;
+  background: #b63b36;
+}
+
+/* 问一问 Tab */
+.ai-tab-item {
+  padding: 10rpx 0;
+}
+
+.ai-tab-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  border-radius: 50%;
-  transition: all 0.2s;
+  gap: 10rpx;
 }
 
-.search-btn:active {
-  transform: scale(0.92);
-  background: #e8e8e8;
+/* AI 彩虹圆形图标 */
+.ai-round-inner {
+  position: relative;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #ff3b3b, #ff8c00, #ffe000,
+    #3ecf3e, #1a8fff, #a259ff, #ff3b3b
+  );
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 大星星 - 居中偏左下 */
+.ai-star-big {
+  position: absolute;
+  font-size: 32rpx;
+  color: #fff;
+  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-68%, -58%);
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.3);
+}
+
+/* 小星星 - 居中偏右上，与大星星形成叠压 */
+.ai-star-small {
+  position: absolute;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-10%, -88%);
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.25);
+}
+
+/* 图标优雅闪烁动画 */
+@keyframes iconPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  40%       { opacity: 0.65; transform: scale(0.9); }
+  70%       { opacity: 0.9; transform: scale(0.96); }
+}
+
+.ai-round-inner.pulsing {
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.ai-round-label {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #aaa;
+  transition: all 0.2s ease;
+}
+
+.ai-label-active {
+  font-size: 36rpx !important;
+  font-weight: bold !important;
+  color: #1a1a1a !important;
+}
+
+/* tab-ink 居中对齐基础样式 */
+.tab-ink {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 问一问文字容器：让横杠仅相对文字居中 */
+.ai-label-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 问一问横杠位于文字容器底部 */
+.ai-label-wrap .tab-ink {
+  position: absolute;
+  bottom: -4rpx;
+  width: 48rpx;
+}
+
+/* --- 搜索行 --- */
+.search-row {
+  height: 88rpx;
+  padding: 0 32rpx 16rpx;
+  opacity: 1;
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              padding-bottom 0.3s ease;
+}
+
+.search-row.search-collapsed {
+  height: 0;
+  opacity: 0;
+  padding-bottom: 0;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 72rpx;
+  padding: 0 24rpx;
+  background: #f0f0f0;
+  border-radius: 36rpx;
+}
+
+.search-placeholder {
+  font-size: 26rpx;
+  color: #b0b0b0;
 }
 
 /* 占位元素 */
@@ -96,20 +202,12 @@ page {
   padding-bottom: 40rpx;
 }
 
-/* 页面标题 */
-.page-header {
-  padding: 16rpx 20rpx 32rpx;
-  text-align: center;
+/* 关注空状态 */
+.follow-empty {
+  padding: 120rpx 0;
 }
 
-.header-subtitle {
-  display: block;
-  font-size: 26rpx;
-  color: #999999;
-  letter-spacing: 2rpx;
-}
-
-/* 瀑布流容器 */
+/* 瀑布流 */
 .waterfall-container {
   display: flex;
   gap: 20rpx;
@@ -122,7 +220,6 @@ page {
   gap: 20rpx;
 }
 
-/* 帖子卡片 */
 .post-card {
   background: #ffffff;
   border-radius: 20rpx;
@@ -133,10 +230,8 @@ page {
 
 .post-card:active {
   transform: scale(0.98);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
-/* 封面图区域 */
 .card-cover {
   position: relative;
   width: 100%;
@@ -149,7 +244,6 @@ page {
   display: block;
 }
 
-/* 多图标识 */
 .image-count {
   position: absolute;
   top: 16rpx;
@@ -167,12 +261,10 @@ page {
   color: #ffffff;
 }
 
-/* 内容区域 */
 .card-content {
   padding: 20rpx;
 }
 
-/* 标题行 */
 .title-row {
   margin-bottom: 16rpx;
   line-height: 1.6;
@@ -198,17 +290,14 @@ page {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* 底部信息 */
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* 作者信息 */
 .author-info {
   display: flex;
   align-items: center;
@@ -231,15 +320,10 @@ page {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 140rpx;
-  line-height: 36rpx;
 }
 
-.author-name.certified {
-  color: #b63b36;
-  font-weight: 500;
-}
+.author-name.certified { color: #b63b36; font-weight: 500; }
 
-/* 点赞信息 */
 .like-info {
   display: flex;
   align-items: center;
@@ -247,16 +331,9 @@ page {
   flex-shrink: 0;
 }
 
-.like-count {
-  font-size: 24rpx;
-  color: #999999;
-}
+.like-count { font-size: 24rpx; color: #999999; }
+.like-count.liked { color: #b63b36; }
 
-.like-count.liked {
-  color: #b63b36;
-}
-
-/* 空状态和加载状态 */
 .empty-state,
 .loading-state {
   display: flex;
@@ -265,7 +342,6 @@ page {
   padding: 200rpx 0;
 }
 
-/* 到底提示 */
 .end-tip {
   display: flex;
   align-items: center;
@@ -274,18 +350,10 @@ page {
   gap: 20rpx;
 }
 
-.end-line {
-  width: 80rpx;
-  height: 2rpx;
-  background: #e0e0e0;
-}
+.end-line { width: 80rpx; height: 2rpx; background: #e0e0e0; }
+.end-text { font-size: 24rpx; color: #bbbbbb; }
 
-.end-text {
-  font-size: 24rpx;
-  color: #bbbbbb;
-}
-
-/* ========== 浮动发布按钮 ========== */
+/* ========== 发布按钮 ========== */
 .fab-button {
   position: fixed;
   right: 40rpx;
@@ -297,30 +365,382 @@ page {
   background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
   border-radius: 60rpx;
   border: 3rpx solid rgba(255, 255, 255, 0.9);
-  box-shadow: 
-    0 6rpx 20rpx rgba(0, 0, 0, 0.25),
-    0 12rpx 40rpx rgba(182, 59, 54, 0.4),
-    0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.25), 0 12rpx 40rpx rgba(182,59,54,0.4);
   z-index: 50;
   transition: all 0.3s ease;
 }
 
-.fab-button:active {
-  transform: scale(0.95);
-  box-shadow: 
-    0 4rpx 12rpx rgba(0, 0, 0, 0.2),
-    0 8rpx 24rpx rgba(182, 59, 54, 0.3);
+.fab-button.fab-hidden {
+  opacity: 0;
+  transform: scale(0.7) translateY(20rpx);
+  pointer-events: none;
 }
+
+.fab-button:active { transform: scale(0.95); }
 
 .fab-text {
   font-size: 28rpx;
   font-weight: 600;
   color: #ffffff;
-  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
 }
 
-/* 底部安全区域（给 tabbar 留空） */
+/* ========== AI 问一问 抽屉 ========== */
+.ai-drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: #f7f7f7;
+  z-index: 99;
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-drawer-open {
+  transform: translateY(0);
+}
+
+/* 消息滚动区：flex:1 占满抽屉剩余空间，内联 height 做 scroll-view 必需的定高 */
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-scroll-inner {
+  padding: 24rpx 24rpx 0;
+}
+
+/* 欢迎卡片 */
+.chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 32rpx 32rpx;
+  text-align: center;
+}
+
+.chat-welcome-icon {
+  margin-bottom: 24rpx;
+}
+
+.welcome-rainbow-circle {
+  position: relative;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ff3b3b, #ff8c00, #ffe000, #3ecf3e, #1a8fff, #a259ff, #ff3b3b);
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.welcome-star-big {
+  position: absolute;
+  font-size: 60rpx;
+  color: #fff;
+  bottom: 6rpx;
+  left: 6rpx;
+  line-height: 1;
+  text-shadow: 0 2rpx 6rpx rgba(0,0,0,0.3);
+}
+
+.welcome-star-small {
+  position: absolute;
+  font-size: 38rpx;
+  color: rgba(255,255,255,0.9);
+  top: 6rpx;
+  right: 4rpx;
+  line-height: 1;
+  text-shadow: 0 1rpx 4rpx rgba(0,0,0,0.25);
+}
+
+.chat-welcome-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+}
+
+.chat-welcome-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 32rpx;
+}
+
+.chat-quick-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16rpx;
+  width: 100%;
+}
+
+.chat-quick-chip {
+  padding: 12rpx 28rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #666;
+  border: 1rpx solid #e8e8e8;
+  transition: all 0.15s;
+}
+
+.chat-quick-chip:active {
+  background: #f0f0f0;
+}
+
+/* 消息气泡 */
+.chat-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 20rpx;
+}
+
+.chat-row-wrap {
+  margin-bottom: 8rpx;
+}
+
+.chat-row-self {
+  justify-content: flex-end;
+}
+
+.chat-row-ai {
+  justify-content: flex-start;
+  gap: 14rpx;
+}
+
+.chat-ai-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a259ff, #1a8fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chat-ai-avatar-text {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 1rpx;
+}
+
+.chat-bubble {
+  max-width: 72%;
+  padding: 20rpx 28rpx;
+  border-radius: 24rpx;
+  word-break: break-all;
+}
+
+.chat-bubble-user {
+  background: #b63b36;
+  border-bottom-right-radius: 6rpx;
+}
+
+.chat-bubble-ai {
+  background: #fff;
+  border-bottom-left-radius: 6rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.chat-bubble-error {
+  background: #fff5f0;
+  border: 1rpx solid #ffd0c0;
+}
+
+.chat-bubble-text {
+  font-size: 30rpx;
+  line-height: 1.7;
+  color: #333;
+}
+
+.chat-bubble-user .chat-bubble-text {
+  color: #fff;
+}
+
+.chat-citation-mark {
+  font-size: 26rpx;
+  color: #1a8fff;
+  font-weight: 500;
+}
+
+/* 思考中 */
+.chat-typing-bubble {
+  padding: 20rpx 28rpx;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  height: 32rpx;
+}
+
+.dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #ccc;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.dot-1 { animation-delay: 0s; }
+.dot-2 { animation-delay: 0.2s; }
+.dot-3 { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-8rpx); opacity: 1; }
+}
+
+/* 追问建议 */
+.chat-suggested {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  padding: 12rpx 0 16rpx 74rpx;
+}
+
+.chat-suggested-chip {
+  padding: 10rpx 24rpx;
+  background: #fff;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  color: #555;
+  border: 1rpx solid #e0e0e0;
+  transition: all 0.15s;
+}
+
+.chat-suggested-chip:active {
+  background: #f5f5f5;
+}
+
+/* ========== 底部输入区：flex 流式布局，不再用 absolute ========== */
+.chat-input-area {
+  flex-shrink: 0;
+  background: #f7f7f7;
+  border-top: 1rpx solid #efefef;
+  padding-top: 16rpx;
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 0 24rpx 16rpx;
+}
+
+.chat-input-capsule {
+  flex: 1;
+  height: 80rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 0 28rpx;
+  display: flex;
+  align-items: center;
+  border: 1rpx solid #e8e8e8;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+.chat-input-field {
+  flex: 1;
+  height: 100%;
+  font-size: 30rpx;
+  color: #333;
+  background: transparent;
+}
+
+.chat-input-placeholder {
+  color: #bbb;
+  font-size: 30rpx;
+}
+
+.chat-send-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chat-send-active {
+  background: #b63b36;
+  box-shadow: 0 4rpx 16rpx rgba(182, 59, 54, 0.35);
+}
+
+.chat-send-btn:active {
+  transform: scale(0.92);
+}
+
+/* ========== 引文标记 & 引文卡片 ========== */
+.chat-citation-mark {
+  display: inline;
+  color: #3478f6;
+  font-size: 26rpx;
+  font-weight: 600;
+  padding: 2rpx 4rpx;
+  border-radius: 6rpx;
+  background: rgba(52, 120, 246, 0.08);
+}
+
+.chat-citation-mark:active {
+  background: rgba(52, 120, 246, 0.2);
+}
+
+.chat-citation-list {
+  margin-top: 12rpx;
+  padding-left: 74rpx;
+}
+
+.chat-citation-scroll {
+  white-space: nowrap;
+}
+
+.chat-citation-scroll-inner {
+  display: inline-flex;
+  gap: 12rpx;
+  padding: 4rpx 0;
+}
+
+.chat-citation-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  background: rgba(52, 120, 246, 0.06);
+  border: 1rpx solid rgba(52, 120, 246, 0.12);
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.chat-citation-card:active {
+  background: rgba(52, 120, 246, 0.14);
+}
+
+.chat-citation-icon {
+  font-size: 24rpx;
+}
+
+.chat-citation-title {
+  font-size: 24rpx;
+  color: #3478f6;
+  max-width: 280rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 底部安全区域 */
 .safe-area-bottom {
   height: calc(120rpx + env(safe-area-inset-bottom));
 }
-
