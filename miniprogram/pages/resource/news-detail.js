@@ -5,7 +5,8 @@ Page({
     newsId: '',
     newsData: null,
     loading: true,
-    showNavTitle: false
+    showNavTitle: false,
+    coverLoadFailed: false
   },
 
   onLoad(options) {
@@ -36,12 +37,29 @@ Page({
       if (newsData.content_html) {
         newsData._processedContent = this.processHtml(newsData.content_html)
       }
+      // 格式化发布时间
+      const ts = newsData.update_time || newsData.create_time
+      if (ts) {
+        newsData._dateStr = this.formatDate(ts)
+      }
       this.setData({ newsData, loading: false })
     } catch (err) {
       console.error('加载资讯详情失败:', err)
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
+  },
+
+  onCoverError() {
+    this.setData({ coverLoadFailed: true })
+  },
+
+  formatDate(ts) {
+    try {
+      const d = new Date(ts)
+      if (isNaN(d.getTime())) return ''
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    } catch (e) { return '' }
   },
 
   processHtml(html) {

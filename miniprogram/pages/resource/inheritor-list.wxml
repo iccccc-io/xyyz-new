@@ -6,19 +6,19 @@
     <!-- 导航栏 -->
     <view class="nav-bar">
       <view class="nav-back" bindtap="goBack">
-        <van-icon name="arrow-left" size="18" color="#333" />
+        <van-icon name="arrow-left" size="18" color="#5a4a3a" />
       </view>
       <text class="nav-title">非遗传承人</text>
       <view class="nav-right"></view>
     </view>
 
-    <!-- 搜索行：搜索框 + 搜索按钮 + 筛选图标 -->
+    <!-- 搜索行 -->
     <view class="search-row">
       <view class="search-input-wrap">
-        <van-icon name="search" size="14" color="#999" custom-class="search-icon-inner" />
+        <van-icon name="search" size="14" color="#c4a46c" custom-class="search-icon-inner" />
         <input
           class="search-input"
-          placeholder="搜索传承人姓名"
+          placeholder="请输入关键字进行搜索"
           placeholder-class="search-placeholder"
           value="{{searchKeyword}}"
           bindinput="onSearchInput"
@@ -28,7 +28,7 @@
       </view>
       <view class="search-btn" bindtap="onSearch">搜索</view>
       <view class="filter-btn" bindtap="openFilter">
-        <van-icon name="bars" size="20" color="#8b6f47" />
+        <van-icon name="filter-o" size="20" color="#8b6f47" />
       </view>
     </view>
   </view>
@@ -39,29 +39,40 @@
       <view class="inheritor-card"
         wx:for="{{dataList}}" wx:key="inheritor_id"
         bindtap="goToDetail" data-id="{{item.inheritor_id}}">
-        <image class="inheritor-avatar" src="{{item.cover}}" mode="aspectFill" lazy-load />
+
+        <!-- 头像 -->
+        <view class="avatar-wrap">
+          <image class="inheritor-avatar" src="{{item.cover}}" mode="aspectFill" lazy-load />
+        </view>
+
+        <!-- 文字信息 -->
         <view class="inheritor-info">
-          <view class="inheritor-name">{{item.name}}</view>
-          <view class="inheritor-level">{{item.level}}</view>
-          <view class="inheritor-project" wx:if="{{item.works_at.project_name}}">
-            代表项目：{{item.works_at.project_name}}
+          <view class="name-row">
+            <text class="level-tag" wx:if="{{item.level}}">{{item.level}}</text>
+            <text class="inheritor-name">{{item.name}}</text>
+          </view>
+          <view class="project-row" wx:if="{{item.works_at.project_name}}">
+            <van-icon name="records-o" size="12" color="#c4a46c" />
+            <text class="project-name-text">{{item.works_at.project_name}}</text>
+          </view>
+          <view class="city-row" wx:if="{{item.city}}">
+            <van-icon name="location-o" size="12" color="#b8a898" />
+            <text class="city-text">{{item.city}}</text>
           </view>
         </view>
-        <van-icon name="arrow" size="16" color="#ccc" />
+
+        <van-icon name="arrow" size="14" color="#c4b8a8" />
       </view>
     </block>
 
-    <!-- 空状态 -->
     <view class="empty-state" wx:if="{{dataList.length === 0 && !loading}}">
       <van-empty description="暂无数据" />
     </view>
 
-    <!-- 加载中 -->
     <view class="loading-state" wx:if="{{loading}}">
-      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+      <van-loading type="spinner" color="#8b6f47">加载中...</van-loading>
     </view>
 
-    <!-- 到底了 -->
     <view class="no-more" wx:if="{{noMore && dataList.length > 0}}">
       <text>— 已经到底了 —</text>
     </view>
@@ -81,7 +92,6 @@
       </view>
 
       <scroll-view class="filter-body" scroll-y>
-        <!-- 级别 -->
         <view class="filter-section">
           <view class="filter-section-title">级别</view>
           <view class="filter-options">

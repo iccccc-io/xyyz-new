@@ -10,23 +10,55 @@
 <view class="detail-container">
   <!-- 加载状态 -->
   <view class="loading-wrapper" wx:if="{{loading}}">
-    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+    <van-loading type="spinner" color="#8b6f47" size="40">加载中...</van-loading>
   </view>
 
   <!-- 空状态 -->
   <van-empty wx:if="{{!loading && !newsData}}" description="资讯不存在" />
 
   <block wx:if="{{newsData}}">
+
+    <!-- 封面图：加载失败自动隐藏，不留空白 -->
+    <view class="cover-wrap" wx:if="{{newsData.cover && !coverLoadFailed}}">
+      <image
+        class="cover-img"
+        src="{{newsData.cover}}"
+        mode="aspectFill"
+        binderror="onCoverError"
+      />
+      <view class="cover-category-badge">{{newsData.category}}</view>
+    </view>
+
     <!-- 文章头部 -->
     <view class="article-header">
-      <view class="article-category">
-        <van-tag
-          plain
-          color="{{newsData.category === '非遗快讯' ? '#1989fa' : '#8b6f47'}}"
-          size="large"
-        >{{newsData.category}}</van-tag>
+      <!-- 无封面或封面失败时显示分类标签 -->
+      <view class="category-inline" wx:if="{{!newsData.cover || coverLoadFailed}}">
+        <text class="category-text">{{newsData.category}}</text>
       </view>
+
+      <!-- 标题 -->
       <view class="article-title">{{newsData.title}}</view>
+
+      <!-- 元信息行：作者 · 来源 · 时间 -->
+      <view class="meta-bar">
+        <view class="meta-item" wx:if="{{newsData.author}}">
+          <van-icon name="user-o" size="12" color="#b8a898" />
+          <text class="meta-text">{{newsData.author}}</text>
+        </view>
+        <text class="meta-dot" wx:if="{{newsData.author && newsData.source}}">·</text>
+        <view class="meta-item" wx:if="{{newsData.source}}">
+          <van-icon name="newspaper-o" size="12" color="#b8a898" />
+          <text class="meta-text">{{newsData.source}}</text>
+        </view>
+        <text class="meta-dot" wx:if="{{newsData._dateStr}}">·</text>
+        <view class="meta-item" wx:if="{{newsData._dateStr}}">
+          <van-icon name="clock-o" size="12" color="#b8a898" />
+          <text class="meta-text">{{newsData._dateStr}}</text>
+        </view>
+      </view>
+
+      <!-- 分割线 -->
+      <view class="header-divider"></view>
     </view>
 
     <!-- 文章正文 -->
@@ -35,40 +67,48 @@
     </view>
 
     <!-- 本文涉及 -->
-    <view class="related-section"
-      wx:if="{{(newsData.related_projects && newsData.related_projects.length > 0) || (newsData.related_inheritors && newsData.related_inheritors.length > 0)}}">
-      <view class="related-title">
-        <view class="related-line"></view>
-        <text>本文涉及</text>
-        <view class="related-line"></view>
+    <view class="related-section">
+      <view class="section-header">
+        <view class="section-line"></view>
+        <text class="section-title">本文涉及</text>
+        <view class="section-line"></view>
       </view>
 
-      <!-- 关联项目 -->
-      <view class="related-group" wx:if="{{newsData.related_projects && newsData.related_projects.length > 0}}">
-        <view class="related-group-label">
-          <van-icon name="bookmark-o" size="14" color="#b63b36" />
-          <text>相关项目</text>
+      <!-- 有内容时展示 -->
+      <block wx:if="{{(newsData.related_projects && newsData.related_projects.length > 0) || (newsData.related_inheritors && newsData.related_inheritors.length > 0)}}">
+        <!-- 关联项目 -->
+        <view class="related-group" wx:if="{{newsData.related_projects && newsData.related_projects.length > 0}}">
+          <view class="group-label">
+            <van-icon name="bookmark-o" size="13" color="#8b6f47" />
+            <text>相关非遗项目</text>
+          </view>
+          <view class="related-item"
+            wx:for="{{newsData.related_projects}}" wx:key="index"
+            bindtap="goToProject" data-id="{{item.project_id}}">
+            <text class="related-name">{{item.name}}</text>
+            <van-icon name="arrow" size="13" color="#c4b8a8" />
+          </view>
         </view>
-        <view class="related-item"
-          wx:for="{{newsData.related_projects}}" wx:key="project_id"
-          bindtap="goToProject" data-id="{{item.project_id}}">
-          <text class="related-name">{{item.name}}</text>
-          <van-icon name="arrow" size="14" color="#ccc" />
-        </view>
-      </view>
 
-      <!-- 关联传承人 -->
-      <view class="related-group" wx:if="{{newsData.related_inheritors && newsData.related_inheritors.length > 0}}">
-        <view class="related-group-label">
-          <van-icon name="user-o" size="14" color="#b63b36" />
-          <text>相关传承人</text>
+        <!-- 关联传承人 -->
+        <view class="related-group" wx:if="{{newsData.related_inheritors && newsData.related_inheritors.length > 0}}">
+          <view class="group-label">
+            <van-icon name="friends-o" size="13" color="#8b6f47" />
+            <text>相关传承人</text>
+          </view>
+          <view class="related-item"
+            wx:for="{{newsData.related_inheritors}}" wx:key="index"
+            bindtap="goToInheritor" data-id="{{item.inheritor_id}}">
+            <text class="related-name">{{item.name}}</text>
+            <van-icon name="arrow" size="13" color="#c4b8a8" />
+          </view>
         </view>
-        <view class="related-item"
-          wx:for="{{newsData.related_inheritors}}" wx:key="inheritor_id"
-          bindtap="goToInheritor" data-id="{{item.inheritor_id}}">
-          <text class="related-name">{{item.name}}</text>
-          <van-icon name="arrow" size="14" color="#ccc" />
-        </view>
+      </block>
+
+      <!-- 无内容时的提示 -->
+      <view class="related-empty" wx:else>
+        <van-icon name="info-o" size="14" color="#c4b8a8" />
+        <text class="related-empty-text">本文暂未关联具体非遗项目与传承人</text>
       </view>
     </view>
 
@@ -77,7 +117,8 @@
 
     <!-- AI 对话悬浮按钮 -->
     <view class="ai-fab" bindtap="goToAiChat">
-      <text class="ai-fab-text">AI</text>
+      <text class="ai-fab-text">问一问</text>
     </view>
+
   </block>
 </view>

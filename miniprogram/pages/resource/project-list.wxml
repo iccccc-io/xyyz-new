@@ -6,19 +6,19 @@
     <!-- 导航栏 -->
     <view class="nav-bar">
       <view class="nav-back" bindtap="goBack">
-        <van-icon name="arrow-left" size="18" color="#333" />
+        <van-icon name="arrow-left" size="18" color="#5a4a3a" />
       </view>
       <text class="nav-title">非遗项目</text>
       <view class="nav-right"></view>
     </view>
 
-    <!-- 搜索行：搜索框 + 搜索按钮 + 筛选图标 -->
+    <!-- 搜索行 -->
     <view class="search-row">
       <view class="search-input-wrap">
-        <van-icon name="search" size="14" color="#999" custom-class="search-icon-inner" />
+        <van-icon name="search" size="14" color="#c4a46c" custom-class="search-icon-inner" />
         <input
           class="search-input"
-          placeholder="搜索非遗项目名称"
+          placeholder="请输入关键字进行搜索"
           placeholder-class="search-placeholder"
           value="{{searchKeyword}}"
           bindinput="onSearchInput"
@@ -28,7 +28,7 @@
       </view>
       <view class="search-btn" bindtap="onSearch">搜索</view>
       <view class="filter-btn" bindtap="openFilter">
-        <van-icon name="bars" size="20" color="#8b6f47" />
+        <van-icon name="filter-o" size="20" color="#8b6f47" />
       </view>
     </view>
   </view>
@@ -39,33 +39,27 @@
       <view class="project-card"
         wx:for="{{dataList}}" wx:key="project_id"
         bindtap="goToDetail" data-id="{{item.project_id}}">
-        <image class="project-cover" src="{{item.cover}}" mode="aspectFill" lazy-load />
-        <view class="project-info">
-          <view class="project-name">{{item.name}}</view>
-          <view class="project-tags">
-            <van-tag type="danger" plain>{{item.level}}</van-tag>
-            <van-tag color="#8b6f47" plain>{{item.category}}</van-tag>
-          </view>
-          <view class="project-meta" wx:if="{{item.city}}">
-            <van-icon name="location-o" size="12" color="#999" />
-            <text class="meta-text">{{item.city}}</text>
-            <text class="meta-text" wx:if="{{item.batch}}"> · {{item.batch}}</text>
-          </view>
+        <view class="project-name">{{item.name}}</view>
+        <view class="tag-row">
+          <text class="tag tag-level" wx:if="{{item.level}}">{{item.level}}</text>
+          <text class="tag tag-category" wx:if="{{item.category}}">{{item.category}}</text>
+          <text class="tag tag-batch" wx:if="{{item.batch}}">{{item.batch}}</text>
+        </view>
+        <view class="project-meta" wx:if="{{item.city}}">
+          <van-icon name="location-o" size="12" color="#c4a46c" />
+          <text class="meta-text">{{item.city}}</text>
         </view>
       </view>
     </block>
 
-    <!-- 空状态 -->
     <view class="empty-state" wx:if="{{dataList.length === 0 && !loading}}">
       <van-empty description="暂无数据" />
     </view>
 
-    <!-- 加载中 -->
     <view class="loading-state" wx:if="{{loading}}">
-      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+      <van-loading type="spinner" color="#8b6f47">加载中...</van-loading>
     </view>
 
-    <!-- 到底了 -->
     <view class="no-more" wx:if="{{noMore && dataList.length > 0}}">
       <text>— 已经到底了 —</text>
     </view>
@@ -85,7 +79,6 @@
       </view>
 
       <scroll-view class="filter-body" scroll-y>
-        <!-- 地区 -->
         <view class="filter-section">
           <view class="filter-section-title">地区</view>
           <view class="filter-options">
@@ -97,7 +90,6 @@
           </view>
         </view>
 
-        <!-- 类别 -->
         <view class="filter-section">
           <view class="filter-section-title">类别</view>
           <view class="filter-options">
@@ -109,7 +101,6 @@
           </view>
         </view>
 
-        <!-- 级别 -->
         <view class="filter-section">
           <view class="filter-section-title">级别</view>
           <view class="filter-options">
@@ -121,7 +112,6 @@
           </view>
         </view>
 
-        <!-- 批次 -->
         <view class="filter-section">
           <view class="filter-section-title">批次</view>
           <view class="filter-options">
