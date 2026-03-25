@@ -7,5 +7,5 @@
     "van-empty": "@vant/weapp/empty/index"
   },
   "navigationBarTitleText": "传承人详情",
-  "backgroundColor": "#f7f5f1"
+  "backgroundColor": "#f0ece4"
 }

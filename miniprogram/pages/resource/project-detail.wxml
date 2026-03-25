@@ -10,7 +10,7 @@
 <view class="detail-container">
   <!-- 加载状态 -->
   <view class="loading-wrapper" wx:if="{{loading}}">
-    <van-loading type="spinner" color="#b63b36" size="40">加载中...</van-loading>
+    <van-loading type="spinner" color="#8b6f47" size="40">加载中...</van-loading>
   </view>
 
   <!-- 空状态 -->
@@ -28,14 +28,21 @@
 
     <!-- 基本信息卡片 -->
     <view class="info-card">
-      <view class="tags-row">
-        <van-tag type="danger" size="large" plain>{{projectData.level}}</van-tag>
-        <van-tag color="#8b6f47" size="large" plain>{{projectData.category}}</van-tag>
-        <van-tag wx:if="{{projectData.batch}}" color="#52c41a" size="large" plain>{{projectData.batch}}</van-tag>
+      <view class="info-row" wx:if="{{projectData.level}}">
+        <text class="info-label">级别</text>
+        <text class="info-value">{{projectData.level}}</text>
       </view>
-      <view class="meta-row" wx:if="{{projectData.city}}">
-        <van-icon name="location-o" size="14" color="#999" />
-        <text class="meta-value">{{projectData.city}}</text>
+      <view class="info-row" wx:if="{{projectData.category}}">
+        <text class="info-label">类别</text>
+        <text class="info-value">{{projectData.category}}</text>
+      </view>
+      <view class="info-row" wx:if="{{projectData.batch}}">
+        <text class="info-label">批次</text>
+        <text class="info-value">{{projectData.batch}}</text>
+      </view>
+      <view class="info-row" wx:if="{{projectData.city}}">
+        <text class="info-label">地区</text>
+        <text class="info-value">{{projectData.city}}</text>
       </view>
     </view>
 
@@ -71,13 +78,13 @@
     </view>
 
     <!-- 代表性传承人 -->
-    <view class="section-card" wx:if="{{inheritorList.length > 0}}">
+    <view class="section-card">
       <view class="section-header">
         <view class="section-bar"></view>
         <text>代表性传承人</text>
-        <text class="section-count">{{inheritorList.length}}位</text>
+        <text class="section-count" wx:if="{{inheritorList.length > 0}}">{{inheritorList.length}}位</text>
       </view>
-      <view class="inheritor-grid">
+      <view class="inheritor-grid" wx:if="{{inheritorList.length > 0}}">
         <view class="inheritor-item"
           wx:for="{{inheritorList}}" wx:key="inheritor_id"
           bindtap="goToInheritor" data-id="{{item.inheritor_id}}">
@@ -85,6 +92,10 @@
           <view class="inheritor-name">{{item.name}}</view>
           <view class="inheritor-level">{{item.level}}</view>
         </view>
+      </view>
+      <view class="inheritor-empty" wx:else>
+        <van-icon name="friends-o" size="16" color="#c4b8a8" />
+        <text class="inheritor-empty-text">暂无收录该项目的代表性传承人</text>
       </view>
     </view>
 
@@ -102,7 +113,7 @@
             <view class="news-title">{{item.title}}</view>
             <van-tag plain color="{{item.category === '非遗快讯' ? '#1989fa' : '#8b6f47'}}" size="medium">{{item.category}}</van-tag>
           </view>
-          <van-icon name="arrow" size="14" color="#ccc" />
+          <van-icon name="arrow" size="14" color="#c4b8a8" />
         </view>
       </view>
     </view>
@@ -112,7 +123,7 @@
 
     <!-- AI 对话悬浮按钮 -->
     <view class="ai-fab" bindtap="goToAiChat">
-      <text class="ai-fab-text">AI</text>
+      <text class="ai-fab-text">问一问</text>
     </view>
   </block>
 </view>

@@ -1,9 +1,17 @@
 const db = wx.cloud.database()
 
+const LEVEL_FULL_TEXT = {
+  '国家级': '国家级代表性传承人',
+  '省级': '省级代表性传承人',
+  '市级': '市级代表性传承人',
+  '县级': '县级代表性传承人'
+}
+
 Page({
   data: {
     inheritorId: '',
     inheritorData: null,
+    levelFullText: '',
     newsList: [],
     loading: true,
     showNavTitle: false
@@ -37,7 +45,10 @@ Page({
       if (inheritorData.content) {
         inheritorData._processedContent = this.processHtml(inheritorData.content)
       }
-      this.setData({ inheritorData, loading: false })
+
+      const levelFullText = LEVEL_FULL_TEXT[inheritorData.level] || inheritorData.level || ''
+
+      this.setData({ inheritorData, levelFullText, loading: false })
 
       this.loadRelatedNews()
     } catch (err) {

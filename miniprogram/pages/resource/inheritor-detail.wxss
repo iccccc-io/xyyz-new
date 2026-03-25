@@ -1,5 +1,5 @@
 page {
-  background-color: #f7f5f1;
+  background-color: #f0ece4;
   min-height: 100vh;
 }
 
@@ -7,113 +7,160 @@ page {
   min-height: 100vh;
 }
 
-/* ========== 个人档案头部 ========== */
-.profile-hero {
+/* ========== 封面大图英雄区 ========== */
+.hero-cover {
   position: relative;
-  padding: 120rpx 0 60rpx;
+  width: 100%;
+  height: 540rpx;
   overflow: hidden;
 }
 
-.profile-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #c94843 0%, #b63b36 40%, #8b2e2a 100%);
+.hero-img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.profile-bg::after {
-  content: '';
+/* 底部渐变蒙层 */
+.hero-gradient {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  background: radial-gradient(ellipse at top right, rgba(255,255,255,0.12) 0%, transparent 60%);
+  height: 300rpx;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(20, 12, 6, 0.55) 60%,
+    rgba(20, 12, 6, 0.82) 100%
+  );
 }
 
-.profile-content {
-  position: relative;
+/* 姓名 + 级别区域 */
+.hero-bottom {
+  position: absolute;
+  bottom: 90rpx;
+  left: 44rpx;
+  right: 44rpx;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.profile-avatar {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 50%;
-  border: 6rpx solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.25);
-  background: #f0e6d6;
 }
 
 .profile-name {
-  font-size: 48rpx;
+  display: block;
+  font-size: 50rpx;
   font-weight: bold;
   color: #fff;
-  margin-top: 24rpx;
-  letter-spacing: 4rpx;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  letter-spacing: 6rpx;
+  text-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.35);
+  line-height: 1.3;
 }
 
-.profile-level {
-  margin-top: 16rpx;
-}
-
-/* ========== 项目链接卡片 ========== */
-.project-link-card {
-  display: flex;
+.level-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 28rpx 32rpx !important;
-  margin-top: -30rpx !important;
+  margin-top: 16rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 30rpx;
+  background: rgba(196, 164, 108, 0.25);
+  border: 1rpx solid rgba(196, 164, 108, 0.55);
+}
+
+.level-badge-text {
+  font-size: 24rpx;
+  color: #f0ddb8;
+  letter-spacing: 2rpx;
+}
+
+/* ========== 基础信息卡片 ========== */
+.info-card {
+  margin: -50rpx 28rpx 0;
+  background: #fffdf9;
+  border-radius: 16rpx;
+  padding: 20rpx 32rpx;
+  border: 1rpx solid #e8e0d2;
+  box-shadow: 0 6rpx 24rpx rgba(90, 60, 30, 0.1);
   position: relative;
   z-index: 5;
 }
 
-.project-link-card:active {
-  background: #fafaf8;
+.info-row {
+  display: flex;
+  align-items: baseline;
+  padding: 14rpx 0;
+  border-bottom: 1rpx dashed #ece6db;
 }
 
-.link-card-left {
+.info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 6rpx;
+}
+
+.info-row:first-child {
+  padding-top: 6rpx;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #a89878;
+  width: 100rpx;
+  flex-shrink: 0;
+  letter-spacing: 2rpx;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #3a2e24;
+  font-weight: 500;
+  flex: 1;
+}
+
+/* ========== 所属项目跳转卡片 ========== */
+.project-link-card {
+  margin: 20rpx 28rpx 0;
+  background: #fffdf9;
+  border-radius: 16rpx;
+  border: 1rpx solid #e8e0d2;
+  box-shadow: 0 3rpx 16rpx rgba(90, 60, 30, 0.07);
+  padding: 28rpx 32rpx;
   display: flex;
   align-items: center;
-  flex: 1;
-  min-width: 0;
+  gap: 20rpx;
+  transition: background 0.15s;
 }
 
-.link-icon-wrapper {
+.project-link-card:active {
+  background: #faf7f2;
+}
+
+.project-link-icon {
   width: 72rpx;
   height: 72rpx;
-  background: #fff5f0;
-  border-radius: 16rpx;
+  border-radius: 14rpx;
+  background: #f5ede0;
+  border: 1rpx solid #e8d8c4;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.link-card-info {
-  margin-left: 24rpx;
+.project-link-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
-.link-label {
-  display: block;
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 6rpx;
+.project-link-label {
+  font-size: 22rpx;
+  color: #a89878;
 }
 
-.link-name {
-  display: block;
+.project-link-name {
   font-size: 30rpx;
   font-weight: 500;
-  color: #333;
+  color: #3a2e24;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -121,37 +168,42 @@ page {
 
 /* ========== 通用区块卡片 ========== */
 .section-card {
-  margin: 24rpx 30rpx;
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 36rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  margin: 20rpx 28rpx 0;
+  background: #fffdf9;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  border: 1rpx solid #e8e0d2;
+  box-shadow: 0 3rpx 16rpx rgba(90, 60, 30, 0.07);
 }
 
 .section-header {
   display: flex;
   align-items: center;
-  padding-bottom: 24rpx;
-  border-bottom: 2rpx solid #f5f5f5;
+  padding-bottom: 22rpx;
+  border-bottom: 1rpx dashed #e8e0d2;
   margin-bottom: 28rpx;
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
 }
 
 .section-bar {
-  width: 8rpx;
-  height: 32rpx;
-  background: linear-gradient(to bottom, #b63b36, #8b2e2a);
+  width: 7rpx;
+  height: 30rpx;
+  background: linear-gradient(to bottom, #c4a46c, #8b6f47);
   border-radius: 4rpx;
   margin-right: 16rpx;
   flex-shrink: 0;
 }
 
-/* ========== 富文本内容 ========== */
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2c2318;
+  letter-spacing: 2rpx;
+}
+
+/* ========== 富文本 ========== */
 .rich-content {
   font-size: 30rpx;
-  color: #444;
+  color: #3a2e24;
   line-height: 1.9;
   word-break: break-all;
 }
@@ -166,8 +218,8 @@ page {
   display: flex;
   align-items: center;
   padding: 24rpx 0;
-  border-bottom: 2rpx solid #f8f8f8;
-  transition: background 0.2s;
+  border-bottom: 1rpx dashed #ece6db;
+  transition: background 0.15s;
 }
 
 .news-item:last-child {
@@ -175,26 +227,26 @@ page {
 }
 
 .news-item:active {
-  background: #fafaf8;
+  background: #faf7f2;
 }
 
-.news-content {
+.news-body {
   flex: 1;
   min-width: 0;
 }
 
-.news-content .news-title {
+.news-title {
+  display: -webkit-box;
   font-size: 28rpx;
-  color: #333;
+  color: #3a2e24;
   line-height: 1.5;
   margin-bottom: 10rpx;
-  display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
-/* ========== 加载/空/安全区 ========== */
+/* ========== 加载 / 安全区 ========== */
 .loading-wrapper {
   display: flex;
   justify-content: center;
@@ -203,45 +255,39 @@ page {
 }
 
 .safe-bottom {
-  height: calc(40rpx + env(safe-area-inset-bottom));
+  height: calc(120rpx + env(safe-area-inset-bottom));
 }
 
-/* ========== AI 悬浮按钮 ========== */
+/* ========== AI 悬浮胶囊 ========== */
 .ai-fab {
   position: fixed;
-  right: 40rpx;
+  right: 36rpx;
   bottom: calc(120rpx + env(safe-area-inset-bottom));
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
+  height: 76rpx;
+  padding: 0 32rpx;
+  border-radius: 40rpx;
   background: linear-gradient(135deg, #c94843 0%, #b63b36 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 28rpx rgba(182, 59, 54, 0.45);
+  box-shadow: 0 8rpx 28rpx rgba(182, 59, 54, 0.4);
   z-index: 50;
   transition: transform 0.2s ease;
   animation: fabFadeIn 0.4s ease-out;
 }
 
 .ai-fab:active {
-  transform: scale(0.9);
+  transform: scale(0.93);
 }
 
 .ai-fab-text {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: bold;
   color: #fff;
   letter-spacing: 2rpx;
 }
 
 @keyframes fabFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.6) translateY(20rpx); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
