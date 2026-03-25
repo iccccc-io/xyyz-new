@@ -274,41 +274,39 @@ page {
 /* ─── 快捷导航 ─── */
 .quick-nav-row {
   display: flex;
-  gap: 20rpx;
+  justify-content: space-between;
+  align-items: center;
   padding: 0 40rpx 36rpx;
   flex-shrink: 0;
 }
 
 .nav-capsule {
   flex: 1;
-  height: 84rpx;
-  border-radius: 42rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 600;
   letter-spacing: 2rpx;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.nav-capsule:active {
-  transform: scale(0.95);
-  opacity: 0.85;
+  color: #79665B;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12rpx 32rpx rgba(184, 59, 59, 0.08);
+  transition: all 0.2s ease;
 }
 
 .nav-capsule--primary {
-  background: linear-gradient(135deg, #d4534a 0%, #b63b36 100%);
-  color: #ffffff;
-  box-shadow: 0 8rpx 28rpx rgba(182, 59, 54, 0.38);
+  margin-right: 20rpx;
 }
 
-.nav-capsule--secondary {
-  background: rgba(255, 255, 255, 0.7);
-  color: #8b6f47;
-  border: 1.5rpx solid rgba(139, 111, 71, 0.35);
-  backdrop-filter: blur(8px);
+.nav-capsule:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ═══════════ 遮罩 ═══════════ */
