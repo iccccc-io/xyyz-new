@@ -489,7 +489,7 @@ Page({
     const city = this.data.selectedCity;
     this._hideCanvas();
     wx.navigateTo({
-      url: `/pages/resource/list?tab=project${city ? '&city=' + encodeURIComponent(city) : ''}`,
+      url: `/pages/resource/project-list${city ? '?city=' + encodeURIComponent(city) : ''}`,
     });
   },
 
@@ -497,7 +497,7 @@ Page({
     const city = this.data.selectedCity;
     this._hideCanvas();
     wx.navigateTo({
-      url: `/pages/resource/list?tab=inheritor${city ? '&city=' + encodeURIComponent(city) : ''}`,
+      url: `/pages/resource/inheritor-list${city ? '?city=' + encodeURIComponent(city) : ''}`,
     });
   },
 

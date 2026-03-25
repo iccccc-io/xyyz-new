@@ -1,0 +1,103 @@
+<view class="page-container">
+  <!-- 顶部固定区域 -->
+  <view class="fixed-header">
+    <view class="status-bar" style="height: {{statusBarHeight}}px;"></view>
+
+    <!-- 导航栏 -->
+    <view class="nav-bar">
+      <view class="nav-back" bindtap="goBack">
+        <van-icon name="arrow-left" size="18" color="#333" />
+      </view>
+      <text class="nav-title">非遗传承人</text>
+      <view class="nav-right"></view>
+    </view>
+
+    <!-- 搜索行：搜索框 + 搜索按钮 + 筛选图标 -->
+    <view class="search-row">
+      <view class="search-input-wrap">
+        <van-icon name="search" size="14" color="#999" custom-class="search-icon-inner" />
+        <input
+          class="search-input"
+          placeholder="搜索传承人姓名"
+          placeholder-class="search-placeholder"
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+          bindconfirm="onSearch"
+          confirm-type="search"
+        />
+      </view>
+      <view class="search-btn" bindtap="onSearch">搜索</view>
+      <view class="filter-btn" bindtap="openFilter">
+        <van-icon name="bars" size="20" color="#8b6f47" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表内容区 -->
+  <view class="list-content" style="padding-top: {{headerHeight}}px;">
+    <block wx:if="{{dataList.length > 0}}">
+      <view class="inheritor-card"
+        wx:for="{{dataList}}" wx:key="inheritor_id"
+        bindtap="goToDetail" data-id="{{item.inheritor_id}}">
+        <image class="inheritor-avatar" src="{{item.cover}}" mode="aspectFill" lazy-load />
+        <view class="inheritor-info">
+          <view class="inheritor-name">{{item.name}}</view>
+          <view class="inheritor-level">{{item.level}}</view>
+          <view class="inheritor-project" wx:if="{{item.works_at.project_name}}">
+            代表项目：{{item.works_at.project_name}}
+          </view>
+        </view>
+        <van-icon name="arrow" size="16" color="#ccc" />
+      </view>
+    </block>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{dataList.length === 0 && !loading}}">
+      <van-empty description="暂无数据" />
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+    </view>
+
+    <!-- 到底了 -->
+    <view class="no-more" wx:if="{{noMore && dataList.length > 0}}">
+      <text>— 已经到底了 —</text>
+    </view>
+  </view>
+
+  <!-- 筛选弹窗 -->
+  <van-popup
+    show="{{ showFilter }}"
+    position="right"
+    custom-style="width: 75%; height: 100%;"
+    bind:close="closeFilter"
+  >
+    <view class="filter-popup">
+      <view class="filter-status-bar" style="height: {{statusBarHeight}}px;"></view>
+      <view class="filter-header">
+        <text class="filter-title">筛选</text>
+      </view>
+
+      <scroll-view class="filter-body" scroll-y>
+        <!-- 级别 -->
+        <view class="filter-section">
+          <view class="filter-section-title">级别</view>
+          <view class="filter-options">
+            <view class="filter-option {{filterData.level === '' ? 'active' : ''}}"
+              bindtap="selectFilter" data-type="level" data-value="">全部</view>
+            <view class="filter-option {{filterData.level === item ? 'active' : ''}}"
+              wx:for="{{levelOptions}}" wx:key="index"
+              bindtap="selectFilter" data-type="level" data-value="{{item}}">{{item}}</view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="filter-footer">
+        <view class="filter-action reset-action" bindtap="resetFilter">重置</view>
+        <view class="filter-action confirm-action" bindtap="confirmFilter">确定</view>
+      </view>
+    </view>
+  </van-popup>
+</view>

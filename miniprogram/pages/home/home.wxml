@@ -11,7 +11,7 @@
     <view class="top-bar" style="padding-top: {{statusBarHeight}}px;">
       <view class="brand">
         <text class="brand-name">湘韵遗珍</text>
-        <text class="brand-tagline">湖南非遗地图</text>
+        <text class="brand-tagline">湖南非遗数字化交互平台</text>
       </view>
     </view>
 

@@ -1,0 +1,302 @@
+page {
+  background-color: #f7f5f1;
+  height: 100vh;
+}
+
+.page-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f7f5f1;
+}
+
+/* ========== 顶部固定区域 ========== */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #f7f5f1;
+}
+
+.status-bar {
+  background-color: #f7f5f1;
+}
+
+/* ========== 导航栏 ========== */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 30rpx;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.nav-back:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-right {
+  width: 60rpx;
+}
+
+/* ========== 搜索行 ========== */
+.search-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 30rpx 20rpx;
+  gap: 16rpx;
+}
+
+.search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 0 24rpx;
+  height: 72rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.search-icon-inner {
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  height: 72rpx;
+  line-height: 72rpx;
+}
+
+.search-placeholder {
+  color: #bbb;
+  font-size: 28rpx;
+}
+
+.search-btn {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #b63b36 0%, #8b2e2a 100%);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 0 36rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 40rpx;
+  text-align: center;
+  letter-spacing: 2rpx;
+}
+
+.search-btn:active {
+  opacity: 0.85;
+}
+
+.filter-btn {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2rpx 12rpx rgba(139, 111, 71, 0.1);
+}
+
+.filter-btn:active {
+  background: #f5f0e8;
+}
+
+/* ========== 列表内容区 ========== */
+.list-content {
+  padding: 20rpx 30rpx;
+  padding-bottom: 40rpx;
+}
+
+/* ========== 传承人卡片 ========== */
+.inheritor-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.inheritor-card:active {
+  transform: scale(0.98);
+}
+
+.inheritor-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #eee;
+  border: 4rpx solid #f0e6d6;
+}
+
+.inheritor-info {
+  flex: 1;
+  margin-left: 24rpx;
+  min-width: 0;
+}
+
+.inheritor-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.inheritor-level {
+  font-size: 26rpx;
+  color: #8b6f47;
+  margin-bottom: 6rpx;
+}
+
+.inheritor-project {
+  font-size: 24rpx;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== 空/加载/到底 ========== */
+.empty-state {
+  padding: 120rpx 0;
+  text-align: center;
+}
+
+.loading-state {
+  padding: 60rpx 0;
+  text-align: center;
+}
+
+.no-more {
+  padding: 40rpx 0;
+  text-align: center;
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+/* ========== 筛选弹窗 ========== */
+.filter-popup {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fafaf8;
+}
+
+.filter-status-bar {
+  background-color: #fff;
+  flex-shrink: 0;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx 40rpx;
+  background-color: #fff;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.filter-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.filter-body {
+  flex: 1;
+  padding: 20rpx 0;
+}
+
+.filter-section {
+  margin-bottom: 10rpx;
+  background-color: #fff;
+  padding: 28rpx 32rpx;
+}
+
+.filter-section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.filter-option {
+  padding: 14rpx 28rpx;
+  background-color: #f7f5f1;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #666;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.filter-option.active {
+  background-color: #fff5f0;
+  color: #b63b36;
+  border-color: #b63b36;
+  font-weight: bold;
+}
+
+.filter-footer {
+  display: flex;
+  padding: 20rpx 40rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background-color: #fff;
+  border-top: 2rpx solid #f0f0f0;
+  gap: 20rpx;
+}
+
+.filter-action {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.reset-action {
+  background-color: #f7f5f1;
+  color: #666;
+  border: 2rpx solid #e5e5e5;
+}
+
+.confirm-action {
+  background: linear-gradient(135deg, #b63b36 0%, #8b2e2a 100%);
+  color: #fff;
+}

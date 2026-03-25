@@ -6,6 +6,8 @@
     "pages/message/list",
     "pages/gerenzhongxin/gerenzhongxin",
     "pages/community/post",
+    "pages/resource/project-list",
+    "pages/resource/inheritor-list",
     "pages/resource/list",
     "pages/resource/project-detail",
     "pages/resource/inheritor-detail",
