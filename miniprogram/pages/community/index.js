@@ -28,6 +28,15 @@ Page({
   },
 
   /**
+   * 跳转到 AI 问一问（社区全局入口）
+   */
+  goToAiChat() {
+    wx.navigateTo({
+      url: '/pages/ai-chat/index?source_scene=community_feed&source_entity_name=&source_entity_id=global'
+    })
+  },
+
+  /**
    * 跳转到搜索
    */
   goToSearch() {

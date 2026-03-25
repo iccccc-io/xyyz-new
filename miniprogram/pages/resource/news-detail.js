@@ -73,7 +73,7 @@ Page({
     const { newsData, newsId } = this.data
     if (!newsData) return
     wx.navigateTo({
-      url: `/pages/ai-chat/index?source_type=news&source_name=${encodeURIComponent(newsData.title)}&source_id=${newsId}`
+      url: `/pages/ai-chat/index?source_scene=ich_news&source_entity_name=${encodeURIComponent(newsData.title)}&source_entity_id=${newsId}`
     })
   },
 

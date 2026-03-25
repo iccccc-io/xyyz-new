@@ -40,7 +40,6 @@ async function handleSend(event, openid) {
     return { success: false, message: '缺少必要参数' }
   }
 
-  // 查找已有的 Dify conversation_id（用于多轮对话连续性）
   let difyConvId = ''
   try {
     const lastMsg = await db.collection('ai_chat_history')
@@ -60,7 +59,6 @@ async function handleSend(event, openid) {
     console.warn('[ai_chat_proxy] 查询 dify_conversation_id 失败:', e)
   }
 
-  // 调用 Dify Chat API（阻塞模式）
   let difyResult
   try {
     difyResult = await callDifyChat({
@@ -71,15 +69,11 @@ async function handleSend(event, openid) {
     })
   } catch (err) {
     console.error('[ai_chat_proxy] Dify API 调用失败:', err)
-    return { success: false, message: '大师此刻忙碌，请稍后再问' }
+    return { success: false, message: '网络开小差了，大师正在重新连线，请稍后再试。' }
   }
 
-  // 将 AI 回复持久化到 ai_chat_history
-  const sourceInfo = {
-    type: (inputs && inputs.source_type) || '',
-    name: (inputs && inputs.source_name) || '',
-    id: (inputs && inputs.source_id) || ''
-  }
+  // 解析 Dify 结构化输出：answer 可能是 JSON 字符串，也可能是纯文本
+  const structured = parseStructuredOutput(difyResult.answer)
 
   try {
     await db.collection('ai_chat_history').add({
@@ -87,9 +81,15 @@ async function handleSend(event, openid) {
         conversation_id,
         role: 'assistant',
         type: 'text',
-        content: difyResult.answer || '',
+        content: structured.answer,
+        citations: structured.citations,
+        suggested_questions: structured.suggested_questions,
         dify_conversation_id: difyResult.conversation_id || '',
-        source_info: sourceInfo,
+        source_info: {
+          scene: (inputs && inputs.source_scene) || '',
+          name: (inputs && inputs.source_entity_name) || '',
+          id: (inputs && inputs.source_entity_id) || ''
+        },
         create_time: db.serverDate()
       }
     })
@@ -99,8 +99,42 @@ async function handleSend(event, openid) {
 
   return {
     success: true,
-    answer: difyResult.answer || '',
+    answer: structured.answer,
+    citations: structured.citations,
+    suggested_questions: structured.suggested_questions,
     dify_conversation_id: difyResult.conversation_id || ''
+  }
+}
+
+/**
+ * 解析 Dify 的结构化输出
+ * Dify 工作流开启结构化输出后，answer 字段为 JSON 字符串
+ * 兼容旧版纯文本回复
+ */
+function parseStructuredOutput(rawAnswer) {
+  if (!rawAnswer) {
+    return { answer: '', citations: [], suggested_questions: [] }
+  }
+
+  // 尝试 JSON 解析
+  try {
+    const parsed = JSON.parse(rawAnswer)
+    if (parsed && typeof parsed.answer === 'string') {
+      return {
+        answer: parsed.answer || '',
+        citations: Array.isArray(parsed.citations) ? parsed.citations : [],
+        suggested_questions: Array.isArray(parsed.suggested_questions) ? parsed.suggested_questions : []
+      }
+    }
+  } catch (e) {
+    // 非 JSON，走纯文本兜底
+  }
+
+  // 纯文本兜底（兼容旧版 Dify 配置）
+  return {
+    answer: rawAnswer,
+    citations: [],
+    suggested_questions: []
   }
 }
 

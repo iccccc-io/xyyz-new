@@ -8,6 +8,10 @@
       <text class="header-title">非遗社区</text>
     </view>
     <view class="header-right">
+      <view class="ai-ask-btn" bindtap="goToAiChat">
+        <text class="ai-ask-icon">🤖</text>
+        <text class="ai-ask-text">问一问</text>
+      </view>
       <view class="search-btn" bindtap="goToSearch">
         <van-icon name="search" size="22px" color="#333" />
       </view>

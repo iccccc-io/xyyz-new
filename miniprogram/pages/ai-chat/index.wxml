@@ -7,7 +7,7 @@
       </view>
       <view class="nav-info" bindtap="goToSource">
         <text class="nav-title">非遗智答</text>
-        <text class="nav-sub" wx:if="{{sourceName}}">与「{{sourceName}}」交流中</text>
+        <text class="nav-sub" wx:if="{{sourceEntityName}}">与「{{sourceEntityName}}」交流中</text>
       </view>
       <view class="clear-btn" bindtap="onClearHistory">
         <van-icon name="delete-o" size="18" color="#999" />
@@ -43,17 +43,75 @@
             <text class="bubble-text" user-select>{{item.content}}</text>
           </view>
         </view>
+
         <!-- AI 消息 -->
-        <view class="msg-row msg-ai" wx:else id="msg-{{index}}">
-          <view class="ai-avatar">
-            <text class="ai-avatar-text">AI</text>
+        <view class="msg-row-wrap" wx:else id="msg-{{index}}">
+          <view class="msg-row msg-ai">
+            <view class="ai-avatar">
+              <text class="ai-avatar-text">AI</text>
+            </view>
+            <view
+              class="bubble bubble-ai {{item.isError ? 'error-bubble' : ''}}"
+              bindlongpress="onLongPressBubble"
+              data-content="{{item.content}}"
+            >
+              <!-- 富文本：引用标记可点击 -->
+              <view class="bubble-rich" wx:if="{{item.segments && item.segments.length > 0}}">
+                <block wx:for="{{item.segments}}" wx:for-item="seg" wx:for-index="si" wx:key="si">
+                  <text
+                    wx:if="{{seg.type === 'text'}}"
+                    class="bubble-text"
+                    user-select
+                  >{{seg.text}}</text>
+                  <text
+                    wx:elif="{{seg.type === 'ref'}}"
+                    class="citation-mark"
+                    bindtap="onCitationTap"
+                    data-type="{{seg.targetType}}"
+                    data-id="{{seg.targetId}}"
+                  >[{{seg.refId}}]</text>
+                </block>
+              </view>
+              <!-- 纯文本兜底 -->
+              <text wx:else class="bubble-text" user-select>{{item.content}}</text>
+            </view>
           </view>
+
+          <!-- 引用来源卡片列表 -->
+          <view class="citation-list" wx:if="{{item.citations && item.citations.length > 0}}">
+            <scroll-view scroll-x class="citation-scroll">
+              <view class="citation-scroll-inner">
+                <view
+                  class="citation-card"
+                  wx:for="{{item.citations}}"
+                  wx:for-item="cite"
+                  wx:for-index="ci"
+                  wx:key="ci"
+                  bindtap="onCitationTap"
+                  data-type="{{cite.type}}"
+                  data-id="{{cite.target_id}}"
+                >
+                  <text class="citation-icon">{{cite.type === 'ich_project' ? '🏛️' : cite.type === 'ich_inheritor' ? '👤' : cite.type === 'ich_news' ? '📰' : '📝'}}</text>
+                  <text class="citation-title">[{{cite.ref_id}}] {{cite.title}}</text>
+                </view>
+              </view>
+            </scroll-view>
+          </view>
+
+          <!-- 启发式追问（仅最后一条 AI 消息显示） -->
           <view
-            class="bubble bubble-ai {{item.isError ? 'error-bubble' : ''}}"
-            bindlongpress="onLongPressBubble"
-            data-content="{{item.content}}"
+            class="suggested-bar"
+            wx:if="{{index === messages.length - 1 && item.suggested_questions && item.suggested_questions.length > 0 && !loading}}"
           >
-            <text class="bubble-text" user-select>{{item.content}}</text>
+            <view
+              class="suggested-chip"
+              wx:for="{{item.suggested_questions}}"
+              wx:for-item="sq"
+              wx:for-index="qi"
+              wx:key="qi"
+              bindtap="onSuggestedTap"
+              data-text="{{sq}}"
+            >{{sq}}</view>
           </view>
         </view>
       </block>
@@ -79,7 +137,7 @@
   <!-- 底部输入区 -->
   <view class="bottom-area" style="bottom: {{keyboardHeight}}px;">
     <!-- 快捷引导短语 -->
-    <scroll-view scroll-x class="quick-bar" wx:if="{{keyboardHeight === 0}}">
+    <scroll-view scroll-x class="quick-bar" wx:if="{{keyboardHeight === 0 && messages.length === 0}}">
       <view class="quick-inner">
         <view
           class="quick-chip"

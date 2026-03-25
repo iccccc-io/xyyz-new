@@ -40,7 +40,34 @@ page {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 16rpx;
+}
+
+.ai-ask-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  height: 60rpx;
+  padding: 0 20rpx;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(109, 40, 217, 0.3);
+  transition: all 0.2s;
+}
+
+.ai-ask-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2rpx 8rpx rgba(109, 40, 217, 0.2);
+}
+
+.ai-ask-icon {
+  font-size: 28rpx;
+}
+
+.ai-ask-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .search-btn {

@@ -115,7 +115,7 @@ Page({
     const { projectData, projectId } = this.data
     if (!projectData) return
     wx.navigateTo({
-      url: `/pages/ai-chat/index?source_type=project&source_name=${encodeURIComponent(projectData.name)}&source_id=${projectId}`
+      url: `/pages/ai-chat/index?source_scene=ich_project&source_entity_name=${encodeURIComponent(projectData.name)}&source_entity_id=${projectId}`
     })
   },
 
