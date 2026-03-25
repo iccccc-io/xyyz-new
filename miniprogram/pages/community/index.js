@@ -3,7 +3,12 @@ const app = getApp()
 const db = wx.cloud.database()
 
 const CHAT_QUICK_REPLIES = ['推荐一项湖南非遗', '有什么周末体验攻略？', '哪些非遗最受欢迎？']
-const CHAT_WELCOME = '你好！我是湘韵遗珍生活助手。\n想了解哪项非遗，或者寻找周末体验攻略？直接问我吧！'
+const CHAT_WELCOME =
+  '你好呀～我是问一问小助手 🎋\n' +
+  '我会综合社区里的游记、心得，和非遗资讯里的权威资料来作答，\n' +
+  '帮你少翻页、一次听明白 📰✨\n' +
+  '想聊湖南哪项非遗、周末去哪儿体验，\n' +
+  '点下面一句话或直接输入都可以～'
 
 Page({
   data: {

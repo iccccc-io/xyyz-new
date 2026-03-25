@@ -161,13 +161,13 @@
       <!-- 欢迎卡片 -->
       <view class="chat-welcome" wx:if="{{chatMessages.length === 0 && !chatLoading}}">
         <view class="chat-welcome-icon">
-          <view class="welcome-rainbow-circle">
-            <text class="welcome-star-big">✦</text>
-            <text class="welcome-star-small">✦</text>
+          <view class="ai-round-inner ai-round-inner--welcome">
+            <text class="ai-star-big">✦</text>
+            <text class="ai-star-small">✦</text>
           </view>
         </view>
-        <text class="chat-welcome-title">非遗智答</text>
-        <text class="chat-welcome-desc">{{chatWelcomeText}}</text>
+        <text class="chat-welcome-title">问一问</text>
+        <text class="chat-welcome-desc" user-select>{{chatWelcomeText}}</text>
         <!-- 快捷引导 -->
         <view class="chat-quick-bar" wx:if="{{chatQuickReplies.length > 0}}">
           <view
