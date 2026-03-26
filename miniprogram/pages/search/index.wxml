@@ -48,7 +48,13 @@
             bindtap="switchTab"
             hover-class="tab-hover"
           >
-            <text class="tab-txt">{{item.label}}</text>
+            <!-- 帖子 tab 选中时显示下拉箭头 -->
+            <view class="tab-label-row">
+              <text class="tab-txt">{{item.label}}</text>
+              <view wx:if="{{index === 1 && activeTab === 1}}" class="tab-arrow {{postFilterOpen ? 'tab-arrow-up' : ''}}">
+                <van-icon name="arrow-down" size="10" color="#b63b36" />
+              </view>
+            </view>
             <view class="tab-ink" wx:if="{{activeTab === index}}"></view>
           </view>
         </view>
@@ -65,9 +71,50 @@
         </view>
       </view>
     </view>
+
+    <!-- ── 帖子筛选面板（在 header 内，自然撑高后内容跟着下移） ── -->
+    <view class="post-filter-panel {{postFilterOpen ? 'filter-open' : ''}}">
+      <view class="filter-section">
+        <text class="filter-section-label">排序方式</text>
+        <view class="filter-chips">
+          <view
+            wx:for="{{sortOptions}}"
+            wx:key="key"
+            class="filter-chip {{postFilter.sort === item.key ? 'filter-chip-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="setPostFilterSort"
+            hover-class="filter-chip-hover"
+          >{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-section">
+        <text class="filter-section-label">发布时间</text>
+        <view class="filter-chips filter-chips--time-row">
+          <view
+            wx:for="{{timeOptions}}"
+            wx:key="key"
+            class="filter-chip filter-chip--time {{postFilter.timeRange === item.key ? 'filter-chip-active' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="setPostFilterTime"
+            hover-class="filter-chip-hover"
+          >{{item.label}}</view>
+        </view>
+      </view>
+      <view class="filter-actions">
+        <view class="filter-reset" bindtap="resetPostFilter" hover-class="filter-reset-hover">
+          <van-icon name="replay" size="14" color="#9a8c7c" />
+          <text>重置</text>
+        </view>
+        <view class="filter-confirm" bindtap="closePostFilter" hover-class="filter-confirm-hover">
+          收起
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- ══════════ 内容区 ══════════ -->
+  <!-- 筛选面板遮罩：点击关闭 -->
+  <view wx:if="{{postFilterOpen}}" class="filter-mask" bindtap="closePostFilter" catch:touchmove="noop"></view>
   <scroll-view scroll-y class="search-body" enhanced show-scrollbar="{{false}}">
 
     <!-- 未搜索：引导页 -->

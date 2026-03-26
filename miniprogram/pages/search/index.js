@@ -48,7 +48,27 @@ Page({
     hasSearched: false,
     autoFocus: false,
     // 防止切 tab 时老数据闪烁
-    tabChanging: false
+    tabChanging: false,
+
+    // ── 帖子筛选面板 ──
+    postFilterOpen: false,   // 下拉面板是否展开
+    postFilter: {
+      sort:     'default',  // default | latest | most_liked | most_commented
+      timeRange: 'all'      // all | day | week | half_year
+    },
+    // 筛选条件文案配置（渲染用）
+    sortOptions: [
+      { key: 'default',       label: '综合排序' },
+      { key: 'latest',        label: '最新发布' },
+      { key: 'most_liked',    label: '最多点赞' },
+      { key: 'most_commented',label: '最多评论' }
+    ],
+    timeOptions: [
+      { key: 'all',       label: '全部时间' },
+      { key: 'day',       label: '24小时内' },
+      { key: 'week',      label: '一周内' },
+      { key: 'half_year', label: '半年内' }
+    ]
   },
 
   // 页面生命周期
@@ -109,9 +129,18 @@ Page({
   // ─── Tab 切换 ───
   switchTab(e) {
     const i = Number(e.currentTarget.dataset.i)
-    if (i === this.data.activeTab || this.data.loading) return
+
+    // 已在帖子 tab(1) 再次点击 → 切换筛选面板开关
+    if (i === 1 && this.data.activeTab === 1) {
+      this.setData({ postFilterOpen: !this.data.postFilterOpen })
+      return
+    }
+
+    if (this.data.loading) return
+
     this.setData({
       activeTab: i,
+      postFilterOpen: false,
       tabChanging: true,
       inkStyle: `transform:translateX(${i * 100}%)`
     })
@@ -120,6 +149,38 @@ Page({
     if (this.data.hasSearched) {
       this._fetchTab(i, this.data.keyword.trim())
     }
+  },
+
+  // ─── 帖子筛选面板交互 ───
+  closePostFilter() {
+    this.setData({ postFilterOpen: false })
+  },
+
+  setPostFilterSort(e) {
+    const key = e.currentTarget.dataset.key
+    if (key === this.data.postFilter.sort) return
+    this.setData({ 'postFilter.sort': key })
+    this._applyPostFilter()
+  },
+
+  setPostFilterTime(e) {
+    const key = e.currentTarget.dataset.key
+    if (key === this.data.postFilter.timeRange) return
+    this.setData({ 'postFilter.timeRange': key })
+    this._applyPostFilter()
+  },
+
+  resetPostFilter() {
+    this.setData({
+      postFilter: { sort: 'default', timeRange: 'all' },
+      postFilterOpen: false
+    })
+    this._fetchTab(1, this.data.keyword.trim())
+  },
+
+  _applyPostFilter() {
+    if (!this.data.hasSearched || !this.data.keyword.trim()) return
+    this._fetchTab(1, this.data.keyword.trim())
   },
 
   // 点击 AI搜一搜
@@ -187,7 +248,8 @@ Page({
   },
 
   async _searchPosts(re, myOpenid) {
-    const list = await this._queryPosts(re, myOpenid, 30)
+    const { sort, timeRange } = this.data.postFilter
+    const list = await this._queryPosts(re, myOpenid, 40, sort, timeRange)
     this.setData({ postResults: list })
   },
 
@@ -212,19 +274,27 @@ Page({
   },
 
   // ─── 底层查询 ───
-  async _queryPosts(re, myOpenid, limit) {
+  async _queryPosts(re, myOpenid, limit, sort = 'default', timeRange = 'all') {
+    // 时间范围条件
+    const timeQuery = {}
+    if (timeRange !== 'all') {
+      const now = Date.now()
+      const msMap = { day: 86400000, week: 604800000, half_year: 15552000000 }
+      timeQuery.create_time = _.gte(new Date(now - (msMap[timeRange] || 0)))
+    }
+
     let list = []
     try {
       const res = await db.collection('community_posts')
-        .where(_.or([{ title: re }, { content: re }]))
+        .where(_.and([_.or([{ title: re }, { content: re }]), timeQuery]))
         .orderBy('create_time', 'desc')
         .limit(limit)
         .get()
       list = res.data || []
     } catch {
       const [a, b] = await Promise.allSettled([
-        db.collection('community_posts').where({ title: re }).limit(limit).get(),
-        db.collection('community_posts').where({ content: re }).limit(limit).get()
+        db.collection('community_posts').where({ title: re, ...timeQuery }).limit(limit).get(),
+        db.collection('community_posts').where({ content: re, ...timeQuery }).limit(limit).get()
       ])
       const map = new Map()
       for (const r of [a, b]) {
@@ -237,6 +307,17 @@ Page({
     list.forEach(p => {
       p.images = (p.images || []).map(img => (typeof img === 'string' ? img : (img.url || '')))
     })
+
+    // 客户端排序（时间过滤后数据量不大，可接受）
+    if (sort === 'latest') {
+      list.sort((a, b) => toMs(b) - toMs(a))
+    } else if (sort === 'most_liked') {
+      list.sort((a, b) => (b.likes || 0) - (a.likes || 0))
+    } else if (sort === 'most_commented') {
+      list.sort((a, b) => (b.comment_count || 0) - (a.comment_count || 0))
+    }
+    // default: 保持服务端 create_time desc
+
     return list
   },
 
@@ -323,6 +404,8 @@ Page({
   },
 
   // ─── 跳转 ───
+  noop() {},
+
   goPost(e) {
     const id = e.currentTarget.dataset.id
     if (id) wx.navigateTo({ url: `/pages/community/detail?id=${id}` })
