@@ -46,6 +46,7 @@ Page({
 
     loading: false,
     hasSearched: false,
+    autoFocus: false,
     // 防止切 tab 时老数据闪烁
     tabChanging: false
   },
@@ -56,9 +57,13 @@ Page({
     this.setData({ statusBarHeight: sys.statusBarHeight || 20 })
 
     if (options.keyword) {
+      // 带关键词进入：直接搜索，不弹键盘
       const kw = decodeURIComponent(options.keyword)
-      this.setData({ keyword: kw })
+      this.setData({ keyword: kw, autoFocus: false })
       this._runSearch(kw)
+    } else {
+      // 空搜索进入：自动聚焦方便输入
+      this.setData({ autoFocus: true })
     }
   },
 

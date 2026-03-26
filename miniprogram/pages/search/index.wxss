@@ -78,7 +78,7 @@
   display: flex;
   align-items: center;
   height: 80rpx;
-  padding: 0 20rpx;
+  padding: 0 16rpx 0 28rpx;
   background: rgba(255, 255, 255, 0.82);
   border: 1.5rpx solid rgba(255, 255, 255, 0.95);
   border-radius: 40rpx;
@@ -87,12 +87,6 @@
     inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
   gap: 12rpx;
   transition: box-shadow 0.3s ease;
-}
-
-.search-icon-left {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
 }
 
 .search-input {
@@ -123,42 +117,46 @@
   border-radius: 2rpx;
 }
 
-.btn-search {
+.btn-search-icon {
   flex-shrink: 0;
-  font-size: 26rpx;
-  font-weight: 700;
-  color: #b63b36;
-  padding: 4rpx 8rpx;
-  border-radius: 8rpx;
-  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4rpx 0 8rpx;
+  transition: opacity 0.2s, transform 0.18s;
 }
 .btn-search-hover {
-  opacity: 0.65;
+  opacity: 0.6;
+  transform: scale(0.88);
 }
 
 /* ── Tab 栏 ── */
 .tabs-container {
-  position: relative;
+  display: flex;
+  align-items: center;
   padding-bottom: 4rpx;
+  position: relative;
 }
 
+/* 可滚动区域，flex:1 挤走 AI 按钮 */
 .tabs-scroll {
+  flex: 1;
   white-space: nowrap;
-  padding: 4rpx 24rpx 0;
+  padding: 4rpx 0 0 24rpx;
+  overflow: hidden;
 }
 
 .tabs-row {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0;
 }
 
 .tab-item {
-  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  padding: 10rpx 24rpx 14rpx;
+  padding: 10rpx 24rpx 6rpx;
   transition: transform 0.25s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 
@@ -172,6 +170,7 @@
   font-weight: 500;
   white-space: nowrap;
   transition: color 0.28s, font-size 0.28s, font-weight 0.25s;
+  line-height: 1.4;
 }
 
 .tab-active .tab-txt {
@@ -180,20 +179,18 @@
   font-size: 30rpx;
 }
 
+/* 横杠：普通流布局，自然居中于文字下方 */
 .tab-ink {
-  position: absolute;
-  bottom: 4rpx;
-  left: 50%;
-  transform: translateX(-50%);
   width: 36rpx;
   height: 6rpx;
   border-radius: 3rpx;
   background: linear-gradient(90deg, #b63b36, #c7685c);
   box-shadow: 0 2rpx 10rpx rgba(182, 59, 54, 0.35);
+  margin-top: 6rpx;
   animation: scaleIn 0.28s cubic-bezier(0.34, 1.18, 0.64, 1) both;
 }
 
-/* 分隔线 */
+/* 分隔线（scroll 内不再使用，保留备用） */
 .tab-sep {
   width: 1.5rpx;
   height: 36rpx;
@@ -203,7 +200,15 @@
   flex-shrink: 0;
 }
 
-/* AI搜一搜 */
+/* AI搜一搜 固定在右侧 */
+.tab-ai-fixed {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 16rpx 0 8rpx;
+  border-left: 1.5rpx solid rgba(182, 59, 54, 0.12);
+}
+
 .tab-ai-btn {
   display: inline-flex;
   align-items: center;
@@ -265,15 +270,7 @@
 }
 
 /* 右侧渐变遮罩 */
-.tabs-fade-right {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 48rpx;
-  background: linear-gradient(to left, rgba(250, 246, 238, 0.96) 30%, transparent);
-  pointer-events: none;
-}
+/* tabs-fade-right 已废弃，AI按钮固定右侧无需遮罩 */
 
 /* ══════════════════════════════
    内容区
@@ -408,7 +405,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20rpx;
-  padding: 0 24rpx 8rpx;
+  padding: 24rpx 24rpx 8rpx;
 }
 
 .post-card {
@@ -476,7 +473,7 @@
    通用列表（非遗/传承人/用户）
 ══════════════════════════════ */
 .card-list {
-  padding: 0 24rpx 8rpx;
+  padding: 24rpx 24rpx 8rpx;
   display: flex;
   flex-direction: column;
   gap: 18rpx;
@@ -670,7 +667,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 18rpx;
-  padding: 0 24rpx 16rpx;
+  padding: 24rpx 24rpx 16rpx;
 }
 
 .topic-chip {
@@ -708,7 +705,7 @@
 
 /* 话题列表（tab 4 完整模式） */
 .topic-list {
-  padding: 16rpx 24rpx 8rpx;
+  padding: 24rpx 24rpx 8rpx;
   display: flex;
   flex-direction: column;
   gap: 4rpx;

@@ -68,6 +68,8 @@ Page({
     })
 
     this._autoQuery = options.auto_query ? decodeURIComponent(options.auto_query) : ''
+    // 从搜索页进入时（携带 auto_query），离开时销毁会话
+    this._destroyOnExit = !!options.auto_query
     this._initConversation()
 
     this._onKeyboardHeight = (res) => {
@@ -84,6 +86,13 @@ Page({
   onUnload() {
     if (this._onKeyboardHeight) {
       wx.offKeyboardHeightChange(this._onKeyboardHeight)
+    }
+    // 临时会话：退出时销毁数据库记录
+    if (this._destroyOnExit && this.data.conversationId) {
+      wx.cloud.callFunction({
+        name: 'ai_chat_proxy',
+        data: { action: 'clear', conversationId: this.data.conversationId }
+      }).catch(() => {})
     }
   },
 
@@ -107,10 +116,14 @@ Page({
       return
     }
 
-    // V3 规则：openid + scene + entity_id
-    const conversationId = `${openid}_${this.data.sourceScene}_${this.data.sourceEntityId}`
+    // 从搜索页进入时使用临时 conversationId，不复用历史
+    const conversationId = this._destroyOnExit
+      ? `tmp_search_${openid}_${Date.now()}`
+      : `${openid}_${this.data.sourceScene}_${this.data.sourceEntityId}`
     this.setData({ conversationId })
-    await this.loadHistory()
+    if (!this._destroyOnExit) {
+      await this.loadHistory()
+    }
 
     // 若携带 auto_query 参数，则自动发送
     if (this._autoQuery) {

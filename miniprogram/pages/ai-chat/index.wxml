@@ -6,7 +6,13 @@
         <van-icon name="arrow-left" size="18" color="#333" />
       </view>
       <view class="nav-info" bindtap="goToSource">
-        <text class="nav-title">非遗智答</text>
+        <view class="nav-title-row">
+          <view class="nav-rainbow-icon">
+            <text class="nav-star-big">✦</text>
+            <text class="nav-star-small">✦</text>
+          </view>
+          <text class="nav-title">问一问</text>
+        </view>
         <text class="nav-sub" wx:if="{{sourceEntityName}}">与「{{sourceEntityName}}」交流中</text>
       </view>
       <view class="clear-btn" bindtap="onClearHistory">
@@ -28,10 +34,11 @@
     <view class="msg-scroll-inner">
       <!-- 欢迎卡片 -->
       <view class="welcome-card" wx:if="{{messages.length === 0 && !loading}}">
-        <view class="welcome-avatar">
-          <text class="welcome-avatar-text">AI</text>
+        <view class="welcome-rainbow-icon">
+          <text class="welcome-star-big">✦</text>
+          <text class="welcome-star-small">✦</text>
         </view>
-        <text class="welcome-title">非遗智答</text>
+        <text class="welcome-title">问一问</text>
         <text class="welcome-desc">{{welcomeText}}</text>
       </view>
 
@@ -48,7 +55,8 @@
         <view class="msg-row-wrap" wx:else id="msg-{{index}}">
           <view class="msg-row msg-ai">
             <view class="ai-avatar">
-              <text class="ai-avatar-text">AI</text>
+              <text class="ai-avatar-star-big">✦</text>
+              <text class="ai-avatar-star-small">✦</text>
             </view>
             <view
               class="bubble bubble-ai {{item.isError ? 'error-bubble' : ''}}"
@@ -119,7 +127,8 @@
       <!-- AI 正在思考指示器 -->
       <view class="msg-row msg-ai" wx:if="{{loading}}" id="msg-loading">
         <view class="ai-avatar">
-          <text class="ai-avatar-text">AI</text>
+          <text class="ai-avatar-star-big">✦</text>
+          <text class="ai-avatar-star-small">✦</text>
         </view>
         <view class="bubble bubble-ai typing-bubble">
           <view class="typing-dots">

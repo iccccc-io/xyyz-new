@@ -13,9 +13,6 @@
     <!-- 第二行：搜索框 -->
     <view class="header-row-2">
       <view class="search-bar-wrap">
-        <view class="search-icon-left">
-          <van-icon name="search" size="18" color="#9a8c7c" />
-        </view>
         <input
           class="search-input"
           placeholder="搜帖子、非遗、传承人、话题、用户…"
@@ -26,20 +23,21 @@
           bindfocus="onFocus"
           bindblur="onBlur"
           bindconfirm="onConfirm"
-          focus="{{true}}"
+          focus="{{autoFocus}}"
         />
         <view class="btn-clear" wx:if="{{keyword}}" bindtap="onClear">
           <van-icon name="clear" size="16" color="#b5a899" />
         </view>
-        <view class="search-divider" wx:if="{{keyword}}"></view>
-        <view class="btn-search" wx:if="{{keyword}}" bindtap="onConfirm" hover-class="btn-search-hover">
-          搜索
+        <view class="search-divider"></view>
+        <view class="btn-search-icon" bindtap="onConfirm" hover-class="btn-search-hover">
+          <van-icon name="search" size="20" color="#b63b36" />
         </view>
       </view>
     </view>
 
     <!-- ── Tab 栏（含"问AI") ── -->
     <view class="tabs-container">
+      <!-- 可横滑的 tab 区域 -->
       <scroll-view scroll-x class="tabs-scroll" enhanced show-scrollbar="{{false}}">
         <view class="tabs-row">
           <view
@@ -53,22 +51,19 @@
             <text class="tab-txt">{{item.label}}</text>
             <view class="tab-ink" wx:if="{{activeTab === index}}"></view>
           </view>
-
-          <!-- 分隔线 -->
-          <view class="tab-sep"></view>
-
-          <!-- AI 搜一搜 特殊按钮 -->
-          <view class="tab-ai-btn" bindtap="goAiSearch" hover-class="tab-ai-hover">
-            <view class="ai-spark-icon">
-              <text class="ai-spark-star ai-star-lg">✦</text>
-              <text class="ai-spark-star ai-star-sm">✦</text>
-            </view>
-            <text class="tab-ai-label">AI搜一搜</text>
-          </view>
         </view>
       </scroll-view>
-      <!-- 渐变遮罩：右侧提示可横滑 -->
-      <view class="tabs-fade-right"></view>
+
+      <!-- AI 搜一搜 固定在最右侧，不参与横滑 -->
+      <view class="tab-ai-fixed">
+        <view class="tab-ai-btn" bindtap="goAiSearch" hover-class="tab-ai-hover">
+          <view class="ai-spark-icon">
+            <text class="ai-spark-star ai-star-lg">✦</text>
+            <text class="ai-spark-star ai-star-sm">✦</text>
+          </view>
+          <text class="tab-ai-label">AI搜一搜</text>
+        </view>
+      </view>
     </view>
   </view>
 
@@ -119,7 +114,7 @@
             <view class="post-body">
               <text class="post-title">{{item.title || item.content}}</text>
               <view class="post-foot">
-                <image src="{{item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
+                <image src="{{item.author_info.avatar_file_id || item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
                 <text class="post-nick">{{item.author_info.nickname || '用户'}}</text>
               </view>
             </view>
@@ -139,7 +134,7 @@
             wx:key="_id"
             class="ich-card anim-in"
             style="animation-delay:{{index * 60}}ms"
-            data-id="{{item._id}}"
+            data-id="{{item.project_id}}"
             bindtap="goProject"
             hover-class="card-press"
           >
@@ -165,7 +160,7 @@
             wx:key="_id"
             class="inheritor-card anim-in"
             style="animation-delay:{{index * 60}}ms"
-            data-id="{{item._id}}"
+            data-id="{{item.inheritor_id}}"
             bindtap="goInheritor"
             hover-class="card-press"
           >
@@ -256,7 +251,7 @@
           <view class="post-body">
             <text class="post-title">{{item.title || item.content}}</text>
             <view class="post-foot">
-              <image src="{{item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
+              <image src="{{item.author_info.avatar_file_id || item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
               <text class="post-nick">{{item.author_info.nickname || '用户'}}</text>
               <text class="post-likes"> · {{item.likes || 0}}赞</text>
             </view>
@@ -275,9 +270,9 @@
           wx:for="{{projectResults}}"
           wx:key="_id"
           class="ich-card ich-card--full anim-in"
-          style="animation-delay:{{index * 50}}ms"
-          data-id="{{item._id}}"
-          bindtap="goProject"
+            style="animation-delay:{{index * 50}}ms"
+            data-id="{{item.project_id}}"
+            bindtap="goProject"
           hover-class="card-press"
         >
           <view class="ich-card-left">
@@ -301,9 +296,9 @@
           wx:for="{{inheritorResults}}"
           wx:key="_id"
           class="inheritor-card inheritor-card--full anim-in"
-          style="animation-delay:{{index * 50}}ms"
-          data-id="{{item._id}}"
-          bindtap="goInheritor"
+            style="animation-delay:{{index * 50}}ms"
+            data-id="{{item.inheritor_id}}"
+            bindtap="goInheritor"
           hover-class="card-press"
         >
           <image src="{{item.avatar || '/images/avatar.png'}}" class="inheritor-avatar inheritor-avatar--lg" mode="aspectFill" />
