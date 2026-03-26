@@ -264,7 +264,7 @@
         <input
           class="chat-input-field"
           value="{{chatInputValue}}"
-          placeholder="问问非遗智答..."
+          placeholder="问一问..."
           placeholder-class="chat-input-placeholder"
           confirm-type="send"
           bindinput="onChatInput"
