@@ -63,7 +63,20 @@
     easing-function="easeOutCubic"
   >
     <swiper-item class="feed-swiper-item">
-      <scroll-view scroll-y class="feed-scroll" enhanced show-scrollbar="{{false}}" bindscroll="onTabScroll">
+      <scroll-view
+        scroll-y
+        class="feed-scroll"
+        enhanced
+        show-scrollbar="{{false}}"
+        bindscroll="onTabScroll"
+        refresher-enabled="{{!aiDrawerOpen}}"
+        refresher-threshold="{{72}}"
+        refresher-max-drag-distance="{{100}}"
+        refresher-default-style="black"
+        refresher-background="#f5f5f5"
+        refresher-triggered="{{refresherTriggered}}"
+        bindrefresherrefresh="onFeedRefresherRefresh"
+      >
         <view class="feed-scroll-inner">
           <view class="waterfall-container" wx:if="{{postList.length > 0}}">
       <!-- 左列 -->
@@ -136,23 +149,33 @@
       </view>
     </view>
 
-    <view class="end-tip" wx:if="{{postList.length > 0 && !loading}}">
+    <view class="end-tip" wx:if="{{postList.length > 0}}">
       <view class="end-line"></view>
       <text class="end-text">已经到底啦~</text>
       <view class="end-line"></view>
     </view>
-    <view class="empty-state" wx:if="{{postList.length === 0 && !loading}}">
+    <view class="empty-state" wx:if="{{postList.length === 0 && discoverFetched}}">
       <van-empty description="暂无帖子" />
-    </view>
-    <view class="loading-state" wx:if="{{loading}}">
-      <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
     </view>
         </view>
       </scroll-view>
     </swiper-item>
 
     <swiper-item class="feed-swiper-item">
-      <scroll-view scroll-y class="feed-scroll" enhanced show-scrollbar="{{false}}" bindscroll="onTabScroll">
+      <scroll-view
+        scroll-y
+        class="feed-scroll"
+        enhanced
+        show-scrollbar="{{false}}"
+        bindscroll="onTabScroll"
+        refresher-enabled="{{!aiDrawerOpen}}"
+        refresher-threshold="{{72}}"
+        refresher-max-drag-distance="{{100}}"
+        refresher-default-style="black"
+        refresher-background="#f5f5f5"
+        refresher-triggered="{{refresherTriggered}}"
+        bindrefresherrefresh="onFeedRefresherRefresh"
+      >
         <view class="feed-scroll-inner">
           <view class="waterfall-container" wx:if="{{followPostList.length > 0}}">
             <view class="waterfall-column left-column">
@@ -222,16 +245,13 @@
               </view>
             </view>
           </view>
-          <view class="end-tip" wx:if="{{followPostList.length > 0 && !followLoading}}">
+          <view class="end-tip" wx:if="{{followPostList.length > 0}}">
             <view class="end-line"></view>
             <text class="end-text">已经到底啦~</text>
             <view class="end-line"></view>
           </view>
-          <view class="empty-state" wx:if="{{followPostList.length === 0 && !followLoading}}">
+          <view class="empty-state" wx:if="{{followPostList.length === 0 && followFetched}}">
             <van-empty description="{{followEmptyDesc || '暂无动态'}}" />
-          </view>
-          <view class="loading-state" wx:if="{{followLoading}}">
-            <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
           </view>
         </view>
       </scroll-view>

@@ -20,13 +20,15 @@ Page({
     postList: [],
     leftColumn: [],
     rightColumn: [],
-    loading: true,
+    /** 发现流是否已完成至少一次拉取（用于空状态，不用底部转圈） */
+    discoverFetched: false,
 
     // 关注：仅展示已关注用户的帖子
     followPostList: [],
     followLeftColumn: [],
     followRightColumn: [],
-    followLoading: false,
+    /** 关注流是否已完成至少一次拉取（不显示列表内转圈） */
+    followFetched: false,
     followEmptyDesc: '',
 
     // 顶部 & 布局
@@ -38,6 +40,9 @@ Page({
     feedSwiperHeightPx: 500,
     searchCollapsed: false,
     _lastScrollTop: 0,
+
+    /** scroll-view 下拉刷新：仅列表区域，不与顶栏联动 */
+    refresherTriggered: false,
 
     // AI 抽屉
     aiDrawerOpen: false,
@@ -155,6 +160,18 @@ Page({
     this._applySearchCollapseScroll(e.detail.scrollTop)
   },
 
+  onFeedRefresherRefresh() {
+    if (this.data.aiDrawerOpen) return
+    this.setData({ refresherTriggered: true })
+    const p =
+      this.data.feedSwiperIndex === 1 ? this.loadFollowPosts() : this.loadPosts()
+    Promise.resolve(p)
+      .catch(() => {})
+      .finally(() => {
+        this.setData({ refresherTriggered: false })
+      })
+  },
+
   _applySearchCollapseScroll(currentTop) {
     const lastTop = this._lastScrollTop || 0
     if (currentTop > lastTop + 10 && currentTop > 60) {
@@ -168,6 +185,9 @@ Page({
 
   onFeedSwiperChange(e) {
     if (this.data.aiDrawerOpen) return
+    if (this.data.refresherTriggered) {
+      this.setData({ refresherTriggered: false })
+    }
     const cur = e.detail.current
     if (cur === 0) {
       this.setData({ activeTab: 'discover', feedSwiperIndex: 0 })
@@ -182,6 +202,9 @@ Page({
   /* ===== Tab 切换 ===== */
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
+    if (this.data.refresherTriggered) {
+      this.setData({ refresherTriggered: false })
+    }
     if (this.data.aiDrawerOpen) {
       this._destroyChatSession()
       const idx = tab === 'follow' ? 1 : 0
@@ -448,13 +471,12 @@ Page({
         followPostList: [],
         followLeftColumn: [],
         followRightColumn: [],
-        followLoading: false,
+        followFetched: true,
         followEmptyDesc: '登录后可查看关注动态'
       })
       return
     }
 
-    this.setData({ followLoading: true })
     try {
       const followRes = await db.collection('community_follows')
         .where({ follower_id: myOpenid })
@@ -468,7 +490,7 @@ Page({
           followPostList: [],
           followLeftColumn: [],
           followRightColumn: [],
-          followLoading: false,
+          followFetched: true,
           followEmptyDesc: '还没有关注任何人，去发现页逛逛吧'
         })
         return
@@ -548,13 +570,13 @@ Page({
         followPostList: postList,
         followLeftColumn: leftColumn,
         followRightColumn: rightColumn,
-        followLoading: false,
+        followFetched: true,
         followEmptyDesc: postList.length === 0 ? '你关注的人还没发动态' : ''
       })
     } catch (err) {
       console.error('加载关注动态失败', err)
       this.setData({
-        followLoading: false,
+        followFetched: true,
         followEmptyDesc: '加载失败，请下拉重试'
       })
     }
@@ -562,7 +584,6 @@ Page({
 
   /* ===== 加载帖子 ===== */
   async loadPosts() {
-    this.setData({ loading: true })
     try {
       const res = await db.collection('community_posts')
         .orderBy('create_time', 'desc')
@@ -592,10 +613,15 @@ Page({
       }
 
       const wf = this._waterfallFromList(postList)
-      this.setData({ postList, leftColumn: wf.leftColumn, rightColumn: wf.rightColumn, loading: false })
+      this.setData({
+        postList,
+        leftColumn: wf.leftColumn,
+        rightColumn: wf.rightColumn,
+        discoverFetched: true
+      })
     } catch (err) {
       console.error('加载帖子失败:', err)
-      this.setData({ loading: false })
+      this.setData({ discoverFetched: true })
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
@@ -638,12 +664,6 @@ Page({
       this.setData({ feedSwiperIndex: 1 })
       this.loadFollowPosts()
     }
-  },
-
-  onPullDownRefresh() {
-    const p =
-      this.data.activeTab === 'follow' ? this.loadFollowPosts() : this.loadPosts()
-    Promise.resolve(p).then(() => wx.stopPullDownRefresh())
   },
 
   onReachBottom() {},
