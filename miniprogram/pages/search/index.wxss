@@ -202,11 +202,24 @@
 
 /* AI搜一搜 固定在右侧 */
 .tab-ai-fixed {
+  position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  padding: 0 16rpx 0 8rpx;
-  border-left: 1.5rpx solid rgba(182, 59, 54, 0.12);
+  padding: 0 16rpx 0 20rpx;
+}
+
+/* 左侧短竖线，避免与整行等高显得过粗过长 */
+.tab-ai-fixed::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rpx;
+  height: 28rpx;
+  border-radius: 1rpx;
+  background: rgba(182, 59, 54, 0.12);
 }
 
 .tab-ai-btn {
