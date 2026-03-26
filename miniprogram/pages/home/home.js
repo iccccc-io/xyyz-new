@@ -485,6 +485,10 @@ Page({
 
   // ═══════════ 导航 ═══════════
 
+  goToSearch() {
+    wx.navigateTo({ url: '/pages/search/index' })
+  },
+
   goToProjects() {
     const city = this.data.selectedCity;
     this._hideCanvas();

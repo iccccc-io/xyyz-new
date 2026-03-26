@@ -37,6 +37,23 @@ page {
   gap: 4rpx;
 }
 
+.top-search-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5rpx solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, background 0.2s;
+}
+.top-search-hover {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .brand-name {
   font-size: 44rpx;
   font-weight: bold;

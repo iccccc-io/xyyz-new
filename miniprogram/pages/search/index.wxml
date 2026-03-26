@@ -1,0 +1,384 @@
+<!-- pages/search/index.wxml -->
+<view class="search-page">
+
+  <!-- ══════════ 顶部搜索栏 ══════════ -->
+  <view class="search-header" style="padding-top:{{statusBarHeight}}px;">
+    <!-- 第一行：仅返回按钮，与微信胶囊同高 -->
+    <view class="header-row-1">
+      <view class="btn-back" bindtap="goBack" hover-class="btn-back-hover">
+        <van-icon name="arrow-left" size="20" color="#5c4f42" />
+      </view>
+    </view>
+
+    <!-- 第二行：搜索框 -->
+    <view class="header-row-2">
+      <view class="search-bar-wrap">
+        <view class="search-icon-left">
+          <van-icon name="search" size="18" color="#9a8c7c" />
+        </view>
+        <input
+          class="search-input"
+          placeholder="搜帖子、非遗、传承人、话题、用户…"
+          placeholder-class="search-ph"
+          value="{{keyword}}"
+          confirm-type="search"
+          bindinput="onInput"
+          bindfocus="onFocus"
+          bindblur="onBlur"
+          bindconfirm="onConfirm"
+          focus="{{true}}"
+        />
+        <view class="btn-clear" wx:if="{{keyword}}" bindtap="onClear">
+          <van-icon name="clear" size="16" color="#b5a899" />
+        </view>
+        <view class="search-divider" wx:if="{{keyword}}"></view>
+        <view class="btn-search" wx:if="{{keyword}}" bindtap="onConfirm" hover-class="btn-search-hover">
+          搜索
+        </view>
+      </view>
+    </view>
+
+    <!-- ── Tab 栏（含"问AI") ── -->
+    <view class="tabs-container">
+      <scroll-view scroll-x class="tabs-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="tabs-row">
+          <view
+            wx:for="{{tabs}}"
+            wx:key="key"
+            class="tab-item {{activeTab === index ? 'tab-active' : ''}}"
+            data-i="{{index}}"
+            bindtap="switchTab"
+            hover-class="tab-hover"
+          >
+            <text class="tab-txt">{{item.label}}</text>
+            <view class="tab-ink" wx:if="{{activeTab === index}}"></view>
+          </view>
+
+          <!-- 分隔线 -->
+          <view class="tab-sep"></view>
+
+          <!-- AI 搜一搜 特殊按钮 -->
+          <view class="tab-ai-btn" bindtap="goAiSearch" hover-class="tab-ai-hover">
+            <view class="ai-spark-icon">
+              <text class="ai-spark-star ai-star-lg">✦</text>
+              <text class="ai-spark-star ai-star-sm">✦</text>
+            </view>
+            <text class="tab-ai-label">AI搜一搜</text>
+          </view>
+        </view>
+      </scroll-view>
+      <!-- 渐变遮罩：右侧提示可横滑 -->
+      <view class="tabs-fade-right"></view>
+    </view>
+  </view>
+
+  <!-- ══════════ 内容区 ══════════ -->
+  <scroll-view scroll-y class="search-body" enhanced show-scrollbar="{{false}}">
+
+    <!-- 未搜索：引导页 -->
+    <block wx:if="{{!hasSearched}}">
+      <view class="guide-wrap">
+        <view class="guide-icon-wrap">
+          <view class="guide-aura"></view>
+          <text class="guide-icon">🔍</text>
+        </view>
+        <text class="guide-title">探索湖南非遗</text>
+        <text class="guide-sub">输入关键词，发现非遗项目、传承人、社区帖子与话题</text>
+        <view class="suggest-chips">
+          <view class="chip" wx:for="{{['湘绣','花鼓戏','土家织锦','滩头年画','茶艺','苗鼓']}}" wx:key="*this" bindtap="onChipTap" data-kw="{{item}}">
+            {{item}}
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:elif="{{loading && !tabChanging}}">
+      <van-loading type="spinner" color="#b63b36" size="24px" />
+    </view>
+
+    <!-- ── 综合 (tab 0) ── -->
+    <block wx:elif="{{activeTab === 0}}">
+      <!-- 帖子区 -->
+      <block wx:if="{{allResults.posts.length}}">
+        <view class="section-head">
+          <text class="section-title">帖子</text>
+          <view class="section-more" bindtap="switchTab" data-i="1">更多 <van-icon name="arrow" size="12" color="#b63b36" /></view>
+        </view>
+        <view class="posts-waterfall">
+          <view
+            wx:for="{{allResults.posts}}"
+            wx:key="_id"
+            class="post-card anim-in"
+            style="animation-delay:{{index * 60}}ms"
+            data-id="{{item._id}}"
+            bindtap="goPost"
+            hover-class="card-press"
+          >
+            <image wx:if="{{item.images[0]}}" src="{{item.images[0]}}" class="post-img" mode="aspectFill" />
+            <view class="post-body">
+              <text class="post-title">{{item.title || item.content}}</text>
+              <view class="post-foot">
+                <image src="{{item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
+                <text class="post-nick">{{item.author_info.nickname || '用户'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 非遗项目区 -->
+      <block wx:if="{{allResults.projects.length}}">
+        <view class="section-head">
+          <text class="section-title">非遗项目</text>
+          <view class="section-more" bindtap="switchTab" data-i="2">更多 <van-icon name="arrow" size="12" color="#b63b36" /></view>
+        </view>
+        <view class="card-list">
+          <view
+            wx:for="{{allResults.projects}}"
+            wx:key="_id"
+            class="ich-card anim-in"
+            style="animation-delay:{{index * 60}}ms"
+            data-id="{{item._id}}"
+            bindtap="goProject"
+            hover-class="card-press"
+          >
+            <view class="ich-card-left">
+              <view class="ich-badge">{{item.level || '非遗'}}</view>
+              <text class="ich-name">{{item.name}}</text>
+              <text class="ich-sub">{{item.category}}{{item.city ? ' · ' + item.city : ''}}</text>
+            </view>
+            <van-icon name="arrow" size="14" color="#c5b8a8" />
+          </view>
+        </view>
+      </block>
+
+      <!-- 传承人区 -->
+      <block wx:if="{{allResults.inheritors.length}}">
+        <view class="section-head">
+          <text class="section-title">传承人</text>
+          <view class="section-more" bindtap="switchTab" data-i="3">更多 <van-icon name="arrow" size="12" color="#b63b36" /></view>
+        </view>
+        <view class="card-list">
+          <view
+            wx:for="{{allResults.inheritors}}"
+            wx:key="_id"
+            class="inheritor-card anim-in"
+            style="animation-delay:{{index * 60}}ms"
+            data-id="{{item._id}}"
+            bindtap="goInheritor"
+            hover-class="card-press"
+          >
+            <image src="{{item.avatar || '/images/avatar.png'}}" class="inheritor-avatar" mode="aspectFill" />
+            <view class="inheritor-info">
+              <view class="inheritor-name-row">
+                <text class="level-tag">{{item.level}}</text>
+                <text class="inheritor-name">{{item.name}}</text>
+              </view>
+              <text class="inheritor-sub">{{item.craft}}{{item.city ? ' · ' + item.city : ''}}</text>
+            </view>
+            <van-icon name="arrow" size="14" color="#c5b8a8" />
+          </view>
+        </view>
+      </block>
+
+      <!-- 话题区 -->
+      <block wx:if="{{allResults.topics.length}}">
+        <view class="section-head">
+          <text class="section-title">话题</text>
+          <view class="section-more" bindtap="switchTab" data-i="4">更多 <van-icon name="arrow" size="12" color="#b63b36" /></view>
+        </view>
+        <view class="topic-chips-wrap">
+          <view
+            wx:for="{{allResults.topics}}"
+            wx:key="tag"
+            class="topic-chip anim-in"
+            style="animation-delay:{{index * 50}}ms"
+            data-tag="{{item.tag}}"
+            bindtap="goTopic"
+            hover-class="chip-press"
+          >
+            <text class="topic-hash">#</text>
+            <text class="topic-name">{{item.tag}}</text>
+            <text class="topic-count">{{item.count}}篇</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 用户区 -->
+      <block wx:if="{{allResults.users.length}}">
+        <view class="section-head">
+          <text class="section-title">用户</text>
+          <view class="section-more" bindtap="switchTab" data-i="5">更多 <van-icon name="arrow" size="12" color="#b63b36" /></view>
+        </view>
+        <view class="card-list">
+          <view
+            wx:for="{{allResults.users}}"
+            wx:key="_id"
+            class="user-card anim-in"
+            style="animation-delay:{{index * 60}}ms"
+            data-id="{{item._id}}"
+            bindtap="goUser"
+            hover-class="card-press"
+          >
+            <image src="{{item.avatar_url}}" class="user-avatar" mode="aspectFill" />
+            <view class="user-info">
+              <view class="user-name-row">
+                <text class="user-name {{item.is_certified ? 'cert' : ''}}">{{item.nickname}}</text>
+                <text class="cert-badge" wx:if="{{item.is_certified}}">传承人</text>
+              </view>
+              <text class="user-bio">{{item.certified_title || item.bio || '暂无简介'}}</text>
+            </view>
+            <van-icon name="arrow" size="14" color="#c5b8a8" />
+          </view>
+        </view>
+      </block>
+
+      <!-- 综合空结果 -->
+      <view class="empty-wrap" wx:if="{{!allResults.posts.length && !allResults.projects.length && !allResults.inheritors.length && !allResults.topics.length && !allResults.users.length}}">
+        <van-empty description="{{'未找到「' + keyword + '」相关内容'}}" />
+      </view>
+    </block>
+
+    <!-- ── 帖子 (tab 1) ── -->
+    <block wx:elif="{{activeTab === 1}}">
+      <view class="posts-waterfall" wx:if="{{postResults.length}}">
+        <view
+          wx:for="{{postResults}}"
+          wx:key="_id"
+          class="post-card anim-in"
+          style="animation-delay:{{index * 50}}ms"
+          data-id="{{item._id}}"
+          bindtap="goPost"
+          hover-class="card-press"
+        >
+          <image wx:if="{{item.images[0]}}" src="{{item.images[0]}}" class="post-img" mode="aspectFill" />
+          <view class="post-body">
+            <text class="post-title">{{item.title || item.content}}</text>
+            <view class="post-foot">
+              <image src="{{item.author_info.avatar_url || '/images/avatar.png'}}" class="post-avatar" />
+              <text class="post-nick">{{item.author_info.nickname || '用户'}}</text>
+              <text class="post-likes"> · {{item.likes || 0}}赞</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="empty-wrap" wx:else>
+        <van-empty description="未找到相关帖子" />
+      </view>
+    </block>
+
+    <!-- ── 非遗项目 (tab 2) ── -->
+    <block wx:elif="{{activeTab === 2}}">
+      <view class="card-list" wx:if="{{projectResults.length}}">
+        <view
+          wx:for="{{projectResults}}"
+          wx:key="_id"
+          class="ich-card ich-card--full anim-in"
+          style="animation-delay:{{index * 50}}ms"
+          data-id="{{item._id}}"
+          bindtap="goProject"
+          hover-class="card-press"
+        >
+          <view class="ich-card-left">
+            <view class="ich-badge">{{item.level || '非遗'}}</view>
+            <text class="ich-name">{{item.name}}</text>
+            <text class="ich-sub">{{item.category}} · {{item.city || '湖南'}} · {{item.batch || ''}}</text>
+            <text class="ich-desc" wx:if="{{item.description}}">{{item.description}}</text>
+          </view>
+          <van-icon name="arrow" size="14" color="#c5b8a8" />
+        </view>
+      </view>
+      <view class="empty-wrap" wx:else>
+        <van-empty description="未找到相关非遗项目" />
+      </view>
+    </block>
+
+    <!-- ── 传承人 (tab 3) ── -->
+    <block wx:elif="{{activeTab === 3}}">
+      <view class="card-list" wx:if="{{inheritorResults.length}}">
+        <view
+          wx:for="{{inheritorResults}}"
+          wx:key="_id"
+          class="inheritor-card inheritor-card--full anim-in"
+          style="animation-delay:{{index * 50}}ms"
+          data-id="{{item._id}}"
+          bindtap="goInheritor"
+          hover-class="card-press"
+        >
+          <image src="{{item.avatar || '/images/avatar.png'}}" class="inheritor-avatar inheritor-avatar--lg" mode="aspectFill" />
+          <view class="inheritor-info">
+            <view class="inheritor-name-row">
+              <text class="level-tag">{{item.level}}</text>
+              <text class="inheritor-name">{{item.name}}</text>
+            </view>
+            <text class="inheritor-sub">{{item.craft}}</text>
+            <text class="inheritor-region" wx:if="{{item.city}}">📍 {{item.city}}</text>
+          </view>
+          <van-icon name="arrow" size="14" color="#c5b8a8" />
+        </view>
+      </view>
+      <view class="empty-wrap" wx:else>
+        <van-empty description="未找到相关传承人" />
+      </view>
+    </block>
+
+    <!-- ── 话题 (tab 4) ── -->
+    <block wx:elif="{{activeTab === 4}}">
+      <view class="topic-list" wx:if="{{topicResults.length}}">
+        <view
+          wx:for="{{topicResults}}"
+          wx:key="tag"
+          class="topic-row anim-in"
+          style="animation-delay:{{index * 50}}ms"
+          data-tag="{{item.tag}}"
+          bindtap="goTopic"
+          hover-class="card-press"
+        >
+          <view class="topic-row-left">
+            <view class="topic-hash-icon">#</view>
+            <view class="topic-row-info">
+              <text class="topic-row-name">{{item.tag}}</text>
+              <text class="topic-row-sub">{{item.count}} 篇相关帖子</text>
+            </view>
+          </view>
+          <van-icon name="arrow" size="14" color="#c5b8a8" />
+        </view>
+      </view>
+      <view class="empty-wrap" wx:else>
+        <van-empty description="未找到相关话题" />
+      </view>
+    </block>
+
+    <!-- ── 用户 (tab 5) ── -->
+    <block wx:elif="{{activeTab === 5}}">
+      <view class="card-list" wx:if="{{userResults.length}}">
+        <view
+          wx:for="{{userResults}}"
+          wx:key="_id"
+          class="user-card user-card--full anim-in"
+          style="animation-delay:{{index * 50}}ms"
+          data-id="{{item._id}}"
+          bindtap="goUser"
+          hover-class="card-press"
+        >
+          <image src="{{item.avatar_url}}" class="user-avatar user-avatar--lg" mode="aspectFill" />
+          <view class="user-info">
+            <view class="user-name-row">
+              <text class="user-name {{item.is_certified ? 'cert' : ''}}">{{item.nickname}}</text>
+              <text class="cert-badge" wx:if="{{item.is_certified}}">传承人</text>
+            </view>
+            <text class="user-bio">{{item.certified_title || item.bio || '暂无简介'}}</text>
+          </view>
+          <van-icon name="arrow" size="14" color="#c5b8a8" />
+        </view>
+      </view>
+      <view class="empty-wrap" wx:else>
+        <van-empty description="未找到相关用户" />
+      </view>
+    </block>
+
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+</view>

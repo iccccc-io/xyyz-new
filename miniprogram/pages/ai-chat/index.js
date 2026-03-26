@@ -67,6 +67,7 @@ Page({
       scrollBottom: 96 + safeAreaBottom
     })
 
+    this._autoQuery = options.auto_query ? decodeURIComponent(options.auto_query) : ''
     this._initConversation()
 
     this._onKeyboardHeight = (res) => {
@@ -109,7 +110,14 @@ Page({
     // V3 规则：openid + scene + entity_id
     const conversationId = `${openid}_${this.data.sourceScene}_${this.data.sourceEntityId}`
     this.setData({ conversationId })
-    this.loadHistory()
+    await this.loadHistory()
+
+    // 若携带 auto_query 参数，则自动发送
+    if (this._autoQuery) {
+      this.setData({ inputValue: this._autoQuery })
+      this._autoQuery = ''
+      await this.sendMessage()
+    }
   },
 
   async loadHistory() {

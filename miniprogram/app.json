@@ -40,7 +40,8 @@
     "pages/aftersale/seller-list",
     "pages/webview/index",
     "pages/index/index",
-    "pages/example/index"
+    "pages/example/index",
+    "pages/search/index"
   ],
   "permission": {
     "scope.camera": {

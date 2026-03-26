@@ -12,6 +12,9 @@ const CHAT_WELCOME =
 
 Page({
   data: {
+    // 搜索
+    communitySearchKw: '',
+
     // 社区帖子
     postList: [],
     leftColumn: [],
@@ -351,8 +354,20 @@ Page({
   },
 
   /* ===== 搜索 ===== */
+  onCommunitySearchInput(e) {
+    this.setData({ communitySearchKw: e.detail.value })
+  },
+
+  onCommunitySearchConfirm() {
+    const kw = this.data.communitySearchKw.trim()
+    const url = kw
+      ? `/pages/search/index?keyword=${encodeURIComponent(kw)}`
+      : '/pages/search/index'
+    wx.navigateTo({ url })
+  },
+
   goToSearch() {
-    wx.showToast({ title: '搜索功能开发中', icon: 'none' })
+    wx.navigateTo({ url: '/pages/search/index' })
   },
 
   /* ===== 加载帖子 ===== */

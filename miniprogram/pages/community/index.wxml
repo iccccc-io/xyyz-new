@@ -32,9 +32,20 @@
 
   <!-- 第二行：搜索框（可折叠） -->
   <view class="search-row {{searchCollapsed ? 'search-collapsed' : ''}}">
-    <view class="search-bar" bindtap="goToSearch">
+    <view class="search-bar">
       <van-icon name="search" size="16" color="#b8a898" />
-      <text class="search-placeholder">搜索帖子、话题、用户...</text>
+      <input
+        class="search-bar-input"
+        placeholder="搜索非遗、帖子、传承人、话题…"
+        placeholder-class="search-placeholder"
+        value="{{communitySearchKw}}"
+        confirm-type="search"
+        bindinput="onCommunitySearchInput"
+        bindconfirm="onCommunitySearchConfirm"
+      />
+      <view class="search-bar-btn" wx:if="{{communitySearchKw}}" bindtap="onCommunitySearchConfirm">
+        <van-icon name="arrow" size="14" color="#b63b36" />
+      </view>
     </view>
   </view>
 </view>

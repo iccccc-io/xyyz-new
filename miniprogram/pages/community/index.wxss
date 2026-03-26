@@ -189,9 +189,25 @@ page {
   border-radius: 36rpx;
 }
 
+.search-bar-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: 26rpx;
+  color: #3d3530;
+  background: transparent;
+}
+
 .search-placeholder {
   font-size: 26rpx;
   color: #b0b0b0;
+}
+
+.search-bar-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 4rpx 6rpx;
 }
 
 /* 占位元素 */
