@@ -216,8 +216,32 @@ page {
 }
 
 .community-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 发现 / 关注：横向滑动切换 */
+.feed-swiper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.feed-swiper-item {
+  height: 100%;
+  overflow: hidden;
+}
+
+.feed-scroll {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.feed-scroll-inner {
   padding: 20rpx;
-  padding-bottom: 40rpx;
+  padding-bottom: 48rpx;
+  box-sizing: border-box;
+  min-height: 100%;
 }
 
 /* 关注空状态 */

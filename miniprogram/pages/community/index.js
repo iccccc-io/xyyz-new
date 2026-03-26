@@ -1,6 +1,7 @@
 // pages/community/index.js
 const app = getApp()
 const db = wx.cloud.database()
+const _ = db.command
 
 const CHAT_QUICK_REPLIES = ['推荐一项湖南非遗', '有什么周末体验攻略？', '哪些非遗最受欢迎？']
 const CHAT_WELCOME =
@@ -21,11 +22,20 @@ Page({
     rightColumn: [],
     loading: true,
 
+    // 关注：仅展示已关注用户的帖子
+    followPostList: [],
+    followLeftColumn: [],
+    followRightColumn: [],
+    followLoading: false,
+    followEmptyDesc: '',
+
     // 顶部 & 布局
     statusBarHeight: 20,
     headerBaseHeight: 0,
     drawerTop: 0,
     activeTab: 'discover',
+    feedSwiperIndex: 0, // 0 发现 1 关注（与 swiper 联动）
+    feedSwiperHeightPx: 500,
     searchCollapsed: false,
     _lastScrollTop: 0,
 
@@ -64,12 +74,14 @@ Page({
     // 抽屉可见高度 = 全屏 - 抽屉顶 - TabBar
     // 消息区高度 = 抽屉可见高度 - 输入区高度
     const chatAreaHeight = sys.screenHeight - drawerTop - tabBarPx - inputAreaPx
+    const feedSwiperHeightPx = Math.max(200, sys.screenHeight - headerBaseHeight - tabBarPx)
 
     this._chatLayoutBase = {
       screenHeight: sys.screenHeight,
       drawerTop,
       inputAreaPx,
-      tabBarPx
+      tabBarPx,
+      headerBaseHeight
     }
 
     this.setData({
@@ -77,7 +89,8 @@ Page({
       headerBaseHeight,
       drawerTop,
       drawerBottom: tabBarPx,
-      chatAreaHeight
+      chatAreaHeight,
+      feedSwiperHeightPx
     })
 
     this.loadPosts()
@@ -109,15 +122,21 @@ Page({
   },
 
   onHide() {
-    if (this.data.aiDrawerOpen) {
+    const hadAiDrawer = this.data.aiDrawerOpen
+    if (hadAiDrawer) {
       this._destroyChatSession()
     }
-    this.setData({
+    const layoutPatch = {
       aiDrawerOpen: false,
-      activeTab: 'discover',
       searchCollapsed: false,
       chatKeyboardHeight: 0
-    })
+    }
+    // 仅从问一问离开时回到发现；关注/发现 tab 保持不变
+    if (hadAiDrawer) {
+      layoutPatch.activeTab = 'discover'
+      layoutPatch.feedSwiperIndex = 0
+    }
+    this.setData(layoutPatch)
     if (this._chatLayoutBase) {
       const { screenHeight, drawerTop, inputAreaPx, tabBarPx } = this._chatLayoutBase
       this.setData({
@@ -128,17 +147,36 @@ Page({
   },
 
   onPageScroll(e) {
-    const currentTop = e.scrollTop
-    const lastTop = this._lastScrollTop || 0
+    this._applySearchCollapseScroll(e.scrollTop)
+  },
 
+  /** 瀑布流在 swiper 内 scroll-view 滚动时调用 */
+  onTabScroll(e) {
+    this._applySearchCollapseScroll(e.detail.scrollTop)
+  },
+
+  _applySearchCollapseScroll(currentTop) {
+    const lastTop = this._lastScrollTop || 0
     if (currentTop > lastTop + 10 && currentTop > 60) {
       if (!this.data.searchCollapsed) this.setData({ searchCollapsed: true })
     }
     if (currentTop < lastTop - 10 || currentTop < 30) {
       if (this.data.searchCollapsed) this.setData({ searchCollapsed: false })
     }
-
     this._lastScrollTop = currentTop
+  },
+
+  onFeedSwiperChange(e) {
+    if (this.data.aiDrawerOpen) return
+    const cur = e.detail.current
+    if (cur === 0) {
+      this.setData({ activeTab: 'discover', feedSwiperIndex: 0 })
+      return
+    }
+    this.setData({ activeTab: 'follow', feedSwiperIndex: 1 })
+    // 手势滑动：拉取关注流；刚点过 Tab 则在短时间内由 switchTab 已请求，避免重复
+    const recentTabTap = Date.now() - (this._lastFeedNavAt || 0) < 450
+    if (!recentTabTap) this.loadFollowPosts()
   },
 
   /* ===== Tab 切换 ===== */
@@ -146,11 +184,26 @@ Page({
     const tab = e.currentTarget.dataset.tab
     if (this.data.aiDrawerOpen) {
       this._destroyChatSession()
-      this.setData({ aiDrawerOpen: false, searchCollapsed: false, activeTab: tab })
+      const idx = tab === 'follow' ? 1 : 0
+      this._lastFeedNavAt = Date.now()
+      this.setData({
+        aiDrawerOpen: false,
+        searchCollapsed: false,
+        activeTab: tab,
+        feedSwiperIndex: idx
+      })
+      if (tab === 'follow') this.loadFollowPosts()
       return
     }
-    if (tab !== this.data.activeTab) {
-      this.setData({ activeTab: tab })
+    if (tab === 'discover' && this.data.activeTab !== 'discover') {
+      this._lastFeedNavAt = Date.now()
+      this.setData({ activeTab: 'discover', feedSwiperIndex: 0 })
+      return
+    }
+    if (tab === 'follow' && this.data.activeTab !== 'follow') {
+      this._lastFeedNavAt = Date.now()
+      this.setData({ activeTab: 'follow', feedSwiperIndex: 1 })
+      this.loadFollowPosts()
     }
   },
 
@@ -163,7 +216,12 @@ Page({
       setTimeout(() => this._scrollChatToBottom(), 350)
     } else {
       this._destroyChatSession()
-      this.setData({ aiDrawerOpen: false, activeTab: 'discover', searchCollapsed: false })
+      this.setData({
+        aiDrawerOpen: false,
+        activeTab: 'discover',
+        feedSwiperIndex: 0,
+        searchCollapsed: false
+      })
     }
   },
 
@@ -370,6 +428,138 @@ Page({
     wx.navigateTo({ url: '/pages/search/index' })
   },
 
+  _waterfallFromList(postList) {
+    const leftColumn = []
+    const rightColumn = []
+    postList.forEach((item, idx) => {
+      if (idx % 2 === 0) leftColumn.push(item)
+      else rightColumn.push(item)
+    })
+    return { leftColumn, rightColumn }
+  },
+
+  /**
+   * 关注 tab：拉取 community_follows 中 target_id，再查这些 openid 的帖子
+   */
+  async loadFollowPosts() {
+    const myOpenid = app.globalData.openid
+    if (!myOpenid) {
+      this.setData({
+        followPostList: [],
+        followLeftColumn: [],
+        followRightColumn: [],
+        followLoading: false,
+        followEmptyDesc: '登录后可查看关注动态'
+      })
+      return
+    }
+
+    this.setData({ followLoading: true })
+    try {
+      const followRes = await db.collection('community_follows')
+        .where({ follower_id: myOpenid })
+        .field({ target_id: true })
+        .get()
+
+      const followedIds = [...new Set((followRes.data || []).map(r => r.target_id).filter(Boolean))]
+
+      if (followedIds.length === 0) {
+        this.setData({
+          followPostList: [],
+          followLeftColumn: [],
+          followRightColumn: [],
+          followLoading: false,
+          followEmptyDesc: '还没有关注任何人，去发现页逛逛吧'
+        })
+        return
+      }
+
+      const chunkSize = 20
+      const chunks = []
+      for (let i = 0; i < followedIds.length; i += chunkSize) {
+        chunks.push(followedIds.slice(i, i + chunkSize))
+      }
+
+      const queryChunk = async ids => {
+        try {
+          return await db
+            .collection('community_posts')
+            .where({ _openid: _.in(ids) })
+            .orderBy('create_time', 'desc')
+            .limit(40)
+            .get()
+        } catch (e) {
+          const r = await db
+            .collection('community_posts')
+            .where({ _openid: _.in(ids) })
+            .limit(40)
+            .get()
+          const list = (r.data || []).sort((a, b) => {
+            const ta = a.create_time instanceof Date ? a.create_time.getTime() : new Date(a.create_time || 0).getTime()
+            const tb = b.create_time instanceof Date ? b.create_time.getTime() : new Date(b.create_time || 0).getTime()
+            return tb - ta
+          })
+          return { data: list }
+        }
+      }
+
+      const results = await Promise.all(chunks.map(ids => queryChunk(ids)))
+      const map = new Map()
+      results.forEach(r => (r.data || []).forEach(p => map.set(p._id, p)))
+
+      let postList = Array.from(map.values())
+      postList.sort((a, b) => {
+        const ta = a.create_time instanceof Date ? a.create_time.getTime() : new Date(a.create_time || 0).getTime()
+        const tb = b.create_time instanceof Date ? b.create_time.getTime() : new Date(b.create_time || 0).getTime()
+        return tb - ta
+      })
+
+      postList = postList
+        .filter(post => {
+          if (!post.status || post.status === 0) return true
+          return post._openid === myOpenid
+        })
+        .slice(0, 50)
+
+      postList.forEach(post => {
+        post.images = (post.images || []).map(img => (typeof img === 'string' ? img : img.url || ''))
+      })
+
+      if (postList.length > 0) {
+        const likedIdSet = new Set()
+        const ids = postList.map(i => i._id)
+        for (let i = 0; i < ids.length; i += chunkSize) {
+          const batch = ids.slice(i, i + chunkSize)
+          const likedRes = await db
+            .collection('community_post_likes')
+            .where({ target_id: _.in(batch), _openid: myOpenid })
+            .field({ target_id: true })
+            .get()
+          ;(likedRes.data || []).forEach(row => likedIdSet.add(row.target_id))
+        }
+        postList = postList.map(item => ({ ...item, isLiked: likedIdSet.has(item._id) }))
+      } else {
+        postList = postList.map(item => ({ ...item, isLiked: false }))
+      }
+
+      const { leftColumn, rightColumn } = this._waterfallFromList(postList)
+
+      this.setData({
+        followPostList: postList,
+        followLeftColumn: leftColumn,
+        followRightColumn: rightColumn,
+        followLoading: false,
+        followEmptyDesc: postList.length === 0 ? '你关注的人还没发动态' : ''
+      })
+    } catch (err) {
+      console.error('加载关注动态失败', err)
+      this.setData({
+        followLoading: false,
+        followEmptyDesc: '加载失败，请下拉重试'
+      })
+    }
+  },
+
   /* ===== 加载帖子 ===== */
   async loadPosts() {
     this.setData({ loading: true })
@@ -391,7 +581,6 @@ Page({
       })
 
       if (myOpenid && postList.length > 0) {
-        const _ = db.command
         const likedRes = await db.collection('community_post_likes')
           .where({ target_id: _.in(postList.map(i => i._id)), _openid: myOpenid })
           .field({ target_id: true })
@@ -402,13 +591,8 @@ Page({
         postList = postList.map(item => ({ ...item, isLiked: false }))
       }
 
-      const leftColumn = [], rightColumn = []
-      postList.forEach((item, idx) => {
-        if (idx % 2 === 0) leftColumn.push(item)
-        else rightColumn.push(item)
-      })
-
-      this.setData({ postList, leftColumn, rightColumn, loading: false })
+      const wf = this._waterfallFromList(postList)
+      this.setData({ postList, leftColumn: wf.leftColumn, rightColumn: wf.rightColumn, loading: false })
     } catch (err) {
       console.error('加载帖子失败:', err)
       this.setData({ loading: false })
@@ -423,15 +607,20 @@ Page({
   },
 
   updatePostLikeStatus(postId, isLiked, likesCount) {
-    const postList = this.data.postList.map(item =>
-      item._id === postId ? { ...item, isLiked, likes: likesCount } : item
-    )
-    const leftColumn = [], rightColumn = []
-    postList.forEach((item, idx) => {
-      if (idx % 2 === 0) leftColumn.push(item)
-      else rightColumn.push(item)
+    const mapOne = list =>
+      list.map(item => (item._id === postId ? { ...item, isLiked, likes: likesCount } : item))
+    const postList = mapOne(this.data.postList)
+    const followPostList = mapOne(this.data.followPostList)
+    const wf = this._waterfallFromList(postList)
+    const fw = this._waterfallFromList(followPostList)
+    this.setData({
+      postList,
+      leftColumn: wf.leftColumn,
+      rightColumn: wf.rightColumn,
+      followPostList,
+      followLeftColumn: fw.leftColumn,
+      followRightColumn: fw.rightColumn
     })
-    this.setData({ postList, leftColumn, rightColumn })
   },
 
   goToPost() {
@@ -445,10 +634,16 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(1)
     }
+    if (this.data.activeTab === 'follow') {
+      this.setData({ feedSwiperIndex: 1 })
+      this.loadFollowPosts()
+    }
   },
 
   onPullDownRefresh() {
-    this.loadPosts().then(() => wx.stopPullDownRefresh())
+    const p =
+      this.data.activeTab === 'follow' ? this.loadFollowPosts() : this.loadPosts()
+    Promise.resolve(p).then(() => wx.stopPullDownRefresh())
   },
 
   onReachBottom() {},

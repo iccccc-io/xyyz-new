@@ -54,14 +54,18 @@
 <view class="header-placeholder" style="height: {{headerBaseHeight}}px;"></view>
 
 <view class="community-container">
-  <!-- 关注页面占位 -->
-  <view class="follow-empty" wx:if="{{activeTab === 'follow'}}">
-    <van-empty description="关注功能即将上线" />
-  </view>
-
-  <!-- 发现页：瀑布流列表 -->
-  <block wx:if="{{activeTab === 'discover'}}">
-    <view class="waterfall-container" wx:if="{{postList.length > 0}}">
+  <swiper
+    class="feed-swiper"
+    style="height: {{feedSwiperHeightPx}}px;"
+    current="{{feedSwiperIndex}}"
+    bindchange="onFeedSwiperChange"
+    duration="{{260}}"
+    easing-function="easeOutCubic"
+  >
+    <swiper-item class="feed-swiper-item">
+      <scroll-view scroll-y class="feed-scroll" enhanced show-scrollbar="{{false}}" bindscroll="onTabScroll">
+        <view class="feed-scroll-inner">
+          <view class="waterfall-container" wx:if="{{postList.length > 0}}">
       <!-- 左列 -->
       <view class="waterfall-column left-column">
         <view
@@ -143,7 +147,96 @@
     <view class="loading-state" wx:if="{{loading}}">
       <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
     </view>
-  </block>
+        </view>
+      </scroll-view>
+    </swiper-item>
+
+    <swiper-item class="feed-swiper-item">
+      <scroll-view scroll-y class="feed-scroll" enhanced show-scrollbar="{{false}}" bindscroll="onTabScroll">
+        <view class="feed-scroll-inner">
+          <view class="waterfall-container" wx:if="{{followPostList.length > 0}}">
+            <view class="waterfall-column left-column">
+              <view
+                class="post-card"
+                wx:for="{{followLeftColumn}}"
+                wx:key="_id"
+                bindtap="goToDetail"
+                data-id="{{item._id}}"
+                data-isliked="{{item.isLiked}}"
+              >
+                <view class="card-cover">
+                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+                  <view class="image-count" wx:if="{{item.images.length > 1}}">
+                    <van-icon name="photo-o" size="12" color="#fff" />
+                    <text class="count-text">{{item.images.length}}</text>
+                  </view>
+                </view>
+                <view class="card-content">
+                  <view class="title-row">
+                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+                  </view>
+                  <view class="card-footer">
+                    <view class="author-info">
+                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                      <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+                    </view>
+                    <view class="like-info">
+                      <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+                      <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+            <view class="waterfall-column right-column">
+              <view
+                class="post-card"
+                wx:for="{{followRightColumn}}"
+                wx:key="_id"
+                bindtap="goToDetail"
+                data-id="{{item._id}}"
+                data-isliked="{{item.isLiked}}"
+              >
+                <view class="card-cover">
+                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
+                  <view class="image-count" wx:if="{{item.images.length > 1}}">
+                    <van-icon name="photo-o" size="12" color="#fff" />
+                    <text class="count-text">{{item.images.length}}</text>
+                  </view>
+                </view>
+                <view class="card-content">
+                  <view class="title-row">
+                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
+                  </view>
+                  <view class="card-footer">
+                    <view class="author-info">
+                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
+                      <text class="author-name {{item.author_info.is_certified ? 'certified' : ''}}">{{item.author_info.nickname}}</text>
+                    </view>
+                    <view class="like-info">
+                      <van-icon name="{{item.isLiked ? 'like' : 'like-o'}}" size="14" color="{{item.isLiked ? '#b63b36' : '#999'}}" />
+                      <text class="like-count {{item.isLiked ? 'liked' : ''}}">{{item.likes || 0}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+          <view class="end-tip" wx:if="{{followPostList.length > 0 && !followLoading}}">
+            <view class="end-line"></view>
+            <text class="end-text">已经到底啦~</text>
+            <view class="end-line"></view>
+          </view>
+          <view class="empty-state" wx:if="{{followPostList.length === 0 && !followLoading}}">
+            <van-empty description="{{followEmptyDesc || '暂无动态'}}" />
+          </view>
+          <view class="loading-state" wx:if="{{followLoading}}">
+            <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
+          </view>
+        </view>
+      </scroll-view>
+    </swiper-item>
+  </swiper>
 </view>
 
 <!-- 底部浮动发布按钮（抽屉关闭时显示） -->
