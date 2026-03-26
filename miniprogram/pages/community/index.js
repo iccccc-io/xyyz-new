@@ -34,6 +34,8 @@ Page({
     // 顶部 & 布局
     statusBarHeight: 20,
     headerBaseHeight: 0,
+    headerCollapsedHeight: 0,
+    feedSwiperCollapsedPx: 500,
     drawerTop: 0,
     activeTab: 'discover',
     feedSwiperIndex: 0, // 0 发现 1 关注（与 swiper 联动）
@@ -67,6 +69,7 @@ Page({
     const tabRowPx = Math.round(96 * ratio)
     const searchRowPx = Math.round(88 * ratio)
     const headerBaseHeight = statusBarHeight + tabRowPx + searchRowPx
+    const headerCollapsedHeight = statusBarHeight + tabRowPx
     const drawerTop = statusBarHeight + tabRowPx
 
     // 自定义 TabBar 高度：100rpx + safe-area-inset-bottom
@@ -80,6 +83,7 @@ Page({
     // 消息区高度 = 抽屉可见高度 - 输入区高度
     const chatAreaHeight = sys.screenHeight - drawerTop - tabBarPx - inputAreaPx
     const feedSwiperHeightPx = Math.max(200, sys.screenHeight - headerBaseHeight - tabBarPx)
+    const feedSwiperCollapsedPx = Math.max(200, sys.screenHeight - headerCollapsedHeight - tabBarPx)
 
     this._chatLayoutBase = {
       screenHeight: sys.screenHeight,
@@ -92,6 +96,8 @@ Page({
     this.setData({
       statusBarHeight,
       headerBaseHeight,
+      headerCollapsedHeight,
+      feedSwiperCollapsedPx,
       drawerTop,
       drawerBottom: tabBarPx,
       chatAreaHeight,

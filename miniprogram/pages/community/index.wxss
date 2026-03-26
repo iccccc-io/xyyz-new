@@ -164,6 +164,7 @@ page {
 
 /* --- 搜索行 --- */
 .search-row {
+  box-sizing: border-box; /* 让 padding 算在 88rpx 内，避免占位偏小覆盖帖子 */
   height: 88rpx;
   padding: 0 32rpx 16rpx;
   opacity: 1;

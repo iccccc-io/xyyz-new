@@ -50,13 +50,13 @@
   </view>
 </view>
 
-<!-- 占位元素 -->
-<view class="header-placeholder" style="height: {{headerBaseHeight}}px;"></view>
+<!-- 占位元素：折叠搜索行时与固定顶栏高度同步缩小 -->
+<view class="header-placeholder" style="height: {{searchCollapsed ? headerCollapsedHeight : headerBaseHeight}}px;"></view>
 
 <view class="community-container">
   <swiper
     class="feed-swiper"
-    style="height: {{feedSwiperHeightPx}}px;"
+    style="height: {{searchCollapsed ? feedSwiperCollapsedPx : feedSwiperHeightPx}}px;"
     current="{{feedSwiperIndex}}"
     bindchange="onFeedSwiperChange"
     duration="{{260}}"
