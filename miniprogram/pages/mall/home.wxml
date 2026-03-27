@@ -2,6 +2,9 @@
   <view class="page-header" style="padding-top: {{statusBarHeight}}px;">
     <view class="header-inner">
       <view class="capsule-offset" style="height: {{headerTopOffset}}px;"></view>
+      <view class="mall-floating-title" style="height: {{headerTopOffset}}px;">
+        <text class="mall-floating-title-text">文创市集</text>
+      </view>
 
       <view class="search-shell">
         <van-icon name="search" size="18" color="#B8AEA2" />

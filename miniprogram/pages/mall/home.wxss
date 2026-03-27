@@ -18,11 +18,36 @@ page {
 }
 
 .header-inner {
+  position: relative;
   padding: 18rpx 20rpx 16rpx;
 }
 
 .capsule-offset {
   width: 100%;
+}
+
+.mall-floating-title {
+  position: absolute;
+  top: 0;
+  left: 32rpx;
+  right: 180rpx;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 10rpx;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.mall-floating-title-text {
+  font-size: 36rpx;
+  line-height: 1;
+  font-weight: 800;
+  color: #1A1A1A;
+  letter-spacing: 0.6rpx;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-shell {
