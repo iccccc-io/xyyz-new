@@ -1,172 +1,314 @@
-// pages/mall/home.js
 const db = wx.cloud.database()
 
-/**
- * 将价格（分）格式化为可读的元字符串
- * 数据库统一存储为分（整数），此函数先除以100转为元再格式化
- * @param {number} fen - 价格（单位：分）
- * @returns {string} 格式化后的价格字符串（元）
- */
+const CATEGORY_TABS = [
+  { id: '全部', label: '全部' },
+  { id: '手工体验', label: '手工体验' },
+  { id: '非遗摆件', label: '非遗摆件' },
+  { id: '文房雅器', label: '文房雅器' },
+  { id: '地道风物', label: '地道风物' },
+  { id: '服饰配件', label: '服饰配件' },
+  { id: '家居装饰', label: '家居装饰' },
+  { id: '文创礼品', label: '文创礼品' }
+]
+
+const PAGE_HORIZONTAL_PADDING_RPX = 20
+const COLUMN_GAP_RPX = 16
+const DEFAULT_IMAGE_RATIO = 1.18
+const IMAGE_RATIO_BY_CATEGORY = {
+  '手工体验': 1.28,
+  '非遗摆件': 1.1,
+  '文房雅器': 1.24,
+  '地道风物': 1.02,
+  '服饰配件': 1.3,
+  '家居装饰': 1.16,
+  '文创礼品': 1.12
+}
+
 function formatPrice(fen) {
   if (!fen && fen !== 0) return '0.00'
-  fen = Number(fen)
-  if (isNaN(fen) || !isFinite(fen)) return '0.00'
+  const amount = Number(fen)
+  if (Number.isNaN(amount) || !Number.isFinite(amount)) return '0.00'
 
-  const yuan = fen / 100
-
+  const yuan = amount / 100
   if (yuan >= 100000000) {
     return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
   }
   if (yuan >= 10000) {
     return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
   }
-  // 小于1万：保留两位小数，去掉末尾无效零
   return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
 }
 
-/**
- * 截断文本
- * @param {string} text - 原始文本
- * @param {number} maxLen - 最大长度
- * @returns {string} 截断后的文本
- */
 function truncateText(text, maxLen) {
   if (!text) return ''
   return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
 
+function clamp(num, min, max) {
+  return Math.min(Math.max(num, min), max)
+}
+
+function getFallbackRatio(category) {
+  return IMAGE_RATIO_BY_CATEGORY[category] || DEFAULT_IMAGE_RATIO
+}
+
+function getImageInfo(src) {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve(null)
+      return
+    }
+
+    wx.getImageInfo({
+      src,
+      success: (res) => resolve(res),
+      fail: () => resolve(null)
+    })
+  })
+}
+
 Page({
-  /**
-   * 页面的初始数据
-   */
   data: {
     statusBarHeight: 20,
     searchValue: '',
-    // 每日推荐商品
     featuredProduct: null,
-    // 快捷入口列表（跳转用，不再用于筛选）
-    quickEntries: [
-      { id: 'category', name: '全部分类', icon: 'apps-o', type: 'category' },
-      { id: '手工体验', name: '手工体验', icon: 'gift-o', type: 'topic' },
-      { id: '非遗摆件', name: '非遗摆件', icon: 'gem-o', type: 'topic' },
-      { id: '地道风物', name: '地道风物', icon: 'shop-o', type: 'topic' },
-      { id: '文房雅器', name: '文房雅器', icon: 'edit', type: 'topic' }
-    ],
-    // 非遗工坊直供专区
-    workshops: [],
-    // 商品列表 - 双列瀑布流
+    categoryTabs: CATEGORY_TABS,
+    activeCategory: '全部',
     leftColumn: [],
     rightColumn: [],
-    // 加载状态
     loading: true,
     loadingMore: false,
     noMore: false,
-    // 分页
     page: 0,
     pageSize: 10
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options) {
-    // 获取状态栏高度
+  onLoad() {
     const systemInfo = wx.getSystemInfoSync()
+    const rpxToPx = systemInfo.screenWidth / 750
+
+    this._columnWidthPx = (
+      systemInfo.screenWidth -
+      PAGE_HORIZONTAL_PADDING_RPX * 2 * rpxToPx -
+      COLUMN_GAP_RPX * rpxToPx
+    ) / 2
+    this._leftColumnHeight = 0
+    this._rightColumnHeight = 0
+    this._workshopCache = {}
+
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight || 20
     })
-    
-    this.loadFeaturedProduct()
-    this.loadWorkshops()
-    this.loadProducts(true)
+
+    this.initializePage()
   },
 
-  /**
-   * 加载每日推荐商品
-   */
+  async initializePage() {
+    await this.loadFeaturedProduct()
+    await this.loadProducts(true)
+  },
+
+  buildWhereCondition() {
+    const _ = db.command
+    const searchValue = (this.data.searchValue || '').trim()
+    const condition = {
+      status: 1,
+      stock: _.gt(0)
+    }
+
+    if (searchValue) {
+      condition.title = db.RegExp({
+        regexp: searchValue,
+        options: 'i'
+      })
+    }
+
+    if (this.data.activeCategory !== '全部') {
+      condition.category = this.data.activeCategory
+    }
+
+    return condition
+  },
+
+  shouldPinFeaturedCard() {
+    return Boolean(
+      this.data.featuredProduct &&
+      !(this.data.searchValue || '').trim() &&
+      this.data.activeCategory === '全部'
+    )
+  },
+
   async loadFeaturedProduct() {
     try {
       const _ = db.command
       const res = await db.collection('shopping_products')
         .where({
-          status: 1, // 已上架
-          stock: _.gt(0) // 有库存
+          status: 1,
+          stock: _.gt(0)
         })
         .orderBy('sales', 'desc')
         .limit(1)
         .get()
-      
-      if (res.data.length > 0) {
-        const item = res.data[0]
-        this.setData({
-          featuredProduct: {
-            ...item,
-            priceDisplay: formatPrice(item.price),
-            titleDisplay: truncateText(item.title, 15),
-            originDisplay: truncateText(item.origin || '湖南', 6)
-          }
-        })
+
+      if (!res.data.length) {
+        this.setData({ featuredProduct: null })
+        return
       }
+
+      const [item] = res.data
+      const workshopMap = await this.loadWorkshopMeta(item.workshop_id ? [item.workshop_id] : [])
+      const imageRatioMap = await this.loadImageRatioMap([item])
+
+      this.setData({
+        featuredProduct: this.normalizeProduct(item, workshopMap, imageRatioMap[item._id])
+      })
     } catch (err) {
       console.error('加载推荐商品失败:', err)
     }
   },
 
-  /**
-   * 加载非遗工坊直供专区
-   * 从 shopping_workshops 表获取工坊信息
-   */
-  async loadWorkshops() {
-    try {
-      // 查询工坊表，按销量排序
-      const workshopsRes = await db.collection('shopping_workshops')
-        .orderBy('total_sales', 'desc')
-        .limit(10)
-        .get()
-      
-      const workshops = []
-      
-      // 为每个工坊查询一个代表商品（销量最高的商品作为封面）
-      for (const workshop of workshopsRes.data) {
-        const productRes = await db.collection('shopping_products')
-          .where({
-            workshop_id: workshop._id,
-            status: 1
-          })
-          .orderBy('sales', 'desc')
-          .limit(1)
-          .get()
-        
-        const product = productRes.data[0]
-        workshops.push({
-          id: workshop._id,
-          name: truncateText(workshop.name, 8),
-          origin: truncateText(workshop.ich_category || '湖南', 6),
-          ich_category: workshop.ich_category,
-          product: product ? {
-            ...product,
-            priceDisplay: formatPrice(product.price),
-            titleDisplay: truncateText(product.title, 10)
-          } : null
+  async loadWorkshopMeta(workshopIds) {
+    const validIds = [...new Set((workshopIds || []).filter(Boolean))]
+    if (!validIds.length) return this._workshopCache
+
+    const missingIds = validIds.filter((id) => !this._workshopCache[id])
+    if (!missingIds.length) return this._workshopCache
+
+    const _ = db.command
+
+    for (let index = 0; index < missingIds.length; index += 20) {
+      const batchIds = missingIds.slice(index, index + 20)
+      const res = await db.collection('shopping_workshops')
+        .where({
+          _id: _.in(batchIds)
         })
-      }
-      
-      this.setData({
-        workshops: workshops
+        .field({
+          _id: true,
+          name: true,
+          logo: true,
+          ich_category: true
+        })
+        .get()
+
+      ;(res.data || []).forEach((item) => {
+        this._workshopCache[item._id] = item
       })
-    } catch (err) {
-      console.error('加载工坊数据失败:', err)
+    }
+
+    return this._workshopCache
+  },
+
+  async loadImageRatioMap(products) {
+    if (!products || !products.length) return {}
+
+    const cloudIds = [...new Set(
+      products
+        .map((item) => item.cover_img)
+        .filter((src) => src && src.startsWith('cloud://'))
+    )]
+
+    const tempUrlMap = {}
+    if (cloudIds.length) {
+      try {
+        const tempRes = await wx.cloud.getTempFileURL({ fileList: cloudIds })
+        ;(tempRes.fileList || []).forEach((item) => {
+          if (item.status === 0 && item.tempFileURL) {
+            tempUrlMap[item.fileID] = item.tempFileURL
+          }
+        })
+      } catch (err) {
+        console.warn('获取商品临时图片链接失败:', err)
+      }
+    }
+
+    const ratioEntries = await Promise.all(
+      products.map(async (item) => {
+        const rawSrc = item.cover_img || ''
+        const imageSrc = rawSrc.startsWith('cloud://') ? tempUrlMap[rawSrc] : rawSrc
+        let ratio = getFallbackRatio(item.category)
+
+        if (imageSrc) {
+          const info = await getImageInfo(imageSrc)
+          if (info && info.width && info.height) {
+            ratio = clamp(info.height / info.width, 0.72, 1.5)
+          }
+        }
+
+        return [item._id, ratio]
+      })
+    )
+
+    return ratioEntries.reduce((map, [id, ratio]) => {
+      map[id] = ratio
+      return map
+    }, {})
+  },
+
+  normalizeProduct(item, workshopMap, imageRatio) {
+    const workshop = item.workshop_id ? workshopMap[item.workshop_id] || {} : {}
+    const workshopName = workshop.name || item.origin || '非遗工坊'
+    const originText = item.origin || workshop.ich_category || '湖南'
+
+    return {
+      ...item,
+      priceDisplay: formatPrice(item.price),
+      originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : '',
+      titleDisplay: truncateText(item.title, 24),
+      projectDisplayName: truncateText(item.related_project_name || '', 14),
+      originDisplay: truncateText(originText, 8),
+      badgeText: item.category || '匠作好物',
+      workshopDisplayName: truncateText(workshopName, 8),
+      workshopLogo: workshop.logo || '',
+      workshopInitial: (workshopName || '匠').slice(0, 1),
+      imageRatio: clamp(imageRatio || getFallbackRatio(item.category), 0.72, 1.5)
     }
   },
 
-  /**
-   * 加载商品列表（首页展示全部商品，不再按分类筛选）
-   */
+  estimateCardHeight(item) {
+    const imageHeight = this._columnWidthPx * (item.imageRatio || DEFAULT_IMAGE_RATIO)
+    const titleLines = Math.min(2, Math.ceil(((item.title || '').length || 1) / 10))
+    const titleHeight = titleLines * 22
+    const tagHeight = item.projectDisplayName ? 30 : 26
+    const footerHeight = 30
+    const bodyPadding = 72
+
+    return imageHeight + titleHeight + tagHeight + footerHeight + bodyPadding
+  },
+
+  distributeProducts(products, refresh) {
+    let leftColumn = refresh ? [] : [...this.data.leftColumn]
+    let rightColumn = refresh ? [] : [...this.data.rightColumn]
+    let leftHeight = refresh ? 0 : this._leftColumnHeight || 0
+    let rightHeight = refresh ? 0 : this._rightColumnHeight || 0
+
+    products.forEach((item) => {
+      if (refresh && this.shouldPinFeaturedCard() && this.data.featuredProduct && item._id === this.data.featuredProduct._id) {
+        return
+      }
+
+      const estimatedHeight = this.estimateCardHeight(item)
+      if (leftHeight <= rightHeight) {
+        leftColumn.push(item)
+        leftHeight += estimatedHeight
+      } else {
+        rightColumn.push(item)
+        rightHeight += estimatedHeight
+      }
+    })
+
+    this._leftColumnHeight = leftHeight
+    this._rightColumnHeight = rightHeight
+
+    return { leftColumn, rightColumn }
+  },
+
   async loadProducts(refresh = false) {
     if (this.data.loadingMore && !refresh) return
     if (this.data.noMore && !refresh) return
 
     if (refresh) {
+      this._leftColumnHeight = 0
+      this._rightColumnHeight = 0
       this.setData({
         leftColumn: [],
         rightColumn: [],
@@ -179,71 +321,36 @@ Page({
     }
 
     try {
-      const { page, pageSize, searchValue } = this.data
-      const _ = db.command
-      
-      let query = db.collection('shopping_products')
-      
-      // 基础过滤：只显示已上架且有库存的商品
-      let whereCondition = {
-        status: 1, // 已上架
-        stock: _.gt(0) // 有库存
-      }
-      
-      // 搜索筛选
-      if (searchValue) {
-        whereCondition.title = db.RegExp({
-          regexp: searchValue,
-          options: 'i'
-        })
-      }
-      
-      const res = await query
-        .where(whereCondition)
-        .skip(page * pageSize)
+      const currentPage = refresh ? 0 : this.data.page
+      const { pageSize } = this.data
+      const res = await db.collection('shopping_products')
+        .where(this.buildWhereCondition())
+        .skip(currentPage * pageSize)
         .limit(pageSize)
         .orderBy('sales', 'desc')
         .get()
-      
-      const products = res.data
-      
+
+      const products = res.data || []
       if (products.length < pageSize) {
         this.setData({ noMore: true })
       }
 
-      // 格式化商品数据
-      const formattedProducts = products.map(item => ({
-        ...item,
-        // 价格格式化（直接格式化，大数字转为万/亿）
-        priceDisplay: formatPrice(item.price),
-        originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : '',
-        // 文字截断
-        titleDisplay: truncateText(item.title, 20),
-        originDisplay: truncateText(item.origin || '湖南', 8)
-      }))
+      const workshopIds = [...new Set(products.map((item) => item.workshop_id).filter(Boolean))]
+      const [workshopMap, imageRatioMap] = await Promise.all([
+        this.loadWorkshopMeta(workshopIds),
+        this.loadImageRatioMap(products)
+      ])
 
-      // 瀑布流分配 - 简单的左右交替分配
-      const { leftColumn, rightColumn } = this.data
-      let left = refresh ? [] : [...leftColumn]
-      let right = refresh ? [] : [...rightColumn]
-      
-      formattedProducts.forEach((item, index) => {
-        // 跳过推荐商品（如果在第一页）
-        if (refresh && this.data.featuredProduct && item._id === this.data.featuredProduct._id) {
-          return
-        }
-        
-        if ((left.length <= right.length)) {
-          left.push(item)
-        } else {
-          right.push(item)
-        }
-      })
+      const normalizedProducts = products.map((item) =>
+        this.normalizeProduct(item, workshopMap, imageRatioMap[item._id])
+      )
+
+      const { leftColumn, rightColumn } = this.distributeProducts(normalizedProducts, refresh)
 
       this.setData({
-        leftColumn: left,
-        rightColumn: right,
-        page: page + 1,
+        leftColumn,
+        rightColumn,
+        page: currentPage + 1,
         loading: false,
         loadingMore: false
       })
@@ -260,54 +367,42 @@ Page({
     }
   },
 
-  /**
-   * 搜索输入
-   */
   onSearchInput(e) {
     this.setData({
-      searchValue: e.detail
+      searchValue: e.detail.value
     })
   },
 
-  /**
-   * 搜索确认
-   */
-  onSearch() {
+  onSearchConfirm() {
+    wx.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
+    })
     this.loadProducts(true)
   },
 
-  /**
-   * 清空搜索
-   */
   onSearchClear() {
-    this.setData({
-      searchValue: ''
+    if (!this.data.searchValue) return
+    this.setData({ searchValue: '' })
+    wx.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
     })
     this.loadProducts(true)
   },
 
-  /**
-   * 快捷入口点击 - 跳转到对应页面
-   */
-  onEntryTap(e) {
-    const { id, type } = e.currentTarget.dataset
-    
-    if (type === 'category') {
-      // 跳转到全部分类页
-      wx.navigateTo({
-        url: '/pages/mall/category'
-      })
-    } else if (type === 'topic') {
-      // 跳转到专题页，传递关键字
-      wx.navigateTo({
-        url: `/pages/mall/topic?keyword=${encodeURIComponent(id)}`
-      })
-    }
+  onCategoryChange(e) {
+    const { id } = e.currentTarget.dataset
+    if (!id || id === this.data.activeCategory) return
+
+    this.setData({ activeCategory: id })
+    wx.pageScrollTo({
+      scrollTop: 0,
+      duration: 0
+    })
+    this.loadProducts(true)
   },
 
-  /**
-   * 跳转商品详情
-   */
   goToDetail(e) {
     const { id } = e.currentTarget.dataset
     wx.navigateTo({
@@ -315,35 +410,22 @@ Page({
     })
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow() {
-    // 更新自定义 tabBar 选中状态
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(2)
     }
   },
 
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-    this.loadProducts(true).then(() => {
-      wx.stopPullDownRefresh()
-    })
+  async onPullDownRefresh() {
+    await this.loadFeaturedProduct()
+    await this.loadProducts(true)
+    wx.stopPullDownRefresh()
   },
 
-  /**
-   * 页面上拉触底事件的处理函数
-   */
   onReachBottom() {
     this.loadProducts(false)
   },
 
-  /**
-   * 用户点击右上角分享
-   */
   onShareAppMessage() {
     return {
       title: '湘韵遗珍 · 文创好物',
@@ -351,4 +433,3 @@ Page({
     }
   }
 })
-

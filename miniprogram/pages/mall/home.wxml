@@ -1,238 +1,157 @@
-<!--pages/mall/home.wxml-->
-<view class="mall-container">
-  <!-- 沉浸式顶部 -->
-  <view class="header" style="padding-top: {{statusBarHeight + 20}}px;">
-    <view class="header-bg"></view>
-    <view class="header-content">
-      <view class="header-title">
-        <text class="title-main">文创好物</text>
-        <text class="title-sub">匠心传承 · 非遗新生</text>
-      </view>
-      <!-- 毛玻璃搜索条 -->
-      <view class="search-bar">
-        <van-search
-          value="{{ searchValue }}"
-          placeholder="搜索非遗好物..."
-          shape="round"
-          background="transparent"
-          bind:change="onSearchInput"
-          bind:search="onSearch"
-          bind:clear="onSearchClear"
+<view class="mall-page">
+  <view class="page-header" style="padding-top: {{statusBarHeight}}px;">
+    <view class="header-inner">
+      <view class="search-shell">
+        <van-icon name="search" size="18" color="#B8AEA2" />
+        <input
+          class="search-input"
+          placeholder="搜索非遗文创..."
+          placeholder-class="search-placeholder"
+          value="{{searchValue}}"
+          confirm-type="search"
+          bindinput="onSearchInput"
+          bindconfirm="onSearchConfirm"
         />
+        <view class="search-clear" wx:if="{{searchValue}}" bindtap="onSearchClear">
+          <van-icon name="cross" size="14" color="#B8AEA2" />
+        </view>
+        <view class="search-action" bindtap="onSearchConfirm">
+          <van-icon name="arrow" size="16" color="#A12D27" />
+        </view>
       </view>
+
+      <scroll-view scroll-x class="tabs-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="tabs-track">
+          <view
+            class="tab-item {{activeCategory === item.id ? 'is-active' : ''}}"
+            wx:for="{{categoryTabs}}"
+            wx:key="id"
+            data-id="{{item.id}}"
+            bindtap="onCategoryChange"
+          >
+            <text class="tab-label">{{item.label}}</text>
+            <view class="tab-ink" wx:if="{{activeCategory === item.id}}"></view>
+          </view>
+        </view>
+      </scroll-view>
     </view>
   </view>
 
-  <!-- 每日一物 Hero Card -->
-  <view class="hero-section" wx:if="{{featuredProduct}}">
-    <view class="hero-card" bindtap="goToDetail" data-id="{{featuredProduct._id}}">
-      <view class="hero-label">
-        <text class="label-text">匠</text>
-        <text class="label-text">心</text>
-        <text class="label-divider"></text>
-        <text class="label-text">推</text>
-        <text class="label-text">荐</text>
-      </view>
-      <view class="hero-image-wrap">
-        <image 
-          class="hero-image" 
-          src="{{featuredProduct.cover_img}}" 
-          mode="aspectFill"
-        />
-        <view class="hero-overlay">
-          <view class="hero-info">
-            <text class="hero-title">{{featuredProduct.titleDisplay || featuredProduct.title}}</text>
-            <view class="hero-price-row">
-              <text class="hero-price">¥{{featuredProduct.priceDisplay}}</text>
-              <text class="hero-origin">📍 {{featuredProduct.originDisplay || '湖南'}}</text>
-            </view>
+  <view class="page-content">
+    <view class="featured-block" wx:if="{{featuredProduct && activeCategory === '全部' && !searchValue}}">
+      <view class="featured-card" bindtap="goToDetail" data-id="{{featuredProduct._id}}">
+        <image class="featured-image" src="{{featuredProduct.cover_img}}" mode="aspectFill" />
+        <view class="featured-badge">{{featuredProduct.badgeText}}</view>
+        <view class="featured-chip-row">
+          <view class="featured-chip">{{featuredProduct.workshopDisplayName}}</view>
+          <view class="featured-chip" wx:if="{{featuredProduct.projectDisplayName}}">{{featuredProduct.projectDisplayName}}</view>
+        </view>
+        <view class="featured-gradient"></view>
+        <view class="featured-content">
+          <text class="featured-title">{{featuredProduct.title}}</text>
+          <view class="featured-footer">
+            <text class="featured-price">¥{{featuredProduct.priceDisplay}}</text>
+            <text class="featured-note">匠心推荐</text>
           </view>
         </view>
       </view>
     </view>
-  </view>
 
-  <!-- 快捷入口导航 -->
-  <view class="category-section">
-    <scroll-view scroll-x class="category-scroll" enhanced show-scrollbar="{{false}}">
-      <view class="category-list">
-        <view 
-          class="category-item"
-          wx:for="{{quickEntries}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          data-type="{{item.type}}"
-          bindtap="onEntryTap"
-        >
-          <view class="category-icon-wrap">
-            <van-icon name="{{item.icon}}" size="24" color="#8B2E2A" />
-          </view>
-          <text class="category-name">{{item.name}}</text>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- 特色专区 - 非遗工坊直供 -->
-  <view class="workshop-section" wx:if="{{workshops.length > 0}}">
-    <view class="section-header">
-      <view class="section-title-wrap">
-        <view class="title-decoration"></view>
-        <text class="section-title">非遗工坊直供</text>
-        <view class="title-decoration"></view>
-      </view>
-      <text class="section-subtitle">源头直采 · 匠人匠心</text>
-    </view>
-    
-    <scroll-view 
-      scroll-x 
-      class="workshop-scroll" 
-      enhanced 
-      show-scrollbar="{{false}}"
-    >
-      <view class="workshop-list">
-        <view 
-          class="workshop-card"
-          wx:for="{{workshops}}"
-          wx:key="id"
-          bindtap="goToDetail"
-          data-id="{{item.product._id}}"
-        >
-          <!-- 工坊图片（代表作） -->
-          <view class="workshop-image-wrap">
-            <image 
-              class="workshop-image" 
-              src="{{item.product.cover_img}}" 
-              mode="aspectFill"
-            />
-            <view class="workshop-badge">
-              <van-icon name="shop-o" size="12" color="#fff" />
-              <text>直供</text>
-            </view>
-          </view>
-          <!-- 工坊信息 -->
-          <view class="workshop-info">
-            <text class="workshop-name">{{item.name}}</text>
-            <view class="workshop-meta">
-              <text class="workshop-origin">📍 {{item.origin || '湖南'}}</text>
-            </view>
-            <view class="workshop-product">
-              <text class="product-label">代表作：</text>
-              <text class="product-name">{{item.product.titleDisplay || item.product.title}}</text>
-            </view>
-            <view class="workshop-price">
-              <text class="price-symbol">¥</text>
-              <text class="price-value">{{item.product.priceDisplay}}</text>
-              <text class="price-suffix">起</text>
-            </view>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- 好物市集 - 瀑布流 -->
-  <view class="products-section">
-    <view class="section-header">
-      <view class="section-title-wrap">
-        <view class="title-decoration"></view>
-        <text class="section-title">好物市集</text>
-        <view class="title-decoration"></view>
-      </view>
-      <text class="section-subtitle">每一件都是非遗的温度</text>
+    <view class="feed-head">
+      <text class="feed-title">{{searchValue ? '搜索结果' : (activeCategory === '全部' ? '匠作清单' : activeCategory)}}</text>
+      <text class="feed-subtitle">{{searchValue ? '与关键词相关的非遗文创' : '让商品回归作品本身，也让工坊被看见'}}</text>
     </view>
 
-    <!-- 加载状态 -->
     <view class="loading-state" wx:if="{{loading}}">
-      <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+      <van-loading size="24px" color="#A12D27">加载中...</van-loading>
     </view>
 
-    <!-- 空状态 -->
-    <van-empty 
-      wx:elif="{{leftColumn.length === 0 && rightColumn.length === 0}}"
-      description="暂无商品"
-    />
+    <view class="empty-state" wx:elif="{{leftColumn.length === 0 && rightColumn.length === 0}}">
+      <van-empty description="暂时没有符合条件的文创好物" />
+    </view>
 
-    <!-- 商品瀑布流 -->
     <view class="waterfall-container" wx:else>
-      <!-- 左列 -->
       <view class="waterfall-column">
-        <view 
+        <view
           class="product-card"
           wx:for="{{leftColumn}}"
           wx:key="_id"
           bindtap="goToDetail"
           data-id="{{item._id}}"
         >
-          <view class="card-image-wrap">
-            <image 
-              class="card-image" 
-              src="{{item.cover_img}}" 
-              mode="widthFix"
-              lazy-load
-            />
+          <view class="card-media">
+            <image class="card-image" src="{{item.cover_img}}" mode="widthFix" lazy-load />
+            <view class="card-badge">{{item.badgeText}}</view>
           </view>
-          <view class="card-content">
-            <text class="card-title">{{item.titleDisplay || item.title}}</text>
-            <view class="card-project" wx:if="{{item.related_project_name}}">
-              <text class="project-tag">{{item.related_project_name}}</text>
+          <view class="card-body">
+            <text class="card-title">{{item.title}}</text>
+            <view class="card-tag-row" wx:if="{{item.projectDisplayName}}">
+              <text class="card-tag">📌 {{item.projectDisplayName}}</text>
+            </view>
+            <view class="card-tag-row" wx:else>
+              <text class="card-tag card-tag-muted">源自 {{item.originDisplay}}</text>
             </view>
             <view class="card-footer">
-              <view class="price-wrap">
-                <text class="current-price">¥{{item.priceDisplay}}</text>
-                <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
+              <view class="card-price">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{item.priceDisplay}}</text>
               </view>
-              <text class="sales-text">已售{{item.sales || 0}}</text>
+              <view class="workshop-box">
+                <image wx:if="{{item.workshopLogo}}" class="workshop-avatar" src="{{item.workshopLogo}}" mode="aspectFill" />
+                <view wx:else class="workshop-avatar workshop-avatar-fallback">
+                  <text class="workshop-initial">{{item.workshopInitial}}</text>
+                </view>
+                <text class="workshop-name">{{item.workshopDisplayName}}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
 
-      <!-- 右列 -->
       <view class="waterfall-column">
-        <view 
+        <view
           class="product-card"
           wx:for="{{rightColumn}}"
           wx:key="_id"
           bindtap="goToDetail"
           data-id="{{item._id}}"
         >
-          <view class="card-image-wrap">
-            <image 
-              class="card-image" 
-              src="{{item.cover_img}}" 
-              mode="widthFix"
-              lazy-load
-            />
+          <view class="card-media">
+            <image class="card-image" src="{{item.cover_img}}" mode="widthFix" lazy-load />
+            <view class="card-badge">{{item.badgeText}}</view>
           </view>
-          <view class="card-content">
-            <text class="card-title">{{item.titleDisplay || item.title}}</text>
-            <view class="card-project" wx:if="{{item.related_project_name}}">
-              <text class="project-tag">{{item.related_project_name}}</text>
+          <view class="card-body">
+            <text class="card-title">{{item.title}}</text>
+            <view class="card-tag-row" wx:if="{{item.projectDisplayName}}">
+              <text class="card-tag">📌 {{item.projectDisplayName}}</text>
+            </view>
+            <view class="card-tag-row" wx:else>
+              <text class="card-tag card-tag-muted">源自 {{item.originDisplay}}</text>
             </view>
             <view class="card-footer">
-              <view class="price-wrap">
-                <text class="current-price">¥{{item.priceDisplay}}</text>
-                <text class="original-price" wx:if="{{item.originalPriceDisplay}}">¥{{item.originalPriceDisplay}}</text>
+              <view class="card-price">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{item.priceDisplay}}</text>
               </view>
-              <text class="sales-text">已售{{item.sales || 0}}</text>
+              <view class="workshop-box">
+                <image wx:if="{{item.workshopLogo}}" class="workshop-avatar" src="{{item.workshopLogo}}" mode="aspectFill" />
+                <view wx:else class="workshop-avatar workshop-avatar-fallback">
+                  <text class="workshop-initial">{{item.workshopInitial}}</text>
+                </view>
+                <text class="workshop-name">{{item.workshopDisplayName}}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 加载更多 -->
     <view class="loading-more" wx:if="{{loadingMore}}">
-      <van-loading size="20px" color="#8B2E2A" />
+      <van-loading size="20px" color="#A12D27" />
     </view>
 
-    <!-- 没有更多 -->
     <view class="no-more" wx:if="{{noMore && (leftColumn.length > 0 || rightColumn.length > 0)}}">
-      <view class="no-more-line"></view>
-      <text class="no-more-text">已展示全部好物</text>
-      <view class="no-more-line"></view>
+      已经逛到底了
     </view>
   </view>
 </view>
-
