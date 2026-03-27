@@ -310,22 +310,8 @@ page {
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
-.draft-btn {
-  flex: 1;
-  text-align: center;
-  padding: 24rpx 0;
-  background: #f5f5f5;
-  border-radius: 40rpx;
-}
-
-.draft-btn text {
-  font-size: 30rpx;
-  color: #666666;
-  font-weight: 500;
-}
-
 .publish-btn {
-  flex: 2;
+  flex: 1;
   text-align: center;
   padding: 24rpx 0;
   background: linear-gradient(135deg, #b63b36 0%, #d4574f 100%);
@@ -338,10 +324,127 @@ page {
   font-weight: bold;
 }
 
-.draft-btn:active {
+.publish-btn:active {
   opacity: 0.8;
 }
 
-.publish-btn:active {
-  opacity: 0.8;
+/* ── 非遗项目弹层 ── */
+.proj-sheet {
+  display: flex;
+  flex-direction: column;
+  height: 68vh;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  overflow: hidden;
+}
+
+.proj-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28rpx 32rpx 16rpx;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.proj-sheet-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.proj-sheet-close {
+  position: absolute;
+  right: 32rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8rpx;
+}
+
+.proj-search-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin: 0 32rpx 16rpx;
+  padding: 0 24rpx;
+  height: 72rpx;
+  background: #f5f5f5;
+  border-radius: 36rpx;
+  gap: 12rpx;
+}
+
+.proj-search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  background: transparent;
+  height: 100%;
+}
+
+.proj-search-placeholder {
+  color: #bbb;
+  font-size: 28rpx;
+}
+
+.proj-search-clear {
+  padding: 4rpx;
+}
+
+
+.proj-list-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.proj-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.proj-scroll {
+  flex: 1;
+  height: 100%;
+}
+
+.proj-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f7f7f7;
+}
+
+.proj-item:active {
+  background: #fafafa;
+}
+
+.proj-item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.proj-item-name {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.proj-item-name--none {
+  color: #b63b36;
+}
+
+.proj-item-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.proj-empty {
+  padding: 80rpx 32rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #bbb;
 }

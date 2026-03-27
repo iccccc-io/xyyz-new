@@ -11,9 +11,17 @@ Page({
     title: '',              // 标题
     content: '',            // 正文
     selectedTags: [],       // 选中的标签
-    selectedProject: '',    // 选中的非遗项目
+    selectedProject: '',    // 选中的非遗项目名称
+    selectedProjectId: '', // 选中的非遗项目 project_id
     location: {},           // 位置信息
-    showPicker: false,      // 项目选择器显示状态
+
+    // 非遗项目弹层
+    showPicker: false,
+    projLoading: false,
+    projAllList: [],       // 全量列表（一次拉取后缓存）
+    projSearchKw: '',
+    projFilteredList: [],
+
     showTopicSearch: false, // 话题搜索浮层显示状态
     
     // 编辑模式相关
@@ -28,8 +36,6 @@ Page({
     // 推荐话题标签（预设高频标签）
     recommendTags: ['非遗打卡', '周末去哪儿', '匠心', '手艺人', '传统文化'],
     
-    // 非遗项目选项
-    projectOptions: ['不关联', '湘绣', '滩头木版年画', '菊花石雕', '长沙花鼓戏', '女书', '土家族织锦', '苗族银饰']
   },
 
   /**
@@ -42,7 +48,7 @@ Page({
         isEditMode: true, 
         editPostId: options.id 
       })
-      wx.setNavigationBarTitle({ title: '编辑笔记' })
+      // nav-bar 标题由 isEditMode 控制，无需原生 API
       this.loadPostData(options.id)
     }
     
@@ -266,29 +272,122 @@ Page({
     })
   },
 
-  /**
-   * 显示项目选择器
-   */
+  // ── 非遗项目弹层 ──────────────────────────────────────────────────
+
   showProjectPicker() {
-    this.setData({ showPicker: true })
+    const needLoad = this.data.projAllList.length === 0
+    this.setData({
+      showPicker: true,
+      projSearchKw: '',
+      projFilteredList: this.data.projAllList,
+      // 若尚未加载，先置 loading，避免列表为空时短暂出现"未找到"
+      projLoading: needLoad ? true : this.data.projLoading
+    })
+    if (needLoad) {
+      this._loadAllProjects()
+    }
   },
 
-  /**
-   * 隐藏项目选择器
-   */
   hideProjectPicker() {
     this.setData({ showPicker: false })
   },
 
-  /**
-   * 确认选择项目
-   */
-  onProjectConfirm(e) {
-    const { value } = e.detail
+  onProjSearchInput(e) {
+    const kw = (e.detail.value || '').trim()
     this.setData({
-      selectedProject: value === '不关联' ? '' : value,
+      projSearchKw: kw,
+      projFilteredList: this._filterProjects(kw)
+    })
+  },
+
+  clearProjSearch() {
+    this.setData({
+      projSearchKw: '',
+      projFilteredList: this.data.projAllList
+    })
+  },
+
+  onPickNoneProject() {
+    this.setData({ selectedProject: '', selectedProjectId: '', showPicker: false })
+  },
+
+  onPickProject(e) {
+    const item = e.currentTarget.dataset.item
+    if (!item) return
+    this.setData({
+      selectedProject: item.name || '',
+      selectedProjectId: item.project_id || '',
       showPicker: false
     })
+  },
+
+  _filterProjects(kw) {
+    if (!kw) return this.data.projAllList
+    const lower = kw.toLowerCase()
+    return this.data.projAllList.filter(p =>
+      (p.name || '').toLowerCase().includes(lower) ||
+      (p.category || '').toLowerCase().includes(lower)
+    )
+  },
+
+  /**
+   * 拉取 ich_projects 全表：
+   * 1. count() 得总数
+   * 2. 并行发所有分页请求（无 orderBy，不需要索引）
+   * 3. 本地去重 + 按名称排序
+   */
+  async _loadAllProjects() {
+    this.setData({ projLoading: true })
+    const MAX = 20
+    try {
+      const countRes = await db.collection('ich_projects').count()
+      const total = countRes.total || 0
+      if (total === 0) {
+        this.setData({ projLoading: false, projAllList: [], projFilteredList: [] })
+        return
+      }
+      const batchCount = Math.ceil(total / MAX)
+      const tasks = []
+      for (let i = 0; i < batchCount; i++) {
+        tasks.push(
+          db.collection('ich_projects')
+            .skip(i * MAX)
+            .limit(MAX)
+            .field({ project_id: true, name: true, title: true, category: true, city: true })
+            .get()
+        )
+      }
+      const results = await Promise.all(tasks)
+      const seen = new Set()
+      const all = []
+      results.forEach(res => {
+        ;(res.data || []).forEach(p => {
+          const name = String(p.name || p.title || '').trim()
+          if (!name || !p.project_id || seen.has(p.project_id)) return
+          seen.add(p.project_id)
+          all.push({ project_id: p.project_id, name, category: p.category || '', city: p.city || '' })
+        })
+      })
+      all.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'))
+      // 注意：_filterProjects 读的是 this.data.projAllList，此时 setData 还未生效，
+      // 所以必须直接从新的 all 数组上过滤，不能依赖 this.data.projAllList
+      const kw = (this.data.projSearchKw || '').toLowerCase()
+      const filtered = kw
+        ? all.filter(p =>
+            (p.name || '').toLowerCase().includes(kw) ||
+            (p.category || '').toLowerCase().includes(kw)
+          )
+        : all
+      this.setData({
+        projLoading: false,
+        projAllList: all,
+        projFilteredList: filtered
+      })
+    } catch (e) {
+      console.error('[post] 拉取非遗项目失败', e)
+      this.setData({ projLoading: false, projAllList: [], projFilteredList: [] })
+      wx.showToast({ title: '项目加载失败，请重试', icon: 'none' })
+    }
   },
 
   /**
@@ -324,16 +423,6 @@ Page({
   },
 
   /**
-   * 保存草稿
-   */
-  saveDraft() {
-    wx.showToast({
-      title: '草稿已保存',
-      icon: 'success'
-    })
-  },
-
-  /**
    * 发布/更新帖子
    */
   async publishPost() {
@@ -341,14 +430,6 @@ Page({
     if (this.data.fileList.length === 0) {
       wx.showToast({
         title: '请至少选择一张图片',
-        icon: 'none'
-      })
-      return
-    }
-
-    if (!this.data.location.name) {
-      wx.showToast({
-        title: '请标记地点',
         icon: 'none'
       })
       return
@@ -448,11 +529,9 @@ Page({
           title: this.data.title || '分享一下',
           content: this.data.content || '',
           images: newImagesArray,
-          location: {
-            name: this.data.location.name,
-            latitude: this.data.location.latitude,
-            longitude: this.data.location.longitude
-          },
+          location: this.data.location.name
+            ? { name: this.data.location.name, latitude: this.data.location.latitude, longitude: this.data.location.longitude }
+            : {},
           related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
           tags: this.data.selectedTags,
           is_edited: true,
@@ -539,11 +618,9 @@ Page({
           title: this.data.title || '分享一下',
           content: this.data.content || '',
           images: imageObjects,
-          location: {
-            name: this.data.location.name,
-            latitude: this.data.location.latitude,
-            longitude: this.data.location.longitude
-          },
+          location: this.data.location.name
+            ? { name: this.data.location.name, latitude: this.data.location.latitude, longitude: this.data.location.longitude }
+            : {},
           related_projects: this.data.selectedProject ? [{ name: this.data.selectedProject }] : [],
           tags: this.data.selectedTags,
           create_time: new Date().toISOString(),

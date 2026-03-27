@@ -5,7 +5,7 @@
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",
     "van-popup": "@vant/weapp/popup/index",
-    "van-picker": "@vant/weapp/picker/index",
+    "van-loading": "@vant/weapp/loading/index",
     "topic-search": "/components/topic-search/index",
     "nav-bar": "/components/nav-bar/index"
   },

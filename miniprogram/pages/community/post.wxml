@@ -1,4 +1,10 @@
 <!--pages/community/post.wxml-->
+<nav-bar
+  title="{{isEditMode ? '编辑笔记' : '发布笔记'}}"
+  placeholder="{{true}}"
+  dark="{{true}}"
+  background="solid"
+/>
 <view class="post-container">
   <!-- 图片选择器（发布 & 编辑模式均可增删图片） -->
   <view class="uploader-section">
@@ -99,7 +105,7 @@
       <van-cell 
         title="标记地点" 
         is-link 
-        value="{{location.name || '必填'}}"
+        value="{{location.name || '选填'}}"
         bind:click="chooseLocation"
         title-style="color: #333"
         icon="location-o"
@@ -109,30 +115,74 @@
 
   <!-- 底部操作栏 -->
   <view class="action-bar">
-    <view class="draft-btn" bindtap="saveDraft" wx:if="{{!isEditMode}}">
-      <text>存草稿</text>
-    </view>
     <view class="publish-btn" bindtap="publishPost">
       <text>{{isEditMode ? '保存修改' : '发布笔记'}}</text>
     </view>
   </view>
 
-  <!-- 非遗项目选择器 -->
-  <van-popup 
-    show="{{ showPicker }}" 
+  <!-- 非遗项目选择器（真实数据 + 搜索过滤） -->
+  <van-popup
+    show="{{ showPicker }}"
     position="bottom"
     bind:close="hideProjectPicker"
     round
+    custom-style="height:68vh;display:flex;flex-direction:column;"
   >
-    <van-picker
-      columns="{{ projectOptions }}"
-      bind:confirm="onProjectConfirm"
-      bind:cancel="hideProjectPicker"
-      show-toolbar
-      title="选择非遗项目"
-      confirm-button-text="确定"
-      cancel-button-text="取消"
-    />
+    <view class="proj-sheet">
+      <!-- 标题栏 -->
+      <view class="proj-sheet-header">
+        <text class="proj-sheet-title">选择非遗项目</text>
+        <view class="proj-sheet-close" bindtap="hideProjectPicker">
+          <van-icon name="cross" size="18px" color="#999" />
+        </view>
+      </view>
+      <!-- 搜索框 -->
+      <view class="proj-search-wrap">
+        <van-icon name="search" size="16px" color="#aaa" />
+        <input
+          class="proj-search-input"
+          placeholder="搜索项目名称"
+          placeholder-class="proj-search-placeholder"
+          value="{{ projSearchKw }}"
+          bindinput="onProjSearchInput"
+          confirm-type="search"
+        />
+        <view wx:if="{{ projSearchKw }}" bindtap="clearProjSearch" class="proj-search-clear">
+          <van-icon name="clear" size="14px" color="#ccc" />
+        </view>
+      </view>
+      <!-- 列表 -->
+      <view class="proj-list-area">
+        <view class="proj-loading" wx:if="{{ projLoading }}">
+          <van-loading type="spinner" size="24px" color="#b63b36" />
+        </view>
+        <scroll-view wx:else scroll-y class="proj-scroll">
+          <!-- 不关联选项：固定在列表第一条 -->
+          <view class="proj-item proj-item--none" bindtap="onPickNoneProject">
+            <view class="proj-item-body">
+              <text class="proj-item-name proj-item-name--none">不关联非遗项目</text>
+            </view>
+            <van-icon name="success" size="16px" color="#b63b36" wx:if="{{ !selectedProject }}" />
+          </view>
+          <view
+            class="proj-item"
+            wx:for="{{ projFilteredList }}"
+            wx:key="project_id"
+            bindtap="onPickProject"
+            data-item="{{ item }}"
+          >
+            <view class="proj-item-body">
+              <text class="proj-item-name">{{ item.name }}</text>
+              <text class="proj-item-meta" wx:if="{{ item.category || item.city }}">{{ item.category }}{{ item.category && item.city ? ' · ' : '' }}{{ item.city }}</text>
+            </view>
+            <van-icon name="success" size="16px" color="#b63b36" wx:if="{{ selectedProject === item.name }}" />
+          </view>
+          <view class="proj-empty" wx:if="{{ projFilteredList.length === 0 && !projLoading }}">
+            <text>未找到相关项目</text>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
   </van-popup>
 
   <!-- 话题搜索浮层 -->
