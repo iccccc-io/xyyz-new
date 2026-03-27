@@ -1,169 +1,166 @@
-<!--pages/mall/detail.wxml-->
-<view class="detail-container" wx:if="{{!loading && product}}">
-  <!-- 首屏大图轮播 -->
-  <view class="image-section">
-    <swiper 
-      class="image-swiper"
-      indicator-dots="{{product.detail_imgs.length > 1}}"
-      indicator-color="rgba(255,255,255,0.5)"
-      indicator-active-color="#ffffff"
+<!-- pages/mall/detail.wxml -->
+<view class="detail-page" wx:if="{{!loading && product}}">
+  <view class="hero-section">
+    <swiper
+      class="hero-swiper"
+      circular="{{product.heroImages.length > 1}}"
+      indicator-dots="{{false}}"
       bindchange="onSwiperChange"
     >
-      <swiper-item 
-        wx:for="{{product.detail_imgs}}" 
+      <swiper-item
+        wx:for="{{product.heroImages}}"
         wx:key="*this"
+        data-index="{{index}}"
+        data-kind="hero"
         bindtap="previewImage"
       >
-        <image class="swiper-image" src="{{item}}" mode="aspectFill" />
+        <image class="hero-image" src="{{item}}" mode="aspectFill" />
       </swiper-item>
     </swiper>
-    <!-- 图片计数 -->
-    <view class="image-counter" wx:if="{{product.detail_imgs.length > 1}}">
-      <text>{{currentImageIndex + 1}}/{{product.detail_imgs.length}}</text>
+
+    <view class="hero-top-mask" style="height: {{heroMaskHeight}}px;"></view>
+
+    <view
+      class="hero-back"
+      bindtap="goBack"
+      style="top: {{backButtonTop}}px; width: {{backButtonWidth}}px; height: {{backButtonHeight}}px;"
+    >
+      <van-icon name="arrow-left" size="18" color="#FFFFFF" />
     </view>
-    <!-- 弧形遮罩 -->
-    <view class="curve-mask"></view>
+
+    <view class="hero-indicator" wx:if="{{product.heroImages.length > 1}}">
+      <text class="hero-indicator-text">{{currentImageIndex + 1}}/{{product.heroImages.length}}</text>
+    </view>
   </view>
 
-  <!-- 内容区域 -->
   <view class="content-section">
-    <!-- 价格与标题 -->
-    <view class="info-card">
+    <view class="core-info">
       <view class="price-row">
-        <view class="price-group">
-          <text class="currency">¥</text>
-          <text class="current-price">{{product.priceDisplay}}</text>
-          <text class="original-price" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
+        <view class="price-main">
+          <text class="price-currency">¥</text>
+          <text class="price-number">{{product.priceDisplay}}</text>
+          <text class="price-original" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
         </view>
-        <view class="sales-info">
-          <text class="sales-text">已售 {{product.sales || 0}}</text>
-        </view>
+        <text class="sales-copy">已售 {{product.salesDisplay}}</text>
       </view>
-      
-      <!-- 标签 -->
-      <view class="tags-row" wx:if="{{product.tags && product.tags.length > 0}}">
-        <van-tag 
-          wx:for="{{product.tags}}" 
-          wx:key="*this"
-          plain
-          color="#8B2E2A"
-          custom-class="product-tag"
-        >{{item}}</van-tag>
-      </view>
-      
-      <view class="title-row">
-        <text class="product-title">{{product.title}}</text>
-      </view>
-      
-      <view class="origin-row">
-        <text class="origin-icon">📍</text>
-        <text class="origin-text">{{product.origin || '湖南'}}</text>
-        <text class="stock-text">库存 {{product.stock}} 件</text>
-      </view>
-    </view>
 
-    <!-- 文化溯源卡片 -->
-    <view class="traceability-card" wx:if="{{product.related_project_name}}" bindtap="goToProject">
-      <view class="trace-left">
-        <view class="trace-icon">
-          <van-icon name="bookmark-o" size="24" color="#8B2E2A" />
-        </view>
-        <view class="trace-info">
-          <text class="trace-label">本商品源自非遗项目</text>
-          <text class="trace-name">{{product.related_project_name}}</text>
-        </view>
+      <view class="mini-tags" wx:if="{{product.displayTags.length > 0}}">
+        <text class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">{{item}}</text>
       </view>
-      <view class="trace-right">
-        <text class="trace-link">去了解</text>
-        <van-icon name="arrow" size="14" color="#8B2E2A" />
-      </view>
-    </view>
 
-    <!-- 工坊信息卡片 -->
-    <view class="workshop-card" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
-      <view class="workshop-left">
-        <image class="workshop-logo" src="{{product.workshop_info.logo || '/images/default-goods-image.png'}}" mode="aspectFill" />
-        <view class="workshop-text">
-          <text class="workshop-name">{{product.workshop_info.name}}</text>
-          <view class="workshop-category">
-            <van-tag type="danger" size="small">{{product.workshop_info.ich_category}}</van-tag>
+      <text class="product-title">{{product.title}}</text>
+      <text class="product-intro">{{product.introDisplay}}</text>
+
+      <view class="meta-row">
+        <view class="meta-pill">
+          <van-icon name="location-o" size="14" color="#7B6252" />
+          <text class="meta-pill-text">{{product.originDisplay}}</text>
+        </view>
+        <text class="meta-stock">库存 {{product.stock}} 件</text>
+      </view>
+
+      <view class="quantity-row">
+        <text class="quantity-label">购买数量</text>
+        <view class="quantity-control">
+          <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
+            <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#BBB2A8' : '#4F4036'}}" />
+          </view>
+          <text class="qty-value">{{quantity}}</text>
+          <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
+            <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#BBB2A8' : '#4F4036'}}" />
           </view>
         </view>
       </view>
-      <view class="workshop-right">
-        <text class="workshop-link">进店</text>
-        <van-icon name="arrow" size="14" color="#8B2E2A" />
-      </view>
     </view>
 
-    <!-- 商品简介 -->
-    <view class="intro-card">
-      <view class="card-header">
-        <view class="header-line"></view>
-        <text class="header-title">商品简介</text>
-        <view class="header-line"></view>
-      </view>
-      <text class="intro-text">{{product.intro || '暂无简介'}}</text>
-    </view>
+    <view class="section-divider" wx:if="{{product.related_project_name || product.workshop_info}}"></view>
 
-    <!-- 购买数量 -->
-    <view class="quantity-card">
-      <text class="quantity-label">购买数量</text>
-      <view class="quantity-control">
-        <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
-          <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#ccc' : '#333'}}" />
+    <view class="cultural-section" wx:if="{{product.related_project_name || product.workshop_info}}">
+      <view class="traceability-card" wx:if="{{product.related_project_name}}" bindtap="goToProject">
+        <view class="trace-main">
+          <view class="trace-icon-wrap">
+            <van-icon name="bookmark-o" size="22" color="#A12D27" />
+          </view>
+          <view class="trace-copy">
+            <text class="trace-label">非遗溯源</text>
+            <text class="trace-name">{{product.related_project_name}}</text>
+            <text class="trace-desc">这件作品关联的技艺脉络与文化背景，点此继续了解。</text>
+          </view>
         </view>
-        <text class="qty-value">{{quantity}}</text>
-        <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
-          <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#ccc' : '#333'}}" />
+        <view class="trace-action">
+          <text class="trace-action-text">去了解</text>
+          <van-icon name="arrow" size="14" color="#A12D27" />
         </view>
       </view>
+
+      <view class="workshop-surface" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
+        <view class="workshop-main">
+          <image
+            wx:if="{{product.workshop_info.logoDisplay}}"
+            class="workshop-avatar"
+            src="{{product.workshop_info.logoDisplay}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="workshop-avatar workshop-avatar-fallback">
+            <text class="workshop-avatar-text">{{product.workshop_info.initial}}</text>
+          </view>
+
+          <view class="workshop-copy">
+            <text class="workshop-name">{{product.workshop_info.name}}</text>
+            <view class="workshop-meta" wx:if="{{product.workshopCardTag}}">
+              <text class="workshop-badge">{{product.workshopCardTag}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="store-entry-btn">进店看看</view>
+      </view>
     </view>
 
-    <!-- 详情图片 -->
-    <view class="detail-images" wx:if="{{product.detail_imgs && product.detail_imgs.length > 0}}">
-      <view class="card-header">
-        <view class="header-line"></view>
-        <text class="header-title">商品详情</text>
-        <view class="header-line"></view>
-      </view>
-      <image 
-        wx:for="{{product.detail_imgs}}" 
+    <view class="detail-images" wx:if="{{product.detailImages.length > 0}}">
+      <view class="detail-top-space"></view>
+      <image
+        wx:for="{{product.detailImages}}"
         wx:key="*this"
         class="detail-image"
         src="{{item}}"
         mode="widthFix"
         lazy-load
+        data-index="{{index}}"
+        data-kind="detail"
+        bindtap="previewImage"
       />
     </view>
-  </view>
 
-  <!-- 底部占位 -->
-  <view class="bottom-placeholder"></view>
+    <view class="bottom-placeholder"></view>
+  </view>
 </view>
 
-<!-- 悬浮操作栏 (Apple Style) -->
-<view class="action-bar" style="padding-bottom: calc(30rpx + {{safeAreaBottom}}px);" wx:if="{{!loading && product}}">
+<view class="action-bar" style="padding-bottom: {{safeAreaBottom}}px;" wx:if="{{!loading && product}}">
   <view class="action-bar-content">
-    <!-- 收藏按钮 -->
-    <view class="action-icon" bindtap="toggleFavorite">
-      <van-icon name="{{isFavorite ? 'star' : 'star-o'}}" size="24" color="{{isFavorite ? '#8B2E2A' : '#666'}}" />
+    <view class="action-icons">
+      <view class="action-icon-item" bindtap="toggleFavorite">
+        <van-icon name="{{isFavorite ? 'star' : 'star-o'}}" size="22" color="{{isFavorite ? '#A12D27' : '#4B4038'}}" />
+        <text class="action-icon-label">{{isFavorite ? '已收藏' : '收藏'}}</text>
+      </view>
+
+      <view class="action-icon-item" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
+        <van-icon name="shop-o" size="22" color="#4B4038" />
+        <text class="action-icon-label">工坊</text>
+      </view>
     </view>
-    <!-- 加入购物车 -->
-    <view class="action-btn cart-btn" bindtap="addToCart">
-      <van-icon name="cart-o" size="20" color="#8B2E2A" />
-      <text>加入购物车</text>
-    </view>
-    <!-- 立即购买 -->
-    <view class="action-btn buy-btn" bindtap="buyNow">
-      <text>立即购买</text>
+
+    <view class="cta-group">
+      <view class="cta-btn cart-btn" bindtap="addToCart">
+        <text>加入购物车</text>
+      </view>
+      <view class="cta-btn buy-btn" bindtap="buyNow">
+        <text>立即购买</text>
+      </view>
     </view>
   </view>
 </view>
 
-<!-- 加载状态 -->
 <view class="loading-state" wx:if="{{loading}}">
-  <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  <van-loading size="24px" color="#A12D27">加载中...</van-loading>
 </view>
-
-

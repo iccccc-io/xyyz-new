@@ -15,6 +15,75 @@ function formatPrice(fen) {
   return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
 }
 
+function uniqueImages(list) {
+  const seen = new Set()
+  return (list || []).filter((src) => {
+    if (!src || seen.has(src)) return false
+    seen.add(src)
+    return true
+  })
+}
+
+function normalizeProduct(product) {
+  const heroImages = uniqueImages([product.cover_img, ...(product.detail_imgs || [])])
+  const detailImages = uniqueImages(product.detail_imgs && product.detail_imgs.length ? product.detail_imgs : heroImages)
+  const tags = Array.isArray(product.tags) ? product.tags.filter(Boolean) : []
+  const displayTags = (tags.length ? tags : [product.category].filter(Boolean)).slice(0, 3)
+  const introDisplay = (product.intro || '暂无简介').trim()
+  const originDisplay = (product.origin || '湖南').trim()
+  const salesDisplay = Number(product.sales) || 0
+  const originalPriceDisplay = product.original_price && product.original_price > product.price
+    ? formatPrice(product.original_price)
+    : ''
+
+  let workshopInfo = null
+  let workshopCardTag = ''
+  if (product.workshop_info) {
+    const name = product.workshop_info.name || '非遗工坊'
+    workshopInfo = {
+      ...product.workshop_info,
+      name,
+      logoDisplay: product.workshop_info.logo || '',
+      initial: String(name).trim().charAt(0) || '匠'
+    }
+    workshopCardTag = product.workshop_info.ich_category || product.related_project_name || '非遗工坊'
+  }
+
+  return {
+    ...product,
+    heroImages,
+    detailImages,
+    displayTags,
+    introDisplay,
+    originDisplay,
+    salesDisplay,
+    originalPriceDisplay,
+    workshop_info: workshopInfo,
+    workshopCardTag
+  }
+}
+
+function getNavMetrics() {
+  const systemInfo = wx.getSystemInfoSync()
+  const statusBarHeight = systemInfo.statusBarHeight || 20
+  const safeAreaBottom = systemInfo.safeArea ? (systemInfo.screenHeight - systemInfo.safeArea.bottom) : 0
+  const menuRect = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null
+
+  const backButtonTop = menuRect && menuRect.top ? menuRect.top : statusBarHeight + 6
+  const backButtonHeight = menuRect && menuRect.height ? menuRect.height : 32
+  const backButtonWidth = menuRect && menuRect.height ? Math.round(menuRect.height * 1.7) : 56
+  const heroMaskHeight = menuRect && menuRect.bottom ? Math.round(menuRect.bottom + 72) : statusBarHeight + 96
+
+  return {
+    statusBarHeight,
+    safeAreaBottom,
+    backButtonTop,
+    backButtonHeight,
+    backButtonWidth,
+    heroMaskHeight
+  }
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -25,13 +94,20 @@ Page({
     currentImageIndex: 0,
     quantity: 1,
     isFavorite: false,
-    safeAreaBottom: 0
+    safeAreaBottom: 0,
+    statusBarHeight: 20,
+    backButtonTop: 26,
+    backButtonHeight: 32,
+    backButtonWidth: 56,
+    heroMaskHeight: 120
   },
 
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    this.setData(getNavMetrics())
+
     const { id } = options
     if (id) {
       this.loadProductDetail(id)
@@ -44,12 +120,6 @@ Page({
         wx.navigateBack()
       }, 1500)
     }
-
-    // 获取安全区域
-    const systemInfo = wx.getSystemInfoSync()
-    this.setData({
-      safeAreaBottom: systemInfo.safeArea ? (systemInfo.screenHeight - systemInfo.safeArea.bottom) : 0
-    })
   },
 
   /**
@@ -60,16 +130,11 @@ Page({
       const res = await db.collection('shopping_products').doc(id).get()
       
       if (res.data) {
-        const product = res.data
-
-        if (!product.detail_imgs || product.detail_imgs.length === 0) {
-          product.detail_imgs = [product.cover_img]
+        const product = {
+          ...res.data,
+          detail_imgs: res.data.detail_imgs && res.data.detail_imgs.length ? res.data.detail_imgs : [res.data.cover_img],
+          priceDisplay: formatPrice(res.data.price)
         }
-
-        // 价格格式化（分→元显示）
-        product.priceDisplay = formatPrice(product.price)
-        product.originalPriceDisplay = product.original_price ? formatPrice(product.original_price) : ''
-        // 顶层设计要求：商品页强制展示所属非遗项目，字段已有 related_project_name / related_project_id
 
         // 查询工坊信息（卖家身份展示）
         if (product.workshop_id) {
@@ -83,8 +148,12 @@ Page({
           }
         }
 
+        const normalizedProduct = normalizeProduct(product)
+
         this.setData({
-          product: product,
+          product: normalizedProduct,
+          currentImageIndex: 0,
+          quantity: 1,
           loading: false
         })
 
@@ -117,9 +186,13 @@ Page({
    */
   previewImage(e) {
     const { product, currentImageIndex } = this.data
+    const { index, kind } = e.currentTarget.dataset
+    const imageList = kind === 'detail' ? product.detailImages : product.heroImages
+    const currentIndex = Number.isFinite(Number(index)) ? Number(index) : currentImageIndex
+
     wx.previewImage({
-      urls: product.detail_imgs,
-      current: product.detail_imgs[currentImageIndex]
+      urls: imageList,
+      current: imageList[currentIndex]
     })
   },
 
@@ -161,6 +234,17 @@ Page({
         url: `/pages/workshop/index?id=${product.workshop_id}`
       })
     }
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack()
+      return
+    }
+
+    wx.switchTab({
+      url: '/pages/mall/home'
+    })
   },
 
   /**
