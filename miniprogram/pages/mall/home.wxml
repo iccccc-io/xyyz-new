@@ -154,23 +154,29 @@
           </view>
           <view class="card-body">
             <text class="card-title">{{item.title}}</text>
-            <view class="card-tag-row" wx:if="{{item.projectDisplayName}}">
-              <text class="card-tag">📌 {{item.projectDisplayName}}</text>
-            </view>
-            <view class="card-tag-row" wx:else>
-              <text class="card-tag card-tag-muted">源自 {{item.originDisplay}}</text>
-            </view>
-            <view class="card-footer">
-              <view class="card-price">
-                <text class="price-symbol">¥</text>
-                <text class="price-value">{{item.priceDisplay}}</text>
-              </view>
+            <view class="merchant-row">
               <view class="workshop-box">
                 <image wx:if="{{item.workshopLogo}}" class="workshop-avatar" src="{{item.workshopLogo}}" mode="aspectFill" />
                 <view wx:else class="workshop-avatar workshop-avatar-fallback">
                   <text class="workshop-initial">{{item.workshopInitial}}</text>
                 </view>
-                <text class="workshop-name">{{item.workshopDisplayName}}</text>
+                <view class="merchant-copy">
+                  <text class="workshop-name">{{item.workshopDisplayName}}</text>
+                  <text class="merchant-caption">匠人店铺</text>
+                </view>
+              </view>
+            </view>
+            <view class="card-footer">
+              <view class="card-price price-emphasis">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{item.priceDisplay}}</text>
+              </view>
+              <view class="card-tag heritage-tag footer-heritage-tag" wx:if="{{item.projectDisplayName}}">
+                <view class="tag-seal"></view>
+                <text class="tag-text">{{item.projectDisplayName}}</text>
+              </view>
+              <view class="card-tag card-tag-muted footer-heritage-tag" wx:else>
+                <text class="tag-text">源自 {{item.originDisplay}}</text>
               </view>
             </view>
           </view>
@@ -191,23 +197,29 @@
           </view>
           <view class="card-body">
             <text class="card-title">{{item.title}}</text>
-            <view class="card-tag-row" wx:if="{{item.projectDisplayName}}">
-              <text class="card-tag">📌 {{item.projectDisplayName}}</text>
-            </view>
-            <view class="card-tag-row" wx:else>
-              <text class="card-tag card-tag-muted">源自 {{item.originDisplay}}</text>
-            </view>
-            <view class="card-footer">
-              <view class="card-price">
-                <text class="price-symbol">¥</text>
-                <text class="price-value">{{item.priceDisplay}}</text>
-              </view>
+            <view class="merchant-row">
               <view class="workshop-box">
                 <image wx:if="{{item.workshopLogo}}" class="workshop-avatar" src="{{item.workshopLogo}}" mode="aspectFill" />
                 <view wx:else class="workshop-avatar workshop-avatar-fallback">
                   <text class="workshop-initial">{{item.workshopInitial}}</text>
                 </view>
-                <text class="workshop-name">{{item.workshopDisplayName}}</text>
+                <view class="merchant-copy">
+                  <text class="workshop-name">{{item.workshopDisplayName}}</text>
+                  <text class="merchant-caption">匠人店铺</text>
+                </view>
+              </view>
+            </view>
+            <view class="card-footer">
+              <view class="card-price price-emphasis">
+                <text class="price-symbol">¥</text>
+                <text class="price-value">{{item.priceDisplay}}</text>
+              </view>
+              <view class="card-tag heritage-tag footer-heritage-tag" wx:if="{{item.projectDisplayName}}">
+                <view class="tag-seal"></view>
+                <text class="tag-text">{{item.projectDisplayName}}</text>
+              </view>
+              <view class="card-tag card-tag-muted footer-heritage-tag" wx:else>
+                <text class="tag-text">源自 {{item.originDisplay}}</text>
               </view>
             </view>
           </view>
