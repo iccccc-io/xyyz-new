@@ -24,6 +24,39 @@ const IMAGE_RATIO_BY_CATEGORY = {
   '文创礼品': 1.12
 }
 
+const DEFAULT_FILTER_STATE = {
+  sortBy: 'sales_desc',
+  priceRange: 'all',
+  heritageCategory: 'all'
+}
+
+const FILTER_OPTIONS = {
+  sortBy: [
+    { id: 'sales_desc', label: '销量优先' },
+    { id: 'price_asc', label: '价格从低到高' },
+    { id: 'price_desc', label: '价格从高到低' },
+    { id: 'newest', label: '最新上架' },
+    { id: 'oldest', label: '最早上架' }
+  ],
+  priceRange: [
+    { id: 'all', label: '全部价格' },
+    { id: 'lt_100', label: '¥100以下' },
+    { id: '100_300', label: '¥100-300' },
+    { id: '300_600', label: '¥300-600' },
+    { id: 'gte_600', label: '¥600以上' }
+  ],
+  heritageCategory: [
+    { id: 'all', label: '全部类别' },
+    { id: '手工体验', label: '手工体验' },
+    { id: '非遗摆件', label: '非遗摆件' },
+    { id: '文房雅器', label: '文房雅器' },
+    { id: '地道风物', label: '地道风物' },
+    { id: '服饰配件', label: '服饰配件' },
+    { id: '家居装饰', label: '家居装饰' },
+    { id: '文创礼品', label: '文创礼品' }
+  ]
+}
+
 function formatPrice(fen) {
   if (!fen && fen !== 0) return '0.00'
   const amount = Number(fen)
@@ -67,9 +100,32 @@ function getImageInfo(src) {
   })
 }
 
+function normalizeTime(value) {
+  if (!value) return 0
+  if (typeof value === 'number') return value
+  if (value instanceof Date) return value.getTime()
+  const ts = new Date(value).getTime()
+  return Number.isNaN(ts) ? 0 : ts
+}
+
+function getMenuSafeOffset(systemInfo) {
+  if (!wx.getMenuButtonBoundingClientRect) return 0
+  const rect = wx.getMenuButtonBoundingClientRect()
+  const statusBarHeight = systemInfo.statusBarHeight || 20
+  if (!rect || !rect.bottom) return 0
+  return Math.max(0, rect.bottom - statusBarHeight + 8)
+}
+
+function getFilterCount(filterState) {
+  return Object.keys(DEFAULT_FILTER_STATE).reduce((count, key) => {
+    return filterState[key] === DEFAULT_FILTER_STATE[key] ? count : count + 1
+  }, 0)
+}
+
 Page({
   data: {
     statusBarHeight: 20,
+    headerTopOffset: 0,
     searchValue: '',
     featuredProduct: null,
     categoryTabs: CATEGORY_TABS,
@@ -80,7 +136,14 @@ Page({
     loadingMore: false,
     noMore: false,
     page: 0,
-    pageSize: 10
+    pageSize: 10,
+    showFilterPanel: false,
+    activeFilterCount: 0,
+    filterState: { ...DEFAULT_FILTER_STATE },
+    draftFilterState: { ...DEFAULT_FILTER_STATE },
+    sortOptions: FILTER_OPTIONS.sortBy,
+    priceOptions: FILTER_OPTIONS.priceRange,
+    heritageCategoryOptions: FILTER_OPTIONS.heritageCategory
   },
 
   onLoad() {
@@ -97,7 +160,8 @@ Page({
     this._workshopCache = {}
 
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 20
+      statusBarHeight: systemInfo.statusBarHeight || 20,
+      headerTopOffset: getMenuSafeOffset(systemInfo)
     })
 
     this.initializePage()
@@ -128,6 +192,55 @@ Page({
     }
 
     return condition
+  },
+
+  applyClientFilters(products) {
+    const { filterState } = this.data
+    let list = [...(products || [])]
+
+    const getPrice = (item) => Number(item.price) || 0
+    const getSales = (item) => Number(item.sales) || 0
+
+    switch (filterState.priceRange) {
+      case 'lt_100':
+        list = list.filter((item) => getPrice(item) < 10000)
+        break
+      case '100_300':
+        list = list.filter((item) => getPrice(item) >= 10000 && getPrice(item) <= 30000)
+        break
+      case '300_600':
+        list = list.filter((item) => getPrice(item) > 30000 && getPrice(item) <= 60000)
+        break
+      case 'gte_600':
+        list = list.filter((item) => getPrice(item) > 60000)
+        break
+      default:
+        break
+    }
+
+    if (filterState.heritageCategory !== 'all') {
+      list = list.filter((item) => item.category === filterState.heritageCategory)
+    }
+
+    switch (filterState.sortBy) {
+      case 'price_asc':
+        list.sort((a, b) => getPrice(a) - getPrice(b))
+        break
+      case 'price_desc':
+        list.sort((a, b) => getPrice(b) - getPrice(a))
+        break
+      case 'newest':
+        list.sort((a, b) => normalizeTime(b.create_time) - normalizeTime(a.create_time))
+        break
+      case 'oldest':
+        list.sort((a, b) => normalizeTime(a.create_time) - normalizeTime(b.create_time))
+        break
+      default:
+        list.sort((a, b) => getSales(b) - getSales(a))
+        break
+    }
+
+    return list
   },
 
   shouldPinFeaturedCard() {
@@ -330,8 +443,8 @@ Page({
         .orderBy('sales', 'desc')
         .get()
 
-      const products = res.data || []
-      if (products.length < pageSize) {
+      const products = this.applyClientFilters(res.data || [])
+      if ((res.data || []).length < pageSize) {
         this.setData({ noMore: true })
       }
 
@@ -395,12 +508,62 @@ Page({
     const { id } = e.currentTarget.dataset
     if (!id || id === this.data.activeCategory) return
 
-    this.setData({ activeCategory: id })
+    this.setData({
+      activeCategory: id,
+      showFilterPanel: false
+    })
     wx.pageScrollTo({
       scrollTop: 0,
       duration: 0
     })
     this.loadProducts(true)
+  },
+
+  toggleFilterPanel() {
+    const nextVisible = !this.data.showFilterPanel
+    this.setData({
+      showFilterPanel: nextVisible,
+      draftFilterState: nextVisible
+        ? { ...this.data.filterState }
+        : this.data.draftFilterState
+    })
+  },
+
+  onSelectFilterOption(e) {
+    const { group, id } = e.currentTarget.dataset
+    if (!group || !id) return
+    this.setData({
+      draftFilterState: {
+        ...this.data.draftFilterState,
+        [group]: id
+      }
+    })
+  },
+
+  onResetFilter() {
+    this.setData({
+      draftFilterState: { ...DEFAULT_FILTER_STATE }
+    })
+  },
+
+  onApplyFilter() {
+    const nextState = { ...this.data.draftFilterState }
+    const oldState = this.data.filterState
+    const changed = JSON.stringify(nextState) !== JSON.stringify(oldState)
+
+    this.setData({
+      filterState: nextState,
+      activeFilterCount: getFilterCount(nextState),
+      showFilterPanel: false
+    })
+
+    if (changed) {
+      wx.pageScrollTo({
+        scrollTop: 0,
+        duration: 0
+      })
+      this.loadProducts(true)
+    }
   },
 
   goToDetail(e) {

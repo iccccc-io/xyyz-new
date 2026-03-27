@@ -1,6 +1,8 @@
 <view class="mall-page">
   <view class="page-header" style="padding-top: {{statusBarHeight}}px;">
     <view class="header-inner">
+      <view class="capsule-offset" style="height: {{headerTopOffset}}px;"></view>
+
       <view class="search-shell">
         <van-icon name="search" size="18" color="#B8AEA2" />
         <input
@@ -58,8 +60,75 @@
     </view>
 
     <view class="feed-head">
-      <text class="feed-title">{{searchValue ? '搜索结果' : (activeCategory === '全部' ? '匠作清单' : activeCategory)}}</text>
+      <view class="feed-head-main">
+        <text class="feed-title">{{searchValue ? '搜索结果' : (activeCategory === '全部' ? '匠作清单' : activeCategory)}}</text>
+
+        <view class="filter-trigger {{showFilterPanel ? 'is-open' : ''}}" bindtap="toggleFilterPanel">
+          <van-icon name="filter-o" size="14" color="#7F4A35" />
+          <text class="filter-trigger-text">筛选</text>
+          <view class="filter-count" wx:if="{{activeFilterCount > 0}}">{{activeFilterCount}}</view>
+          <view class="filter-arrow {{showFilterPanel ? 'is-open' : ''}}">
+            <van-icon name="arrow-down" size="12" color="#7F4A35" />
+          </view>
+        </view>
+      </view>
+
       <text class="feed-subtitle">{{searchValue ? '与关键词相关的非遗文创' : '让商品回归作品本身，也让工坊被看见'}}</text>
+    </view>
+
+    <view class="filter-panel {{showFilterPanel ? 'is-open' : 'is-closed'}}">
+      <view class="filter-group">
+        <text class="filter-group-title">排序方式</text>
+        <view class="filter-options">
+          <view
+            class="filter-option {{draftFilterState.sortBy === item.id ? 'is-active' : ''}}"
+            wx:for="{{sortOptions}}"
+            wx:key="id"
+            data-group="sortBy"
+            data-id="{{item.id}}"
+            bindtap="onSelectFilterOption"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-group">
+        <text class="filter-group-title">价格区间</text>
+        <view class="filter-options">
+          <view
+            class="filter-option {{draftFilterState.priceRange === item.id ? 'is-active' : ''}}"
+            wx:for="{{priceOptions}}"
+            wx:key="id"
+            data-group="priceRange"
+            data-id="{{item.id}}"
+            bindtap="onSelectFilterOption"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-group">
+        <text class="filter-group-title">非遗类别</text>
+        <view class="filter-options">
+          <view
+            class="filter-option {{draftFilterState.heritageCategory === item.id ? 'is-active' : ''}}"
+            wx:for="{{heritageCategoryOptions}}"
+            wx:key="id"
+            data-group="heritageCategory"
+            data-id="{{item.id}}"
+            bindtap="onSelectFilterOption"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-actions">
+        <view class="filter-btn filter-btn-reset" bindtap="onResetFilter">重置</view>
+        <view class="filter-btn filter-btn-apply" bindtap="onApplyFilter">应用筛选</view>
+      </view>
     </view>
 
     <view class="loading-state" wx:if="{{loading}}">
@@ -151,7 +220,7 @@
     </view>
 
     <view class="no-more" wx:if="{{noMore && (leftColumn.length > 0 || rightColumn.length > 0)}}">
-      已经逛到底了
+      已经到底了
     </view>
   </view>
 </view>
