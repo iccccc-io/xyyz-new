@@ -608,5 +608,14 @@ Page({
    */
   onShareAppMessage() {
 
+  },
+
+  goToProductManage() {
+    const { userInfo } = this.data
+    if (!userInfo.is_certified || !userInfo.workshop_id) {
+      wx.showToast({ title: '工坊信息异常', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: `/pages/product/manage?id=${userInfo.workshop_id}` })
   }
 })

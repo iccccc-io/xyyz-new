@@ -69,7 +69,7 @@ Page({
       const { activeCategory, page, pageSize } = this.data
       
       const _ = db.command
-      let whereCondition = { status: 1, stock: _.gt(0) }
+      let whereCondition = { status: 1, stock: _.gt(0), is_on_sale: true }
 
       if (activeCategory !== 'all') {
         whereCondition.category = activeCategory

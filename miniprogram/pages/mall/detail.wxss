@@ -606,6 +606,10 @@ page {
   color: #FFFFFF;
 }
 
+.cta-btn.is-disabled {
+  opacity: 0.55;
+}
+
 .cart-btn text,
 .buy-btn text {
   color: inherit;

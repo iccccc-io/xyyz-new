@@ -137,6 +137,17 @@ function getNavMetrics() {
   }
 }
 
+function parseProductIdFromOptions(options = {}) {
+  if (options.id) return options.id
+
+  if (!options.scene) return ''
+  const scene = decodeURIComponent(options.scene)
+  return scene
+    .split('&')
+    .map((item) => item.split('='))
+    .find((pair) => pair[0] === 'id')?.[1] || ''
+}
+
 Page({
   /**
    * 页面的初始数据
@@ -147,6 +158,7 @@ Page({
     currentImageIndex: 0,
     quantity: 1,
     isFavorite: false,
+    isUnavailable: false,
     safeAreaBottom: 0,
     statusBarHeight: 20,
     backButtonTop: 26,
@@ -161,7 +173,7 @@ Page({
   onLoad(options) {
     this.setData(getNavMetrics())
 
-    const { id } = options
+    const id = parseProductIdFromOptions(options)
     if (id) {
       this.loadProductDetail(id)
     } else {
@@ -207,8 +219,14 @@ Page({
           product: normalizedProduct,
           currentImageIndex: 0,
           quantity: 1,
+          isUnavailable: normalizedProduct.status !== 1 || normalizedProduct.is_on_sale === false || !normalizedProduct.stock,
           loading: false
         })
+
+        wx.cloud.callFunction({
+          name: 'report_product_view',
+          data: { product_id: id }
+        }).catch(() => {})
 
         // 设置页面标题
         wx.setNavigationBarTitle({
@@ -288,6 +306,19 @@ Page({
     }
   },
 
+  ensureProductAvailable() {
+    const { product, isUnavailable } = this.data
+    if (!product || isUnavailable || product.is_on_sale === false || product.status !== 1) {
+      wx.showToast({ title: '商品已下架', icon: 'none' })
+      return false
+    }
+    if (!product.stock) {
+      wx.showToast({ title: '商品已售罄', icon: 'none' })
+      return false
+    }
+    return true
+  },
+
   /**
    * 跳转到工坊主页
    */
@@ -357,6 +388,8 @@ Page({
       return
     }
 
+    if (!this.ensureProductAvailable()) return
+
     const { product, quantity } = this.data
     let cart = wx.getStorageSync('cart') || []
     const existIndex = cart.findIndex(item => item.productId === product._id)
@@ -388,6 +421,8 @@ Page({
       app.requireLogin()
       return
     }
+
+    if (!this.ensureProductAvailable()) return
 
     const { product, quantity } = this.data
 

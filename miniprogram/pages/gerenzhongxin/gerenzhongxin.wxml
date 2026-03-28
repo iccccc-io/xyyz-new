@@ -97,7 +97,7 @@
           </view>
           <text class="studio-action-label">发布商品</text>
         </view>
-        <view class="studio-action-item" bindtap="goToMyWorkshop">
+        <view class="studio-action-item" bindtap="goToProductManage">
           <view class="studio-action-icon manage-icon">
             <van-icon name="orders-o" size="24" color="#fff" />
           </view>

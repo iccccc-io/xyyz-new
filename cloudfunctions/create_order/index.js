@@ -55,7 +55,7 @@ exports.main = async (event, context) => {
 
     const product = productRes.data
 
-    if (product.status !== 1) {
+    if (product.status !== 1 || product.is_on_sale === false) {
       return { success: false, message: '商品已下架' }
     }
     if (!product.stock || product.stock < quantity) {
@@ -82,9 +82,11 @@ exports.main = async (event, context) => {
     // 使用 where + inc 的组合天然防超卖：
     // 如果当前 stock < quantity，inc(-quantity) 会使 stock 为负数
     // 但云开发不支持 stock >= quantity 的条件更新，所以用 inc 后再检查
+    const nextStock = (product.stock || 0) - quantity
     const updateRes = await db.collection('shopping_products').doc(product_id).update({
       data: {
         stock: _.inc(-quantity),
+        is_on_sale: nextStock > 0 ? (product.is_on_sale !== false) : false,
         update_time: db.serverDate()
       }
     })

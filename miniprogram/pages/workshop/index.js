@@ -152,6 +152,7 @@ Page({
       if (!isOwner) {
         whereCondition.status = 1
         whereCondition.stock = _.gt(0)
+        whereCondition.is_on_sale = true
       }
 
       const productRes = await db.collection('shopping_products')

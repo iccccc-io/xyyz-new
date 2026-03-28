@@ -82,6 +82,12 @@ Page({
       if (!res.data) throw new Error('商品不存在')
 
       const product = res.data
+      if (product.status !== 1 || product.is_on_sale === false) {
+        throw new Error('商品已下架')
+      }
+      if (!product.stock || product.stock < this.data.quantity) {
+        throw new Error('商品库存不足')
+      }
       const { quantity } = this.data
       const totalFen = product.price * quantity
       const logistics = normalizeLogistics(product.logistics, product.origin || '')

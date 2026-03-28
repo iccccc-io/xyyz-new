@@ -23,6 +23,7 @@
     "pages/mall/category",
     "pages/mall/topic",
     "pages/login/login",
+    "pages/product/manage",
     "pages/user/relations",
     "pages/certification/apply",
     "pages/workshop/index",

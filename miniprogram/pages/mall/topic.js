@@ -123,7 +123,8 @@ Page({
         .where({
           tags: keyword,
           status: 1,
-          stock: _.gt(0)
+          stock: _.gt(0),
+          is_on_sale: true
         })
         .skip(page * pageSize)
         .limit(pageSize)

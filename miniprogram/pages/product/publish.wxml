@@ -1,6 +1,6 @@
 <view class="page">
   <nav-bar
-    title="发布商品"
+    title="{{pageTitle}}"
     showTitle="{{true}}"
     showBack="{{true}}"
     background="solid"
@@ -315,7 +315,7 @@
 
   <view class="submit-bar" style="padding-bottom: calc(20rpx + {{safeAreaBottom}}px);">
     <view class="submit-btn {{submitting ? 'is-disabled' : ''}}" bindtap="submitProduct">
-      {{submitting ? '发布中...' : '发布商品'}}
+      {{submitting ? submittingText : submitText}}
     </view>
   </view>
 </view>

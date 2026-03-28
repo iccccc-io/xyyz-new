@@ -177,7 +177,8 @@ Page({
     const searchValue = (this.data.searchValue || '').trim()
     const condition = {
       status: 1,
-      stock: _.gt(0)
+      stock: _.gt(0),
+      is_on_sale: true
     }
 
     if (searchValue) {
@@ -257,7 +258,8 @@ Page({
       const res = await db.collection('shopping_products')
         .where({
           status: 1,
-          stock: _.gt(0)
+          stock: _.gt(0),
+          is_on_sale: true
         })
         .orderBy('sales', 'desc')
         .limit(1)

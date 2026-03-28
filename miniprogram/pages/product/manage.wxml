@@ -1,0 +1,125 @@
+<view class="page">
+  <nav-bar
+    title="商品管理"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="content" wx:if="{{!loading}}">
+    <view class="dashboard-card card-fade">
+      <view class="dashboard-head">
+        <view class="dashboard-copy">
+          <text class="dashboard-title">商品管理</text>
+          <text class="dashboard-subtitle">{{workshopInfo ? workshopInfo.name : '我的工坊'}}，库存、价格与上下架都可以在这里快速处理。</text>
+        </view>
+        <view class="publish-btn" bindtap="goToPublish">
+          <van-icon name="plus" size="16" color="#fff" />
+          <text>发布商品</text>
+        </view>
+      </view>
+
+      <view class="dashboard-stats">
+        <view
+          class="stat-item {{activeTab === 'selling' ? 'is-active' : ''}}"
+          data-tab="selling"
+          bindtap="switchTab"
+        >
+          <text class="stat-num">{{stats.selling}}</text>
+          <text class="stat-label">出售中</text>
+          <text class="stat-note">正在对外展示</text>
+        </view>
+        <view
+          class="stat-item {{activeTab === 'sold_out' ? 'is-active' : ''}}"
+          data-tab="sold_out"
+          bindtap="switchTab"
+        >
+          <text class="stat-num">{{stats.soldOut}}</text>
+          <text class="stat-label">已售罄</text>
+          <text class="stat-note">等待补货后上架</text>
+        </view>
+        <view
+          class="stat-item {{activeTab === 'warehouse' ? 'is-active' : ''}}"
+          data-tab="warehouse"
+          bindtap="switchTab"
+        >
+          <text class="stat-num">{{stats.warehouse}}</text>
+          <text class="stat-label">仓库中</text>
+          <text class="stat-note">当前不对买家展示</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="list" wx:if="{{filteredProducts.length}}">
+      <view
+        class="product-card card-rise"
+        wx:for="{{filteredProducts}}"
+        wx:key="_id"
+        wx:for-index="index"
+        style="animation-delay: {{index * 50}}ms;"
+      >
+        <view class="thumb-wrap">
+          <image class="thumb" src="{{item.cover_img}}" mode="aspectFill" />
+        </view>
+
+        <view class="card-main">
+        <view class="card-top">
+          <view class="title-block">
+            <text class="title">{{item.title}}</text>
+            <view class="meta-pills">
+                <view class="meta-pill">
+                  <text class="meta-key">销量</text>
+                  <text class="meta-value">{{item.sales}}</text>
+                </view>
+                <view class="meta-pill">
+                  <text class="meta-key">浏览</text>
+                  <text class="meta-value">{{item.views}}</text>
+                </view>
+              </view>
+            </view>
+            <text class="price">¥{{item.priceDisplay}}</text>
+          </view>
+
+          <view class="card-middle">
+            <view class="stock-line">
+              <text class="info-text">库存 {{item.stock}} 件</text>
+              <view class="stock-edit" data-id="{{item._id}}" bindtap="quickEditStock">
+                <van-icon name="edit" size="14" color="#b63b36" />
+              </view>
+            </view>
+            <text class="info-text">{{item.isOnSale ? '当前可售' : '当前下架'}}</text>
+          </view>
+
+          <view class="actions actions-{{item.canDelete ? 'three' : 'two'}}">
+            <view class="action" data-id="{{item._id}}" bindtap="editProduct">
+              <text>编辑</text>
+            </view>
+            <view class="action" data-id="{{item._id}}" bindtap="toggleSale">
+              <text>{{item.isOnSale ? '下架商品' : '重新上架'}}</text>
+            </view>
+            <view class="action" wx:if="{{item.canDelete}}" data-id="{{item._id}}" bindtap="deleteProduct">
+              <text>删除</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-wrap card-fade delay-1" wx:else>
+      <view class="empty-card">
+        <van-empty
+          description="{{activeTab === 'selling' ? '暂无在售商品，去发布第一件作品吧' : activeTab === 'sold_out' ? '当前还没有售罄商品，继续保持' : '仓库中暂时没有下架商品'}}"
+        />
+        <view class="empty-action" wx:if="{{activeTab === 'selling'}}" bindtap="goToPublish">去发布商品</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-card">
+      <van-loading size="24px" color="#b63b36">加载商品中...</van-loading>
+    </view>
+  </view>
+</view>

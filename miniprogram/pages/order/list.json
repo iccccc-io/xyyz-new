@@ -2,13 +2,9 @@
   "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "van-tabs": "@vant/weapp/tabs/index",
-    "van-tab": "@vant/weapp/tab/index",
     "van-icon": "@vant/weapp/icon/index",
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
-    "van-button": "@vant/weapp/button/index",
-    "van-tag": "@vant/weapp/tag/index",
     "nav-bar": "/components/nav-bar/index",
     "pay-keyboard": "/components/pay-keyboard/index"
   }

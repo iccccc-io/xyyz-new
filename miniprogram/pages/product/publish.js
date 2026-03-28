@@ -46,6 +46,12 @@ function getInputValue(e) {
   return ''
 }
 
+function formatFenToInput(fen) {
+  if (!fen && fen !== 0) return ''
+  const yuan = Number(fen) / 100
+  return yuan.toFixed(2).replace(/\.?0+$/, '')
+}
+
 Page({
   data: {
     title: '',
@@ -82,15 +88,78 @@ Page({
     projectEmpty: false,
     projectLoadFailed: false,
     submitting: false,
-    safeAreaBottom: 0
+    safeAreaBottom: 0,
+    pageTitle: '\u53d1\u5e03\u5546\u54c1',
+    submitText: '\u53d1\u5e03\u5546\u54c1',
+    submittingText: '\u53d1\u5e03\u4e2d...',
+    isEditMode: false,
+    editProductId: '',
+    originalIsOnSale: true
   },
 
-  onLoad() {
+  onLoad(options) {
     const systemInfo = wx.getSystemInfoSync()
     this.setData({
       safeAreaBottom: systemInfo.safeArea ? (systemInfo.screenHeight - systemInfo.safeArea.bottom) : 0
     })
     this.loadProjectsFromDB()
+
+    const productId = options.product_id || options.id || ''
+    if (productId) {
+      this.setData({
+        isEditMode: true,
+        editProductId: productId,
+        pageTitle: '\u7f16\u8f91\u5546\u54c1',
+        submitText: '\u4fdd\u5b58\u4fee\u6539',
+        submittingText: '\u4fdd\u5b58\u4e2d...'
+      })
+      this.loadProductForEdit(productId)
+    }
+  },
+
+  async loadProductForEdit(productId) {
+    wx.showLoading({ title: '加载商品中...', mask: true })
+    try {
+      const res = await db.collection('shopping_products').doc(productId).get()
+      const product = res.data
+
+      if (!product) {
+        throw new Error('商品不存在')
+      }
+
+      if (product.author_id !== app.globalData.openid) {
+        throw new Error('无权编辑该商品')
+      }
+
+      this.setData({
+        title: product.title || '',
+        intro: product.intro || '',
+        category: product.category || '',
+        price: formatFenToInput(product.price),
+        originalPrice: formatFenToInput(product.original_price || product.price),
+        stock: String(product.stock ?? ''),
+        deliveryMethod: product.logistics && product.logistics.method ? product.logistics.method : 'express',
+        postage: product.logistics && product.logistics.postage ? product.logistics.postage : 'free',
+        carrier: product.logistics && product.logistics.carrier ? product.logistics.carrier : 'sf_jd',
+        handlingTime: product.logistics && product.logistics.handling_time ? product.logistics.handling_time : '48h',
+        projectId: product.related_project_id || '',
+        projectName: product.related_project_name || '',
+        origin: product.origin || '',
+        imageFiles: (product.detail_imgs || []).map((url, index) => ({
+          url,
+          name: `img_${index}`
+        })),
+        selectedTags: Array.isArray(product.tags) ? product.tags : [],
+        newTopics: [],
+        originalIsOnSale: product.is_on_sale !== false
+      })
+    } catch (err) {
+      console.error('加载编辑商品失败:', err)
+      wx.showToast({ title: err.message || '商品加载失败', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 1200)
+    } finally {
+      wx.hideLoading()
+    }
   },
 
   onTitleInput(e) {
@@ -568,7 +637,7 @@ Page({
       wx.showToast({ title: '原价应不低于现价', icon: 'none' })
       return false
     }
-    if (!stock || stock <= 0 || !Number.isInteger(stock)) {
+    if ((!this.data.isEditMode && (!stock || stock <= 0)) || (this.data.isEditMode && stock < 0) || !Number.isInteger(stock)) {
       wx.showToast({ title: '请输入正确的库存数量（正整数）', icon: 'none' })
       return false
     }
@@ -639,21 +708,26 @@ Page({
       }
 
       const result = await wx.cloud.callFunction({
-        name: 'add_shopping_product',
+        name: 'manage_shopping_product',
         data: {
-          title: this.data.title.trim(),
-          intro: this.data.intro.trim(),
-          category: this.data.category,
-          price: priceFen,
-          original_price: originalPriceFen,
-          stock: Number(this.data.stock),
-          cover_img: this.data.imageFiles[0].url,
-          detail_imgs: this.data.imageFiles.map((file) => file.url),
-          related_project_id: this.data.projectId,
-          related_project_name: this.data.projectName,
-          origin,
-          logistics,
-          tags: selectedTags
+          action: this.data.isEditMode ? 'update' : 'create',
+          product_id: this.data.editProductId,
+          payload: {
+            title: this.data.title.trim(),
+            intro: this.data.intro.trim(),
+            category: this.data.category,
+            price: priceFen,
+            original_price: originalPriceFen,
+            stock: Number(this.data.stock),
+            cover_img: this.data.imageFiles[0].url,
+            detail_imgs: this.data.imageFiles.map((file) => file.url),
+            related_project_id: this.data.projectId,
+            related_project_name: this.data.projectName,
+            origin,
+            logistics,
+            tags: selectedTags,
+            is_on_sale: Number(this.data.stock) > 0 ? this.data.originalIsOnSale : false
+          }
         }
       })
 

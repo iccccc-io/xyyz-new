@@ -169,10 +169,10 @@
     </view>
 
     <view class="cta-group">
-      <view class="cta-btn cart-btn" bindtap="addToCart">
+      <view class="cta-btn cart-btn {{isUnavailable ? 'is-disabled' : ''}}" bindtap="addToCart">
         <text>加入购物车</text>
       </view>
-      <view class="cta-btn buy-btn" bindtap="buyNow">
+      <view class="cta-btn buy-btn {{isUnavailable ? 'is-disabled' : ''}}" bindtap="buyNow">
         <text>立即购买</text>
       </view>
     </view>
