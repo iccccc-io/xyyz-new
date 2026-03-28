@@ -72,7 +72,7 @@ function getNavMetrics() {
   const backButtonTop = menuRect && menuRect.top ? menuRect.top : statusBarHeight + 6
   const backButtonHeight = menuRect && menuRect.height ? menuRect.height : 32
   const backButtonWidth = menuRect && menuRect.height ? Math.round(menuRect.height * 1.7) : 56
-  const heroMaskHeight = menuRect && menuRect.bottom ? Math.round(menuRect.bottom + 72) : statusBarHeight + 96
+  const heroCanvasTop = menuRect && menuRect.bottom ? Math.round(menuRect.bottom + 40) : statusBarHeight + 84
 
   return {
     statusBarHeight,
@@ -80,7 +80,7 @@ function getNavMetrics() {
     backButtonTop,
     backButtonHeight,
     backButtonWidth,
-    heroMaskHeight
+    heroCanvasTop
   }
 }
 
@@ -99,7 +99,7 @@ Page({
     backButtonTop: 26,
     backButtonHeight: 32,
     backButtonWidth: 56,
-    heroMaskHeight: 120
+    heroCanvasTop: 100
   },
 
   /**
@@ -172,12 +172,23 @@ Page({
     }
   },
 
-  /**
-   * 轮播图切换
-   */
-  onSwiperChange(e) {
+  showPrevHeroImage() {
+    const { product, currentImageIndex } = this.data
+    if (!product || !product.heroImages || product.heroImages.length <= 1) return
+
+    const total = product.heroImages.length
     this.setData({
-      currentImageIndex: e.detail.current
+      currentImageIndex: (currentImageIndex - 1 + total) % total
+    })
+  },
+
+  showNextHeroImage() {
+    const { product, currentImageIndex } = this.data
+    if (!product || !product.heroImages || product.heroImages.length <= 1) return
+
+    const total = product.heroImages.length
+    this.setData({
+      currentImageIndex: (currentImageIndex + 1) % total
     })
   },
 

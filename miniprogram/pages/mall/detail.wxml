@@ -1,24 +1,37 @@
 <!-- pages/mall/detail.wxml -->
 <view class="detail-page" wx:if="{{!loading && product}}">
   <view class="hero-section">
-    <swiper
-      class="hero-swiper"
-      circular="{{product.heroImages.length > 1}}"
-      indicator-dots="{{false}}"
-      bindchange="onSwiperChange"
-    >
-      <swiper-item
-        wx:for="{{product.heroImages}}"
-        wx:key="*this"
-        data-index="{{index}}"
-        data-kind="hero"
-        bindtap="previewImage"
-      >
-        <image class="hero-image" src="{{item}}" mode="aspectFill" />
-      </swiper-item>
-    </swiper>
+    <view class="hero-stage" style="top: {{heroCanvasTop}}px;">
+      <view class="hero-canvas">
+        <view class="hero-gallery">
+          <view
+            class="hero-slide {{currentImageIndex === index ? 'is-active' : ''}}"
+            wx:for="{{product.heroImages}}"
+            wx:key="*this"
+            data-index="{{index}}"
+            data-kind="hero"
+            bindtap="previewImage"
+          >
+            <image class="hero-image" src="{{item}}" mode="aspectFill" />
+          </view>
+        </view>
 
-    <view class="hero-top-mask" style="height: {{heroMaskHeight}}px;"></view>
+        <view
+          class="hero-nav hero-nav-prev"
+          wx:if="{{product.heroImages.length > 1}}"
+          catchtap="showPrevHeroImage"
+        ></view>
+        <view
+          class="hero-nav hero-nav-next"
+          wx:if="{{product.heroImages.length > 1}}"
+          catchtap="showNextHeroImage"
+        ></view>
+
+        <view class="hero-indicator" wx:if="{{product.heroImages.length > 1}}">
+          <text class="hero-indicator-text">{{currentImageIndex + 1}}/{{product.heroImages.length}}</text>
+        </view>
+      </view>
+    </view>
 
     <view
       class="hero-back"
@@ -27,47 +40,45 @@
     >
       <van-icon name="arrow-left" size="18" color="#FFFFFF" />
     </view>
-
-    <view class="hero-indicator" wx:if="{{product.heroImages.length > 1}}">
-      <text class="hero-indicator-text">{{currentImageIndex + 1}}/{{product.heroImages.length}}</text>
-    </view>
   </view>
 
   <view class="content-section">
-    <view class="core-info">
-      <view class="price-row">
-        <view class="price-main">
-          <text class="price-currency">¥</text>
-          <text class="price-number">{{product.priceDisplay}}</text>
-          <text class="price-original" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
-        </view>
-        <text class="sales-copy">已售 {{product.salesDisplay}}</text>
-      </view>
-
-      <view class="mini-tags" wx:if="{{product.displayTags.length > 0}}">
-        <text class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">{{item}}</text>
-      </view>
-
-      <text class="product-title">{{product.title}}</text>
-      <text class="product-intro">{{product.introDisplay}}</text>
-
-      <view class="meta-row">
-        <view class="meta-pill">
-          <van-icon name="location-o" size="14" color="#7B6252" />
-          <text class="meta-pill-text">{{product.originDisplay}}</text>
-        </view>
-        <text class="meta-stock">库存 {{product.stock}} 件</text>
-      </view>
-
-      <view class="quantity-row">
-        <text class="quantity-label">购买数量</text>
-        <view class="quantity-control">
-          <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
-            <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#BBB2A8' : '#4F4036'}}" />
+    <view class="product-info-panel">
+      <view class="core-info">
+        <view class="price-row">
+          <view class="price-main">
+            <text class="price-currency">¥</text>
+            <text class="price-number">{{product.priceDisplay}}</text>
+            <text class="price-original" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
           </view>
-          <text class="qty-value">{{quantity}}</text>
-          <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
-            <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#BBB2A8' : '#4F4036'}}" />
+          <text class="sales-copy">已售 {{product.salesDisplay}}</text>
+        </view>
+
+        <view class="mini-tags" wx:if="{{product.displayTags.length > 0}}">
+          <text class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">{{item}}</text>
+        </view>
+
+        <text class="product-title">{{product.title}}</text>
+        <text class="product-intro">{{product.introDisplay}}</text>
+
+        <view class="meta-row">
+          <view class="meta-pill">
+            <van-icon name="location-o" size="14" color="#7B6252" />
+            <text class="meta-pill-text">{{product.originDisplay}}</text>
+          </view>
+          <text class="meta-stock">库存 {{product.stock}} 件</text>
+        </view>
+
+        <view class="quantity-row">
+          <text class="quantity-label">购买数量</text>
+          <view class="quantity-control">
+            <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
+              <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#BBB2A8' : '#4F4036'}}" />
+            </view>
+            <text class="qty-value">{{quantity}}</text>
+            <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
+              <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#BBB2A8' : '#4F4036'}}" />
+            </view>
           </view>
         </view>
       </view>
