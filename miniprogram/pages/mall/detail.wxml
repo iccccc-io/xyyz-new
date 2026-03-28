@@ -54,7 +54,14 @@
           <text class="sales-copy">已售 {{product.salesDisplay}}</text>
         </view>
 
-        <view class="mini-tags" wx:if="{{product.displayTags.length > 0}}">
+        <view class="logistics-bar" wx:if="{{product.logistics}}">
+          <text class="logistics-bar-text">{{product.logistics.summaryText}}</text>
+        </view>
+
+        <view class="mini-tags" wx:if="{{(product.logistics && product.logistics.shippingPromiseText) || product.displayTags.length > 0}}">
+          <text class="mini-tag promise-tag" wx:if="{{product.logistics && product.logistics.shippingPromiseText}}">
+            {{product.logistics.shippingPromiseText}}
+          </text>
           <text class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">{{item}}</text>
         </view>
 

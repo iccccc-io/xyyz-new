@@ -107,6 +107,7 @@ exports.main = async (event, context) => {
       category: product.category || '',
       related_project_id: product.related_project_id || '',
       related_project_name: product.related_project_name || '',
+      logistics: product.logistics || null,
       workshop_id: product.workshop_id || '',
       workshop_name,
       seller_openid

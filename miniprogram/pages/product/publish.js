@@ -12,6 +12,33 @@ const CATEGORY_OPTIONS = [
   { name: '其他', desc: '暂未归类的作品' }
 ]
 
+const DELIVERY_METHOD_OPTIONS = [
+  { value: 'express', name: '快递发货' },
+  { value: 'pickup', name: '同城自提' },
+  { value: 'heavy_cargo', name: '专线物流(大件)' }
+]
+
+const POSTAGE_OPTIONS = [
+  { value: 'free', name: '全国包邮' },
+  { value: 'pay_on_delivery', name: '邮费到付' }
+]
+
+const CARRIER_OPTIONS = [
+  { value: 'sf_jd', name: '顺丰/京东', desc: '偏快，时效稳定' },
+  { value: 'standard', name: '三通一达', desc: '常规快递渠道' },
+  { value: 'post', name: '中国邮政', desc: '覆盖范围较广' },
+  { value: 'heavy_cargo', name: '大件物流', desc: '适合器物、家具等' },
+  { value: 'others', name: '视情况而定', desc: '按实际订单安排' }
+]
+
+const HANDLING_TIME_OPTIONS = [
+  { value: '24h', name: '24小时内', desc: '当天或次日打包发出' },
+  { value: '48h', name: '48小时内', desc: '预留基础备货时间' },
+  { value: '3d', name: '3天内', desc: '适合手工整理与复检' },
+  { value: '7d', name: '7天内', desc: '适合产地调货或集中备货' },
+  { value: 'custom_15d', name: '接单定制(约15天)', desc: '需按订单制作' }
+]
+
 function getInputValue(e) {
   if (!e) return ''
   if (e.detail && typeof e.detail.value !== 'undefined') return e.detail.value
@@ -27,6 +54,10 @@ Page({
     price: '',
     originalPrice: '',
     stock: '',
+    deliveryMethod: 'express',
+    postage: 'free',
+    carrier: 'sf_jd',
+    handlingTime: '48h',
     projectId: '',
     projectName: '',
     origin: '',
@@ -37,6 +68,12 @@ Page({
     recommendTags: ['非遗打卡', '周末去哪儿', '匠心', '手艺人', '传统文化'],
     showCategoryPicker: false,
     categoryOptions: CATEGORY_OPTIONS,
+    deliveryMethodOptions: DELIVERY_METHOD_OPTIONS,
+    postageOptions: POSTAGE_OPTIONS,
+    carrierOptions: CARRIER_OPTIONS,
+    handlingTimeOptions: HANDLING_TIME_OPTIONS,
+    showCarrierPicker: false,
+    showHandlingTimePicker: false,
     showProjectPicker: false,
     projectAllList: [],
     projectFilteredList: [],
@@ -80,6 +117,30 @@ Page({
     this.setData({ origin: getInputValue(e) })
   },
 
+  selectDeliveryMethod(e) {
+    const value = e.currentTarget.dataset.value
+    if (!value || value === this.data.deliveryMethod) return
+
+    const updates = { deliveryMethod: value }
+    if (value === 'pickup') {
+      updates.carrier = 'pickup'
+    } else if (value === 'heavy_cargo') {
+      updates.carrier = 'heavy_cargo'
+    } else if (this.data.carrier === 'pickup') {
+      updates.carrier = 'sf_jd'
+    } else if (this.data.carrier === 'heavy_cargo') {
+      updates.carrier = 'sf_jd'
+    }
+
+    this.setData(updates)
+  },
+
+  selectPostage(e) {
+    const value = e.currentTarget.dataset.value
+    if (!value) return
+    this.setData({ postage: value })
+  },
+
   openCategoryPicker() {
     this.setData({ showCategoryPicker: true })
   },
@@ -95,6 +156,43 @@ Page({
     this.setData({
       category: category.name,
       showCategoryPicker: false
+    })
+  },
+
+  openCarrierPicker() {
+    if (this.data.deliveryMethod === 'pickup') return
+    this.setData({ showCarrierPicker: true })
+  },
+
+  closeCarrierPicker() {
+    this.setData({ showCarrierPicker: false })
+  },
+
+  selectCarrier(e) {
+    const { index } = e.currentTarget.dataset
+    const carrier = this.data.carrierOptions[index]
+    if (!carrier) return
+    this.setData({
+      carrier: carrier.value,
+      showCarrierPicker: false
+    })
+  },
+
+  openHandlingTimePicker() {
+    this.setData({ showHandlingTimePicker: true })
+  },
+
+  closeHandlingTimePicker() {
+    this.setData({ showHandlingTimePicker: false })
+  },
+
+  selectHandlingTime(e) {
+    const { index } = e.currentTarget.dataset
+    const handlingTime = this.data.handlingTimeOptions[index]
+    if (!handlingTime) return
+    this.setData({
+      handlingTime: handlingTime.value,
+      showHandlingTimePicker: false
     })
   },
 
@@ -474,6 +572,14 @@ Page({
       wx.showToast({ title: '请输入正确的库存数量（正整数）', icon: 'none' })
       return false
     }
+    if (!this.data.handlingTime) {
+      wx.showToast({ title: '请选择备货时长', icon: 'none' })
+      return false
+    }
+    if (this.data.deliveryMethod !== 'pickup' && !this.data.carrier) {
+      wx.showToast({ title: '请选择默认物流', icon: 'none' })
+      return false
+    }
     if (!this.data.projectId) {
       wx.showToast({ title: '请选择关联的非遗项目', icon: 'none' })
       return false
@@ -523,6 +629,15 @@ Page({
 
       await this.syncTopicsToDatabase()
 
+      const origin = this.data.origin.trim()
+      const logistics = {
+        method: this.data.deliveryMethod,
+        postage: this.data.postage,
+        carrier: this.data.deliveryMethod === 'pickup' ? 'pickup' : this.data.carrier,
+        handling_time: this.data.handlingTime,
+        ship_from: origin || '湖南·长沙'
+      }
+
       const result = await wx.cloud.callFunction({
         name: 'add_shopping_product',
         data: {
@@ -536,7 +651,8 @@ Page({
           detail_imgs: this.data.imageFiles.map((file) => file.url),
           related_project_id: this.data.projectId,
           related_project_name: this.data.projectName,
-          origin: this.data.origin.trim(),
+          origin,
+          logistics,
           tags: selectedTags
         }
       })

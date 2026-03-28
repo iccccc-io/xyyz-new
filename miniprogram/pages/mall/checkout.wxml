@@ -62,7 +62,10 @@
     </view>
     <view class="summary-row">
       <text class="summary-label">运费</text>
-      <text class="summary-value freight-free">包邮</text>
+      <text class="summary-value">¥{{freightDisplay}}</text>
+    </view>
+    <view class="pay-on-delivery-tip" wx:if="{{showPayOnDeliveryNote}}">
+      *此商品为邮费到付，收件时请直接支付给快递员。
     </view>
     <view class="summary-divider"></view>
     <view class="summary-row total-row">

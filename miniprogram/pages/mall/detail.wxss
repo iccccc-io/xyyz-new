@@ -201,6 +201,20 @@ page {
   padding-bottom: 8rpx;
 }
 
+.logistics-bar {
+  margin-top: 18rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  background: #F9F5F1;
+}
+
+.logistics-bar-text {
+  display: block;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: #7F7065;
+}
+
 .mini-tags {
   display: flex;
   flex-wrap: wrap;
@@ -215,6 +229,12 @@ page {
   color: #555555;
   font-size: 20rpx;
   line-height: 1.5;
+}
+
+.mini-tag.promise-tag {
+  background: rgba(161, 45, 39, 0.1);
+  color: #A12D27;
+  font-weight: 600;
 }
 
 .product-title {

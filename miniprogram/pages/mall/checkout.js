@@ -17,6 +17,24 @@
 const app = getApp()
 const db = wx.cloud.database()
 
+const LOGISTICS_POSTAGE_TEXT = {
+  free: '快递包邮',
+  pay_on_delivery: '邮费到付'
+}
+
+function normalizeLogistics(logistics, origin) {
+  const method = logistics && logistics.method ? logistics.method : 'express'
+  const postage = logistics && logistics.postage ? logistics.postage : 'free'
+  const shipFrom = (logistics && logistics.ship_from ? logistics.ship_from : origin || '湖南·长沙').trim()
+  return {
+    method,
+    postage,
+    ship_from: shipFrom,
+    postageDisplay: LOGISTICS_POSTAGE_TEXT[postage] || '快递包邮',
+    isPayOnDelivery: postage === 'pay_on_delivery'
+  }
+}
+
 function formatPrice(fen) {
   if (!fen && fen !== 0) return '0.00'
   const yuan = fen / 100
@@ -32,6 +50,8 @@ Page({
     address: null,
     totalFen: 0,
     totalDisplay: '0.00',
+    freightDisplay: '0.00',
+    showPayOnDeliveryNote: false,
     submitting: false,
     showPayKeyboard: false,
     paying: false,
@@ -64,14 +84,18 @@ Page({
       const product = res.data
       const { quantity } = this.data
       const totalFen = product.price * quantity
+      const logistics = normalizeLogistics(product.logistics, product.origin || '')
 
       this.setData({
         product: {
           ...product,
-          priceDisplay: formatPrice(product.price)
+          priceDisplay: formatPrice(product.price),
+          logistics
         },
         totalFen,
         totalDisplay: formatPrice(totalFen),
+        freightDisplay: '0.00',
+        showPayOnDeliveryNote: logistics.isPayOnDelivery,
         loading: false
       })
     } catch (err) {

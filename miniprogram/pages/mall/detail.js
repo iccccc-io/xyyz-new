@@ -2,6 +2,23 @@
 const app = getApp()
 const db = wx.cloud.database()
 
+const LOGISTICS_CARRIER_TEXT = {
+  sf_jd: '顺丰/京东',
+  standard: '三通一达',
+  post: '中国邮政',
+  heavy_cargo: '大件物流',
+  others: '视情况而定',
+  pickup: '同城自提'
+}
+
+const LOGISTICS_HANDLING_TIME_TEXT = {
+  '24h': '24小时',
+  '48h': '48小时',
+  '3d': '3天',
+  '7d': '7天',
+  custom_15d: '接单定制(约15天)'
+}
+
 /**
  * 将价格（分）格式化为可读的元字符串
  * @param {number} fen - 价格（单位：分）
@@ -24,6 +41,40 @@ function uniqueImages(list) {
   })
 }
 
+function normalizeLogistics(logistics, originDisplay) {
+  const method = logistics && logistics.method ? logistics.method : 'express'
+  const postage = logistics && logistics.postage ? logistics.postage : 'free'
+  const carrier = logistics && logistics.carrier ? logistics.carrier : (method === 'pickup' ? 'pickup' : 'sf_jd')
+  const handlingTime = logistics && logistics.handling_time ? logistics.handling_time : '48h'
+  const shipFrom = (logistics && logistics.ship_from ? logistics.ship_from : originDisplay || '湖南·长沙').trim()
+  const carrierDisplay = LOGISTICS_CARRIER_TEXT[carrier] || '视情况而定'
+  const handlingTimeDisplay = LOGISTICS_HANDLING_TIME_TEXT[handlingTime] || '48小时'
+  const shippingPromiseText = handlingTime === 'custom_15d'
+    ? `${handlingTimeDisplay}发货`
+    : `${handlingTimeDisplay}内发货`
+
+  let summaryText = `发货：${shipFrom} | ${postage === 'free' ? '快递包邮' : '邮费到付'} | 预计使用：${carrierDisplay}`
+  if (method === 'pickup') {
+    summaryText = handlingTime === 'custom_15d'
+      ? `发货：${shipFrom} | 同城自提 | ${handlingTimeDisplay}可提货`
+      : `发货：${shipFrom} | 同城自提 | ${handlingTimeDisplay}内可提货`
+  } else if (method === 'heavy_cargo') {
+    summaryText = `发货：${shipFrom} | ${postage === 'free' ? '专线包邮' : '运费到付'} | 预计使用：${carrierDisplay}`
+  }
+
+  return {
+    method,
+    postage,
+    carrier,
+    handling_time: handlingTime,
+    ship_from: shipFrom,
+    carrierDisplay,
+    handlingTimeDisplay,
+    shippingPromiseText,
+    summaryText
+  }
+}
+
 function normalizeProduct(product) {
   const heroImages = uniqueImages([product.cover_img, ...(product.detail_imgs || [])])
   const detailImages = uniqueImages(product.detail_imgs && product.detail_imgs.length ? product.detail_imgs : heroImages)
@@ -35,6 +86,7 @@ function normalizeProduct(product) {
   const originalPriceDisplay = product.original_price && product.original_price > product.price
     ? formatPrice(product.original_price)
     : ''
+  const logistics = normalizeLogistics(product.logistics, originDisplay)
 
   let workshopInfo = null
   let workshopCardTag = ''
@@ -58,6 +110,7 @@ function normalizeProduct(product) {
     originDisplay,
     salesDisplay,
     originalPriceDisplay,
+    logistics,
     workshop_info: workshopInfo,
     workshopCardTag
   }

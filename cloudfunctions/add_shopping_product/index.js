@@ -28,6 +28,7 @@ const db = cloud.database()
  * @param {String} event.related_project_id - 关联非遗项目ID
  * @param {String} event.related_project_name - 关联非遗项目名称
  * @param {String} event.origin - 产地信息
+ * @param {Object} event.logistics - 物流信息
  * @param {Array} event.tags - 标签数组
  * 
  * @returns {Object} { success: Boolean, message: String, product_id: String }
@@ -45,6 +46,7 @@ exports.main = async (event, context) => {
     related_project_id,
     related_project_name,
     origin,
+    logistics,
     tags
   } = event
   
@@ -194,6 +196,18 @@ exports.main = async (event, context) => {
     console.log('[商品上架] 内容安全审核通过')
 
     // ========== 3. 构建商品数据 ==========
+    const logisticsMethod = logistics && typeof logistics.method === 'string' ? logistics.method : 'express'
+    const logisticsPostage = logistics && typeof logistics.postage === 'string' ? logistics.postage : 'free'
+    const logisticsCarrier = logistics && typeof logistics.carrier === 'string'
+      ? logistics.carrier
+      : (logisticsMethod === 'pickup' ? 'pickup' : 'sf_jd')
+    const handlingTime = logistics && typeof logistics.handling_time === 'string'
+      ? logistics.handling_time
+      : '48h'
+    const shipFrom = logistics && typeof logistics.ship_from === 'string'
+      ? logistics.ship_from.trim()
+      : (origin || '').trim()
+
     const productData = {
       title: title,
       intro: intro,
@@ -206,6 +220,13 @@ exports.main = async (event, context) => {
       related_project_id: related_project_id || '',
       related_project_name: related_project_name || '',
       origin: origin || '',
+      logistics: {
+        method: logisticsMethod,
+        postage: logisticsPostage,
+        carrier: logisticsMethod === 'pickup' ? 'pickup' : logisticsCarrier,
+        handling_time: handlingTime,
+        ship_from: shipFrom || '湖南·长沙'
+      },
       tags: tags || [],
       
       // 自动绑定字段
