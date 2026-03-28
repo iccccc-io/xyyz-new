@@ -1,18 +1,14 @@
 const app = getApp()
 const db = wx.cloud.database()
-
-function formatPrice(fen) {
-  if (fen !== 0 && !fen) return '0'
-  const yuan = Number(fen) / 100
-  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
-}
+const { createProductSummary } = require('../../common/mall-sku')
 
 function normalizeProduct(item) {
-  const stock = Number(item.stock) || 0
-  const sales = Number(item.sales) || 0
-  const views = Number(item.view_count) || 0
-  const isOnSale = item.is_on_sale !== false
-  const isSoldOut = stock <= 0
+  const summary = createProductSummary(item)
+  const totalStock = Number(summary.total_stock) || 0
+  const sales = Number(summary.sales) || 0
+  const views = Number(summary.view_count) || 0
+  const isOnSale = summary.is_on_sale !== false
+  const isSoldOut = totalStock <= 0
   const statusKey = isSoldOut ? 'sold_out' : (isOnSale ? 'selling' : 'warehouse')
 
   let badgeText = ''
@@ -20,20 +16,19 @@ function normalizeProduct(item) {
     badgeText = '已售罄'
   } else if (!isOnSale) {
     badgeText = '已下架'
-  } else if (stock <= 5) {
-    badgeText = '库存不足'
+  } else if (totalStock <= 5) {
+    badgeText = '库存紧张'
   }
 
   return {
-    ...item,
-    stock,
+    ...summary,
+    totalStock,
     sales,
     views,
     isOnSale,
     isSoldOut,
     statusKey,
     badgeText,
-    priceDisplay: formatPrice(item.price),
     canDelete: !isOnSale && sales === 0
   }
 }
@@ -167,8 +162,8 @@ Page({
     const product = this.getProductById(e.currentTarget.dataset.id)
     if (!product) return
 
-    if (!product.isOnSale && product.stock <= 0) {
-      wx.showToast({ title: '请先补充库存后再上架', icon: 'none' })
+    if (!product.isOnSale && product.totalStock <= 0) {
+      wx.showToast({ title: '请先补充 SKU 库存后再上架', icon: 'none' })
       return
     }
 
@@ -185,42 +180,6 @@ Page({
 
     wx.showToast({ title: result.message, icon: 'success' })
     this.loadPageData()
-  },
-
-  quickEditStock(e) {
-    const product = this.getProductById(e.currentTarget.dataset.id)
-    if (!product) return
-
-    wx.showModal({
-      title: '修改库存',
-      editable: true,
-      placeholderText: '请输入库存数量',
-      content: String(product.stock),
-      confirmColor: '#9f2f2a',
-      success: async (res) => {
-        if (!res.confirm) return
-
-        const stock = Number((res.content || '').trim())
-        if (!Number.isInteger(stock) || stock < 0) {
-          wx.showToast({ title: '请输入大于等于 0 的整数', icon: 'none' })
-          return
-        }
-
-        const result = await this.callManageProduct({
-          action: 'update_stock',
-          product_id: product._id,
-          stock
-        }, '更新库存中...')
-
-        if (!result.success) {
-          wx.showToast({ title: result.message || '库存更新失败', icon: 'none' })
-          return
-        }
-
-        wx.showToast({ title: result.message, icon: 'success' })
-        this.loadPageData()
-      }
-    })
   },
 
   deleteProduct(e) {

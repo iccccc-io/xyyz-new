@@ -1,4 +1,3 @@
-<!-- pages/mall/detail.wxml -->
 <view class="detail-page" wx:if="{{!loading && product}}">
   <view class="hero-section">
     <view class="hero-stage" style="top: {{heroCanvasTop}}px;">
@@ -47,9 +46,10 @@
       <view class="core-info">
         <view class="price-row">
           <view class="price-main">
-            <text class="price-currency">¥</text>
-            <text class="price-number">{{product.priceDisplay}}</text>
-            <text class="price-original" wx:if="{{product.originalPriceDisplay}}">¥{{product.originalPriceDisplay}}</text>
+            <text class="price-currency">楼</text>
+            <text class="price-number">{{product.displayPrice}}</text>
+            <text class="price-suffix" wx:if="{{product.displayPriceSuffix}}">{{product.displayPriceSuffix}}</text>
+            <text class="price-original" wx:if="{{product.displayOriginalPrice}}">楼{{product.displayOriginalPrice}}</text>
           </view>
           <text class="sales-copy">已售 {{product.salesDisplay}}</text>
         </view>
@@ -73,20 +73,18 @@
             <van-icon name="location-o" size="14" color="#7B6252" />
             <text class="meta-pill-text">{{product.originDisplay}}</text>
           </view>
-          <text class="meta-stock">库存 {{product.stock}} 件</text>
+          <text class="meta-stock">{{product.displaySkuName ? ('库存 ' + product.displayStock + ' 件') : ('总库存 ' + product.total_stock + ' 件')}}</text>
         </view>
 
-        <view class="quantity-row">
-          <text class="quantity-label">购买数量</text>
-          <view class="quantity-control">
-            <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
-              <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#BBB2A8' : '#4F4036'}}" />
-            </view>
-            <text class="qty-value">{{quantity}}</text>
-            <view class="qty-btn {{quantity >= product.stock ? 'disabled' : ''}}" bindtap="increaseQuantity">
-              <van-icon name="plus" size="16" color="{{quantity >= product.stock ? '#BBB2A8' : '#4F4036'}}" />
-            </view>
+        <view class="sku-entry" bindtap="openSkuPopup">
+          <view class="sku-entry-main">
+            <text class="sku-entry-label">选择款式</text>
+            <text class="sku-entry-value {{product.displaySkuName ? 'is-filled' : ''}}">
+              {{product.displaySkuName || (product.hasMultipleSkus ? '请选择商品款式' : (product.defaultSku ? product.defaultSku.sku_name : '默认款式'))}}
+            </text>
+            <text class="sku-entry-stock" wx:if="{{product.displaySkuName}}">当前库存 {{product.displayStock}} 件</text>
           </view>
+          <van-icon name="arrow" size="16" color="#8A7A6E" />
         </view>
       </view>
     </view>
@@ -168,16 +166,81 @@
       </view>
     </view>
 
-    <view class="cta-group">
-      <view class="cta-btn cart-btn {{isUnavailable ? 'is-disabled' : ''}}" bindtap="addToCart">
-        <text>加入购物车</text>
-      </view>
+    <view class="cta-group cta-group-single">
       <view class="cta-btn buy-btn {{isUnavailable ? 'is-disabled' : ''}}" bindtap="buyNow">
         <text>立即购买</text>
       </view>
     </view>
   </view>
 </view>
+
+<van-popup
+  show="{{showSkuPopup}}"
+  position="bottom"
+  round
+  bind:close="closeSkuPopup"
+  custom-style="background: transparent;"
+>
+  <view class="sku-popup">
+    <view class="sku-popup-header">
+      <text class="sku-popup-title">选择款式</text>
+      <view class="sku-popup-close" bindtap="closeSkuPopup">
+        <van-icon name="cross" size="18" color="#8F847A" />
+      </view>
+    </view>
+
+    <view class="sku-popup-preview">
+      <image class="sku-popup-image" src="{{product.displayImage || product.cover_img}}" mode="aspectFill" />
+      <view class="sku-popup-price-block">
+        <view class="sku-popup-price-row">
+          <text class="sku-popup-price">楼{{product.displayPrice}}</text>
+          <text class="sku-popup-price-suffix" wx:if="{{product.displayPriceSuffix}}">{{product.displayPriceSuffix}}</text>
+          <text class="sku-popup-original" wx:if="{{product.displayOriginalPrice}}">楼{{product.displayOriginalPrice}}</text>
+        </view>
+        <text class="sku-popup-stock">库存 {{product.displayStock}} 件</text>
+        <text class="sku-popup-selected">{{product.displaySkuName || (product.defaultSku ? product.defaultSku.sku_name : '默认款式')}}</text>
+      </view>
+    </view>
+
+    <view class="sku-section">
+      <text class="sku-section-title">款式</text>
+      <view class="sku-option-list">
+        <view
+          class="sku-option {{selectedSkuId === item.sku_id ? 'is-active' : ''}} {{item.stock <= 0 ? 'is-disabled' : ''}}"
+          wx:for="{{product.skus}}"
+          wx:key="sku_id"
+          data-id="{{item.sku_id}}"
+          bindtap="selectSku"
+        >
+          <text class="sku-option-name">{{item.sku_name}}</text>
+          <text class="sku-option-meta">楼{{item.priceDisplay}} / 库存 {{item.stock}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="sku-section">
+      <text class="sku-section-title">数量</text>
+      <view class="quantity-row quantity-row-popup">
+        <text class="quantity-label">购买数量</text>
+        <view class="quantity-control">
+          <view class="qty-btn {{quantity <= 1 ? 'disabled' : ''}}" bindtap="decreaseQuantity">
+            <van-icon name="minus" size="16" color="{{quantity <= 1 ? '#BBB2A8' : '#4F4036'}}" />
+          </view>
+          <text class="qty-value">{{quantity}}</text>
+          <view class="qty-btn {{quantity >= product.displayStock ? 'disabled' : ''}}" bindtap="increaseQuantity">
+            <van-icon name="plus" size="16" color="{{quantity >= product.displayStock ? '#BBB2A8' : '#4F4036'}}" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="sku-popup-footer">
+      <view class="sku-confirm-btn {{product.displayStock <= 0 ? 'is-disabled' : ''}}" bindtap="confirmSkuBuy">
+        确认购买
+      </view>
+    </view>
+  </view>
+</van-popup>
 
 <view class="loading-state" wx:if="{{loading}}">
   <van-loading size="24px" color="#A12D27">加载中...</van-loading>

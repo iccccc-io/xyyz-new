@@ -114,9 +114,10 @@
         <text>{{order.product_snapshot.workshop_name || '湘韵遗珍文创商城'}}</text>
       </view>
       <view class="product-row" bindtap="goToProduct">
-        <image class="product-img" src="{{order.product_snapshot.cover_img}}" mode="aspectFill" />
+        <image class="product-img" src="{{order.product_snapshot.sku_image || order.product_snapshot.cover_img}}" mode="aspectFill" />
         <view class="product-info">
           <text class="product-title">{{order.product_snapshot.title}}</text>
+          <text class="product-title" wx:if="{{order.product_snapshot.sku_name}}">款式：{{order.product_snapshot.sku_name}}</text>
           <view class="product-tag-row" wx:if="{{order.product_snapshot.related_project_name}}">
             <van-tag plain color="#8B6F47" size="small">{{order.product_snapshot.related_project_name}}</van-tag>
           </view>

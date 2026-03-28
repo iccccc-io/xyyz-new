@@ -20,6 +20,61 @@ function uniqueCloudFiles(list) {
   return [...new Set((list || []).filter((item) => typeof item === 'string' && item.startsWith('cloud://')))]
 }
 
+function createSkuId() {
+  return `sku_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+function getNonNegativeInt(value, fallback = 0) {
+  const num = Number(value)
+  return Number.isInteger(num) && num >= 0 ? num : fallback
+}
+
+function normalizeSkuInput(item, index) {
+  const skuName = getSafeString(item && item.sku_name) || (index === 0 ? '默认款式' : '')
+  const price = getInt(item && item.price, -1)
+  const originalPriceRaw = item && item.original_price
+  const originalPrice = originalPriceRaw === '' || typeof originalPriceRaw === 'undefined'
+    ? price
+    : getInt(originalPriceRaw, -1)
+  const stock = getNonNegativeInt(item && item.stock, -1)
+  const skuId = getSafeString(item && item.sku_id)
+  const image = getSafeString(item && item.image)
+
+  if (!skuName) {
+    throw new Error(`第 ${index + 1} 个款式名称不能为空`)
+  }
+  if (price < 1) {
+    throw new Error(`第 ${index + 1} 个款式价格不合法`)
+  }
+  if (originalPrice < price) {
+    throw new Error(`第 ${index + 1} 个款式原价不能低于现价`)
+  }
+  if (stock < 0) {
+    throw new Error(`第 ${index + 1} 个款式库存不能小于 0`)
+  }
+
+  return {
+    sku_id: skuId || createSkuId(),
+    sku_name: skuName,
+    price,
+    original_price: originalPrice,
+    stock,
+    image
+  }
+}
+
+function buildSkuAggregates(skus) {
+  const minPrice = Math.min(...skus.map((item) => item.price))
+  const minOriginalPrice = Math.min(...skus.map((item) => item.original_price || item.price))
+  const totalStock = skus.reduce((sum, item) => sum + item.stock, 0)
+
+  return {
+    min_price: minPrice,
+    min_original_price: minOriginalPrice,
+    total_stock: totalStock
+  }
+}
+
 async function checkTextSecurity(text, message) {
   try {
     const res = await cloud.openapi.security.msgSecCheck({ content: text })
@@ -66,7 +121,7 @@ async function ensureProductOwner(productId, openid) {
   return product
 }
 
-function validateProductPayload(payload, { allowZeroStock = false } = {}) {
+function validateProductPayload(payload, { allowZeroTotalStock = false } = {}) {
   const title = getSafeString(payload.title)
   const intro = getSafeString(payload.intro)
   const category = getSafeString(payload.category)
@@ -75,12 +130,8 @@ function validateProductPayload(payload, { allowZeroStock = false } = {}) {
   const relatedProjectId = getSafeString(payload.related_project_id)
   const relatedProjectName = getSafeString(payload.related_project_name)
   const origin = getSafeString(payload.origin)
-  const price = getInt(payload.price, -1)
-  const originalPrice = payload.original_price === '' || typeof payload.original_price === 'undefined'
-    ? price
-    : getInt(payload.original_price, -1)
-  const stock = getInt(payload.stock, -1)
   const tags = Array.isArray(payload.tags) ? payload.tags.filter(Boolean) : []
+  const skuInputs = Array.isArray(payload.skus) ? payload.skus : []
   const logisticsInput = payload.logistics || {}
   const logisticsMethod = getSafeString(logisticsInput.method) || 'express'
   const logisticsPostage = getSafeString(logisticsInput.postage) || 'free'
@@ -99,20 +150,28 @@ function validateProductPayload(payload, { allowZeroStock = false } = {}) {
   if (intro.length < 20 || intro.length > 500) {
     throw new Error('商品描述需控制在 20-500 个字之间')
   }
-  if (price < 1) {
-    throw new Error('商品价格不合法')
-  }
-  if (originalPrice < price) {
-    throw new Error('原价不能低于现价')
-  }
-  if (allowZeroStock ? stock < 0 : stock < 1) {
-    throw new Error(allowZeroStock ? '库存不能小于 0' : '库存至少为 1')
+  if (!skuInputs.length) {
+    throw new Error('请至少配置一个商品款式')
   }
   if (!detailImgs.length) {
     throw new Error('请至少上传一张详情图')
   }
   if (!relatedProjectId || !relatedProjectName) {
     throw new Error('请先关联非遗项目')
+  }
+
+  const skus = skuInputs.map((item, index) => normalizeSkuInput(item, index))
+  const skuIdSet = new Set()
+  skus.forEach((sku) => {
+    if (skuIdSet.has(sku.sku_id)) {
+      throw new Error('SKU 标识重复，请重新保存商品')
+    }
+    skuIdSet.add(sku.sku_id)
+  })
+
+  const aggregates = buildSkuAggregates(skus)
+  if (!allowZeroTotalStock && aggregates.total_stock < 1) {
+    throw new Error('至少需要一个可售库存大于 0 的款式')
   }
 
   return {
@@ -124,10 +183,9 @@ function validateProductPayload(payload, { allowZeroStock = false } = {}) {
     related_project_id: relatedProjectId,
     related_project_name: relatedProjectName,
     origin,
-    price,
-    original_price: originalPrice,
-    stock,
     tags,
+    ...aggregates,
+    skus,
     logistics: {
       method: logisticsMethod,
       postage: logisticsPostage,
@@ -148,6 +206,9 @@ async function createProduct(payload) {
   const parsed = validateProductPayload(payload)
   await checkTextSecurity(parsed.title, '商品标题包含敏感信息，请修改后重试')
   await checkTextSecurity(parsed.intro, '商品描述包含敏感信息，请修改后重试')
+  for (const sku of parsed.skus) {
+    await checkTextSecurity(sku.sku_name, '商品款式名称包含敏感信息，请修改后重试')
+  }
 
   const productData = {
     ...parsed,
@@ -156,7 +217,7 @@ async function createProduct(payload) {
     sales: 0,
     view_count: 0,
     status: 1,
-    is_on_sale: true,
+    is_on_sale: parsed.total_stock > 0,
     create_time: db.serverDate(),
     update_time: db.serverDate()
   }
@@ -182,12 +243,24 @@ async function createProduct(payload) {
 async function updateProduct(productId, payload) {
   const { openid } = await getCurrentUser()
   const product = await ensureProductOwner(productId, openid)
-  const parsed = validateProductPayload(payload, { allowZeroStock: true })
+  const parsed = validateProductPayload(payload, { allowZeroTotalStock: true })
+
+  const existingSkuIds = (Array.isArray(product.skus) ? product.skus : [])
+    .map((item) => getSafeString(item && item.sku_id))
+    .filter(Boolean)
+  const nextSkuIds = new Set(parsed.skus.map((item) => item.sku_id))
+  const removedSkuIds = existingSkuIds.filter((item) => !nextSkuIds.has(item))
+  if (removedSkuIds.length) {
+    throw new Error('已发布商品的已有 SKU 不允许删除，请将库存改为 0 停售')
+  }
 
   await checkTextSecurity(parsed.title, '商品标题包含敏感信息，请修改后重试')
   await checkTextSecurity(parsed.intro, '商品描述包含敏感信息，请修改后重试')
+  for (const sku of parsed.skus) {
+    await checkTextSecurity(sku.sku_name, '商品款式名称包含敏感信息，请修改后重试')
+  }
 
-  const nextIsOnSale = parsed.stock > 0
+  const nextIsOnSale = parsed.total_stock > 0
     ? (typeof payload.is_on_sale === 'boolean' ? payload.is_on_sale : product.is_on_sale !== false)
     : false
 
@@ -208,29 +281,7 @@ async function updateProduct(productId, payload) {
 }
 
 async function updateStock(productId, stock) {
-  const { openid } = await getCurrentUser()
-  const product = await ensureProductOwner(productId, openid)
-
-  if (!Number.isInteger(stock) || stock < 0) {
-    throw new Error('库存必须是大于等于 0 的整数')
-  }
-
-  const nextIsOnSale = stock > 0 ? (product.is_on_sale !== false) : false
-
-  await db.collection('shopping_products').doc(productId).update({
-    data: {
-      stock,
-      is_on_sale: nextIsOnSale,
-      update_time: db.serverDate()
-    }
-  })
-
-  return {
-    success: true,
-    message: stock === 0 ? '库存已更新，商品已自动下架' : '库存更新成功',
-    stock,
-    is_on_sale: nextIsOnSale
-  }
+  throw new Error('SKU 商品不支持快捷改库存，请进入编辑页逐个调整款式库存')
 }
 
 async function toggleSale(productId, isOnSale) {
@@ -241,7 +292,7 @@ async function toggleSale(productId, isOnSale) {
     throw new Error('上下架参数不合法')
   }
 
-  if (isOnSale && (!product.stock || product.stock <= 0)) {
+  if (isOnSale && (!product.total_stock || product.total_stock <= 0)) {
     throw new Error('库存为 0 的商品无法上架，请先补充库存')
   }
 
@@ -277,7 +328,8 @@ async function deleteProduct(productId) {
     throw new Error('该商品已有交易记录，为保障财务对账，仅支持下架处理。')
   }
 
-  const fileList = uniqueCloudFiles([product.cover_img, ...(product.detail_imgs || [])])
+  const skuImages = (Array.isArray(product.skus) ? product.skus : []).map((item) => item.image)
+  const fileList = uniqueCloudFiles([product.cover_img, ...(product.detail_imgs || []), ...skuImages])
   if (fileList.length) {
     await cloud.deleteFile({ fileList }).catch(() => {})
   }

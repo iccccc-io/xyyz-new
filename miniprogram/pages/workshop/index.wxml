@@ -1,6 +1,4 @@
-<!--pages/workshop/index.wxml-->
 <view class="workshop-container">
-  <!-- 导航栏 -->
   <nav-bar
     title="非遗工坊"
     showTitle="{{true}}"
@@ -11,7 +9,6 @@
   />
 
   <view wx:if="{{!loading && workshopInfo}}">
-    <!-- 工坊头部信息 -->
     <view class="workshop-header">
       <image class="workshop-bg" src="{{workshopInfo.logo || '/images/default-goods-image.png'}}" mode="aspectFill" />
       <view class="workshop-info">
@@ -25,8 +22,7 @@
             </view>
           </view>
         </view>
-        
-        <!-- 工坊统计 -->
+
         <view class="workshop-stats">
           <view class="stat-item">
             <text class="stat-num">{{workshopInfo.product_count || 0}}</text>
@@ -46,7 +42,6 @@
       </view>
     </view>
 
-    <!-- 工坊简介 -->
     <view class="section-card">
       <view class="section-title">
         <view class="title-line"></view>
@@ -55,11 +50,10 @@
       <text class="workshop-desc">{{workshopInfo.desc || '暂无简介'}}</text>
     </view>
 
-    <!-- 操作按钮区 -->
     <view class="action-bar" wx:if="{{isOwner}}">
-      <van-button 
-        icon="plus" 
-        type="primary" 
+      <van-button
+        icon="plus"
+        type="primary"
         round
         block
         bind:click="navigateToPublish"
@@ -69,7 +63,6 @@
       </van-button>
     </view>
 
-    <!-- 商品列表 -->
     <view class="section-card">
       <view class="section-title">
         <view class="title-line"></view>
@@ -77,36 +70,33 @@
         <text class="title-count">({{products.length}})</text>
       </view>
 
-      <!-- 空状态 -->
       <view class="empty-state" wx:if="{{products.length === 0}}">
         <van-empty description="暂无商品" />
         <view class="empty-tip" wx:if="{{isOwner}}">
-          <text>快去发布您的第一件非遗作品吧！</text>
+          <text>快去发布您的第一件非遗作品吧</text>
         </view>
       </view>
 
-      <!-- 商品列表 -->
       <view class="product-grid" wx:else>
-        <view 
-          class="product-item" 
-          wx:for="{{products}}" 
+        <view
+          class="product-item"
+          wx:for="{{products}}"
           wx:key="_id"
           bindtap="navigateToProductDetail"
           data-id="{{item._id}}"
         >
           <image class="product-image" src="{{item.cover_img}}" mode="aspectFill" />
-          <!-- 主理人可见：状态徽标 -->
-          <view class="status-badge status-on" wx:if="{{isOwner && item.status === 1}}">上架</view>
-          <view class="status-badge status-off" wx:if="{{isOwner && item.status !== 1}}">下架</view>
+          <view class="status-badge status-on" wx:if="{{isOwner && item.status === 1 && item.is_on_sale !== false && item.total_stock > 0}}">上架</view>
+          <view class="status-badge status-off" wx:if="{{isOwner && item.total_stock <= 0}}">售罄</view>
+          <view class="status-badge status-off" wx:if="{{isOwner && !(item.status === 1 && item.is_on_sale !== false) && item.total_stock > 0}}">下架</view>
           <view class="product-info">
             <text class="product-name">{{item.title}}</text>
             <view class="product-footer">
-              <text class="product-price">¥{{item.priceDisplay}}</text>
+              <text class="product-price">楼{{item.priceDisplay}}</text>
               <text class="product-sales">已售{{item.sales || 0}}</text>
             </view>
-            <!-- 库存提示（仅主理人可见） -->
-            <view class="stock-tip" wx:if="{{isOwner && item.stock <= 5}}">
-              <text class="stock-warn">库存仅剩 {{item.stock}} 件</text>
+            <view class="stock-tip" wx:if="{{isOwner && item.total_stock <= 5}}">
+              <text class="stock-warn">总库存仅剩 {{item.total_stock}} 件</text>
             </view>
           </view>
         </view>
@@ -114,17 +104,15 @@
     </view>
   </view>
 
-  <!-- 加载状态 -->
   <view class="loading-wrapper" wx:if="{{loading}}">
     <van-loading size="24px" vertical>加载中...</van-loading>
   </view>
 
-  <!-- 错误状态 -->
   <view class="error-wrapper" wx:if="{{!loading && !workshopInfo}}">
     <van-empty description="工坊不存在或已被删除" />
-    <van-button 
-      round 
-      type="primary" 
+    <van-button
+      round
+      type="primary"
       size="small"
       bind:click="goBack"
       color="#b63b36"
@@ -133,4 +121,3 @@
     </van-button>
   </view>
 </view>
-

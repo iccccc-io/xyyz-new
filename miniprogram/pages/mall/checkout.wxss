@@ -140,10 +140,28 @@
   margin-top: auto;
 }
 
+.product-sku {
+  font-size: 24rpx;
+  color: #8B6F47;
+}
+
+.product-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
 .product-price {
   font-size: 32rpx;
   font-weight: 700;
   color: #8B2E2A;
+}
+
+.product-original-price {
+  font-size: 22rpx;
+  color: #999;
+  text-decoration: line-through;
 }
 
 .product-qty {

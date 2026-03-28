@@ -195,7 +195,8 @@ function matchesSearchKeyword(order, keyword) {
   const snapshot = order.product_snapshot || {}
   const fields = [
     snapshot.title,
-    snapshot.workshop_name
+    snapshot.workshop_name,
+    snapshot.sku_name
   ]
 
   return fields.some((field) => String(field || '').toLowerCase().includes(normalizedKeyword))
@@ -220,7 +221,8 @@ function buildOrderWhere(openid, activeTab, keyword, activeTimeFilter) {
 
     conditions.push(_.or([
       { 'product_snapshot.title': keywordRegExp },
-      { 'product_snapshot.workshop_name': keywordRegExp }
+      { 'product_snapshot.workshop_name': keywordRegExp },
+      { 'product_snapshot.sku_name': keywordRegExp }
     ]))
   }
 

@@ -1,4 +1,5 @@
 const db = wx.cloud.database()
+const { createProductSummary } = require('../../common/mall-sku')
 
 const CATEGORY_TABS = [
   { id: '全部', label: '全部' },
@@ -15,13 +16,13 @@ const PAGE_HORIZONTAL_PADDING_RPX = 20
 const COLUMN_GAP_RPX = 16
 const DEFAULT_IMAGE_RATIO = 1.18
 const IMAGE_RATIO_BY_CATEGORY = {
-  '手工体验': 1.28,
-  '非遗摆件': 1.1,
-  '文房雅器': 1.24,
-  '地道风物': 1.02,
-  '服饰配件': 1.3,
-  '家居装饰': 1.16,
-  '文创礼品': 1.12
+  手工体验: 1.28,
+  非遗摆件: 1.1,
+  文房雅器: 1.24,
+  地道风物: 1.02,
+  服饰配件: 1.3,
+  家居装饰: 1.16,
+  文创礼品: 1.12
 }
 
 const DEFAULT_FILTER_STATE = {
@@ -40,10 +41,10 @@ const FILTER_OPTIONS = {
   ],
   priceRange: [
     { id: 'all', label: '全部价格' },
-    { id: 'lt_100', label: '¥100以下' },
-    { id: '100_300', label: '¥100-300' },
-    { id: '300_600', label: '¥300-600' },
-    { id: 'gte_600', label: '¥600以上' }
+    { id: 'lt_100', label: '楼100以下' },
+    { id: '100_300', label: '楼100-300' },
+    { id: '300_600', label: '楼300-600' },
+    { id: 'gte_600', label: '楼600以上' }
   ],
   heritageCategory: [
     { id: 'all', label: '全部类别' },
@@ -57,24 +58,9 @@ const FILTER_OPTIONS = {
   ]
 }
 
-function formatPrice(fen) {
-  if (!fen && fen !== 0) return '0.00'
-  const amount = Number(fen)
-  if (Number.isNaN(amount) || !Number.isFinite(amount)) return '0.00'
-
-  const yuan = amount / 100
-  if (yuan >= 100000000) {
-    return (yuan / 100000000).toFixed(1).replace(/\.0$/, '') + '亿'
-  }
-  if (yuan >= 10000) {
-    return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
-  }
-  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
-}
-
 function truncateText(text, maxLen) {
   if (!text) return ''
-  return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
+  return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text
 }
 
 function clamp(num, min, max) {
@@ -117,9 +103,9 @@ function getMenuSafeOffset(systemInfo) {
 }
 
 function getFilterCount(filterState) {
-  return Object.keys(DEFAULT_FILTER_STATE).reduce((count, key) => {
-    return filterState[key] === DEFAULT_FILTER_STATE[key] ? count : count + 1
-  }, 0)
+  return Object.keys(DEFAULT_FILTER_STATE).reduce((count, key) => (
+    filterState[key] === DEFAULT_FILTER_STATE[key] ? count : count + 1
+  ), 0)
 }
 
 Page({
@@ -177,7 +163,7 @@ Page({
     const searchValue = (this.data.searchValue || '').trim()
     const condition = {
       status: 1,
-      stock: _.gt(0),
+      total_stock: _.gt(0),
       is_on_sale: true
     }
 
@@ -199,7 +185,7 @@ Page({
     const { filterState } = this.data
     let list = [...(products || [])]
 
-    const getPrice = (item) => Number(item.price) || 0
+    const getPrice = (item) => Number(item.min_price) || 0
     const getSales = (item) => Number(item.sales) || 0
 
     switch (filterState.priceRange) {
@@ -258,7 +244,7 @@ Page({
       const res = await db.collection('shopping_products')
         .where({
           status: 1,
-          stock: _.gt(0),
+          total_stock: _.gt(0),
           is_on_sale: true
         })
         .orderBy('sales', 'desc')
@@ -294,9 +280,7 @@ Page({
     for (let index = 0; index < missingIds.length; index += 20) {
       const batchIds = missingIds.slice(index, index + 20)
       const res = await db.collection('shopping_workshops')
-        .where({
-          _id: _.in(batchIds)
-        })
+        .where({ _id: _.in(batchIds) })
         .field({
           _id: true,
           name: true,
@@ -360,22 +344,22 @@ Page({
   },
 
   normalizeProduct(item, workshopMap, imageRatio) {
-    const workshop = item.workshop_id ? workshopMap[item.workshop_id] || {} : {}
-    const workshopName = workshop.name || item.origin || '非遗工坊'
-    const originText = item.origin || workshop.ich_category || '湖南'
+    const summary = createProductSummary(item)
+    const workshop = summary.workshop_id ? workshopMap[summary.workshop_id] || {} : {}
+    const workshopName = workshop.name || summary.origin || '非遗工坊'
+    const originText = summary.origin || workshop.ich_category || '湖南'
 
     return {
-      ...item,
-      priceDisplay: formatPrice(item.price),
-      originalPriceDisplay: item.original_price ? formatPrice(item.original_price) : '',
-      titleDisplay: truncateText(item.title, 24),
-      projectDisplayName: truncateText(item.related_project_name || '', 14),
+      ...summary,
+      priceDisplay: `${summary.priceDisplay}${summary.priceSuffix}`,
+      titleDisplay: truncateText(summary.title, 24),
+      projectDisplayName: truncateText(summary.related_project_name || '', 14),
       originDisplay: truncateText(originText, 8),
-      badgeText: item.category || '匠作好物',
+      badgeText: summary.category || '匠作好物',
       workshopDisplayName: truncateText(workshopName, 8),
       workshopLogo: workshop.logo || '',
       workshopInitial: (workshopName || '匠').slice(0, 1),
-      imageRatio: clamp(imageRatio || getFallbackRatio(item.category), 0.72, 1.5)
+      imageRatio: clamp(imageRatio || getFallbackRatio(summary.category), 0.72, 1.5)
     }
   },
 
@@ -386,7 +370,6 @@ Page({
     const tagHeight = item.projectDisplayName ? 30 : 26
     const footerHeight = 30
     const bodyPadding = 72
-
     return imageHeight + titleHeight + tagHeight + footerHeight + bodyPadding
   },
 
@@ -438,15 +421,16 @@ Page({
     try {
       const currentPage = refresh ? 0 : this.data.page
       const { pageSize } = this.data
-      const res = await db.collection('shopping_products')
+      const rawRes = await db.collection('shopping_products')
         .where(this.buildWhereCondition())
         .skip(currentPage * pageSize)
         .limit(pageSize)
         .orderBy('sales', 'desc')
         .get()
 
-      const products = this.applyClientFilters(res.data || [])
-      if ((res.data || []).length < pageSize) {
+      const rawProducts = rawRes.data || []
+      const products = this.applyClientFilters(rawProducts)
+      if (rawProducts.length < pageSize) {
         this.setData({ noMore: true })
       }
 
@@ -489,20 +473,14 @@ Page({
   },
 
   onSearchConfirm() {
-    wx.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    })
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 })
     this.loadProducts(true)
   },
 
   onSearchClear() {
     if (!this.data.searchValue) return
     this.setData({ searchValue: '' })
-    wx.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    })
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 })
     this.loadProducts(true)
   },
 
@@ -514,10 +492,7 @@ Page({
       activeCategory: id,
       showFilterPanel: false
     })
-    wx.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    })
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 })
     this.loadProducts(true)
   },
 
@@ -525,9 +500,7 @@ Page({
     const nextVisible = !this.data.showFilterPanel
     this.setData({
       showFilterPanel: nextVisible,
-      draftFilterState: nextVisible
-        ? { ...this.data.filterState }
-        : this.data.draftFilterState
+      draftFilterState: nextVisible ? { ...this.data.filterState } : this.data.draftFilterState
     })
   },
 
@@ -550,8 +523,7 @@ Page({
 
   onApplyFilter() {
     const nextState = { ...this.data.draftFilterState }
-    const oldState = this.data.filterState
-    const changed = JSON.stringify(nextState) !== JSON.stringify(oldState)
+    const changed = JSON.stringify(nextState) !== JSON.stringify(this.data.filterState)
 
     this.setData({
       filterState: nextState,
@@ -560,10 +532,7 @@ Page({
     })
 
     if (changed) {
-      wx.pageScrollTo({
-        scrollTop: 0,
-        duration: 0
-      })
+      wx.pageScrollTo({ scrollTop: 0, duration: 0 })
       this.loadProducts(true)
     }
   },

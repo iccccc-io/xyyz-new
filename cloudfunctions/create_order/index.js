@@ -23,12 +23,29 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+function getSafeString(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function normalizeSkuList(product) {
+  return Array.isArray(product && product.skus) ? product.skus : []
+}
+
+function findSkuWithIndex(product, skuId) {
+  const targetSkuId = getSafeString(skuId)
+  const skus = normalizeSkuList(product)
+  const index = skus.findIndex((item) => getSafeString(item && item.sku_id) === targetSkuId)
+  if (index < 0) return { index: -1, sku: null }
+  return { index, sku: skus[index] }
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
 
   const {
     product_id,
+    sku_id,
     quantity = 1,
     delivery_address
   } = event
@@ -36,6 +53,9 @@ exports.main = async (event, context) => {
   // ========== 参数校验 ==========
   if (!product_id) {
     return { success: false, message: '参数错误：缺少商品ID' }
+  }
+  if (!sku_id) {
+    return { success: false, message: '参数错误：缺少款式ID' }
   }
   if (!Number.isInteger(quantity) || quantity < 1) {
     return { success: false, message: '购买数量不合法' }
@@ -58,8 +78,16 @@ exports.main = async (event, context) => {
     if (product.status !== 1 || product.is_on_sale === false) {
       return { success: false, message: '商品已下架' }
     }
-    if (!product.stock || product.stock < quantity) {
+    if (!product.total_stock || product.total_stock < quantity) {
       return { success: false, message: '库存不足' }
+    }
+
+    const { sku: previewSku } = findSkuWithIndex(product, sku_id)
+    if (!previewSku) {
+      return { success: false, message: '所选款式不存在' }
+    }
+    if (previewSku.stock < quantity) {
+      return { success: false, message: '该款式库存不足' }
     }
 
     // ========== 2. 查询工坊/卖家信息 ==========
@@ -78,52 +106,69 @@ exports.main = async (event, context) => {
       }
     }
 
-    // ========== 3. 原子扣减库存 ==========
-    // 使用 where + inc 的组合天然防超卖：
-    // 如果当前 stock < quantity，inc(-quantity) 会使 stock 为负数
-    // 但云开发不支持 stock >= quantity 的条件更新，所以用 inc 后再检查
-    const nextStock = (product.stock || 0) - quantity
-    const updateRes = await db.collection('shopping_products').doc(product_id).update({
-      data: {
-        stock: _.inc(-quantity),
-        is_on_sale: nextStock > 0 ? (product.is_on_sale !== false) : false,
-        update_time: db.serverDate()
-      }
-    })
-
-    if (updateRes.stats.updated === 0) {
-      return { success: false, message: '库存扣减失败，请稍后重试' }
-    }
-
-    // ========== 4. 构造数据快照 ==========
-    const totalPrice = product.price * quantity
-
-    const productSnapshot = {
-      product_id: product._id,
-      title: product.title,
-      cover_img: product.cover_img,
-      price: product.price,
-      original_price: product.original_price || product.price,
-      quantity,
-      origin: product.origin || '',
-      category: product.category || '',
-      related_project_id: product.related_project_id || '',
-      related_project_name: product.related_project_name || '',
-      logistics: product.logistics || null,
-      workshop_id: product.workshop_id || '',
-      workshop_name,
-      seller_openid
-    }
-
-    // ========== 5. 创建订单 ==========
+    // ========== 3. 事务：校验 SKU + 扣减库存 + 创建订单 ==========
+    const transaction = await db.startTransaction()
     try {
-      const addRes = await db.collection('shopping_orders').add({
+      const productTxRes = await transaction.collection('shopping_products').doc(product_id).get()
+      const latestProduct = productTxRes.data
+
+      if (!latestProduct || latestProduct.status !== 1 || latestProduct.is_on_sale === false) {
+        await transaction.rollback()
+        return { success: false, message: '商品已下架' }
+      }
+      if (!latestProduct.total_stock || latestProduct.total_stock < quantity) {
+        await transaction.rollback()
+        return { success: false, message: '库存不足' }
+      }
+
+      const { index: skuIndex, sku: targetSku } = findSkuWithIndex(latestProduct, sku_id)
+      if (!targetSku) {
+        await transaction.rollback()
+        return { success: false, message: '所选款式不存在' }
+      }
+      if (targetSku.stock < quantity) {
+        await transaction.rollback()
+        return { success: false, message: '该款式库存不足' }
+      }
+
+      const totalPrice = targetSku.price * quantity
+      const skuImage = targetSku.image || latestProduct.cover_img || ''
+
+      const productSnapshot = {
+        product_id: latestProduct._id,
+        title: latestProduct.title,
+        cover_img: latestProduct.cover_img,
+        sku_id: targetSku.sku_id,
+        sku_name: targetSku.sku_name,
+        sku_image: skuImage,
+        price: targetSku.price,
+        original_price: targetSku.original_price || targetSku.price,
+        quantity,
+        origin: latestProduct.origin || '',
+        category: latestProduct.category || '',
+        related_project_id: latestProduct.related_project_id || '',
+        related_project_name: latestProduct.related_project_name || '',
+        logistics: latestProduct.logistics || null,
+        workshop_id: latestProduct.workshop_id || '',
+        workshop_name,
+        seller_openid
+      }
+
+      await transaction.collection('shopping_products').doc(product_id).update({
+        data: {
+          total_stock: _.inc(-quantity),
+          [`skus.${skuIndex}.stock`]: _.inc(-quantity),
+          update_time: db.serverDate()
+        }
+      })
+
+      const addRes = await transaction.collection('shopping_orders').add({
         data: {
           _openid: openid,
-          status: 10,                           // Pending_Pay
+          status: 10,
           total_price: totalPrice,
           quantity,
-          workshop_id: product.workshop_id || '',
+          workshop_id: latestProduct.workshop_id || '',
           seller_openid,
           product_snapshot: productSnapshot,
           delivery_address,
@@ -138,7 +183,9 @@ exports.main = async (event, context) => {
         }
       })
 
-      console.log(`[create_order] 成功: 用户=${openid}, 订单=${addRes._id}, 商品=${product.title}, 金额=${totalPrice}分`)
+      await transaction.commit()
+
+      console.log(`[create_order] 成功: 用户=${openid}, 订单=${addRes._id}, 商品=${latestProduct.title}, SKU=${targetSku.sku_name}, 金额=${totalPrice}分`)
 
       return {
         success: true,
@@ -146,17 +193,9 @@ exports.main = async (event, context) => {
         order_id: addRes._id,
         total_price: totalPrice
       }
-
     } catch (orderErr) {
-      // 订单写入失败 → 回滚库存
-      console.error('[create_order] 订单写入失败，回滚库存:', orderErr)
-      await db.collection('shopping_products').doc(product_id).update({
-        data: {
-          stock: _.inc(quantity),
-          update_time: db.serverDate()
-        }
-      }).catch(e => console.error('[create_order] 库存回滚也失败:', e))
-
+      await transaction.rollback()
+      console.error('[create_order] 事务失败:', orderErr)
       return { success: false, message: '创建订单失败，请稍后重试' }
     }
 

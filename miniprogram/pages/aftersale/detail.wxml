@@ -60,9 +60,10 @@
     <view class="info-card" wx:if="{{order}}">
       <view class="card-title">商品信息</view>
       <view class="product-row">
-        <image class="product-img" src="{{order.product_snapshot.cover_img}}" mode="aspectFill" />
+        <image class="product-img" src="{{order.product_snapshot.sku_image || order.product_snapshot.cover_img}}" mode="aspectFill" />
         <view class="product-info">
           <text class="product-title">{{order.product_snapshot.title}}</text>
+          <text class="product-title" wx:if="{{order.product_snapshot.sku_name}}">款式：{{order.product_snapshot.sku_name}}</text>
           <text class="product-price">¥{{orderTotalDisplay}} × {{order.quantity}}</text>
         </view>
       </view>

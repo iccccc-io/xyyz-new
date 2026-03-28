@@ -11,6 +11,15 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+function getSafeString(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function findSkuIndex(product, skuId) {
+  const skus = Array.isArray(product && product.skus) ? product.skus : []
+  return skus.findIndex((item) => getSafeString(item && item.sku_id) === getSafeString(skuId))
+}
+
 /**
  * @param {string} event.order_id     - 要取消的订单 ID
  * @param {string} [event.reason]     - 取消原因（可选）
@@ -50,29 +59,42 @@ exports.main = async (event, context) => {
 
     // ========== 4. 取消订单 + 回滚库存 ==========
     const productId = order.product_snapshot && order.product_snapshot.product_id
+    const skuId = order.product_snapshot && order.product_snapshot.sku_id
     const quantity = order.quantity || 1
 
-    // 4a. 更新订单状态
-    await db.collection('shopping_orders').doc(order_id).update({
-      data: {
-        status: 50,
-        cancel_reason: reason,
-        update_time: db.serverDate()
-      }
-    })
+    const transaction = await db.startTransaction()
+    try {
+      await transaction.collection('shopping_orders').doc(order_id).update({
+        data: {
+          status: 50,
+          cancel_reason: reason,
+          update_time: db.serverDate()
+        }
+      })
 
-    // 4b. 回滚库存（商品可能已被删除，try-catch 容错）
-    if (productId && quantity > 0) {
-      try {
-        await db.collection('shopping_products').doc(productId).update({
+      if (productId && quantity > 0) {
+        const productRes = await transaction.collection('shopping_products').doc(productId).get()
+        const product = productRes.data
+        const skuIndex = findSkuIndex(product, skuId)
+
+        if (skuIndex < 0) {
+          throw new Error('订单对应的商品款式不存在，无法回滚库存')
+        }
+
+        await transaction.collection('shopping_products').doc(productId).update({
           data: {
-            stock: _.inc(quantity),
+            total_stock: _.inc(quantity),
+            [`skus.${skuIndex}.stock`]: _.inc(quantity),
             update_time: db.serverDate()
           }
         })
-      } catch (e) {
-        console.warn(`[cancel_order] 库存回滚失败(商品可能已删除): ${productId}`, e.message)
       }
+
+      await transaction.commit()
+    } catch (txErr) {
+      await transaction.rollback()
+      console.error('[cancel_order] 事务回滚:', txErr)
+      return { success: false, message: txErr.message || '取消失败，请稍后重试' }
     }
 
     console.log(`[cancel_order] 成功: 用户=${openid}, 订单=${order_id}`)

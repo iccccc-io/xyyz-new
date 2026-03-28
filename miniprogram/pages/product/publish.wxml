@@ -103,56 +103,124 @@
         <view class="panel-title-wrap">
           <text class="panel-index">03</text>
           <view class="panel-copy">
-            <text class="panel-title">价格与库存</text>
+            <text class="panel-title">SKU 款式</text>
+          </view>
+        </view>
+        <text class="panel-meta">{{skus.length}} 款</text>
+      </view>
+
+      <view class="cover-tip">
+        所有交易都以 SKU 为准。即使只有一种款式，也请保留默认 SKU。
+      </view>
+
+      <view class="sku-list">
+        <view class="sku-card" wx:for="{{skus}}" wx:key="index">
+          <view class="sku-head">
+            <view class="sku-title-wrap">
+              <text class="sku-index-badge">{{index + 1}}</text>
+              <view class="sku-title-copy">
+                <text class="sku-title">{{item.skuName || ('SKU ' + (index + 1))}}</text>
+                <text class="sku-lock-tip" wx:if="{{item.skuId}}">已发布 SKU 不可删除，可将库存改为 0 停售</text>
+              </view>
+            </view>
+            <view class="sku-remove" wx:if="{{!item.skuId && skus.length > 1}}" data-index="{{index}}" bindtap="removeSku">
+              <van-icon name="delete-o" size="18" color="#B63B36" />
+            </view>
+          </view>
+
+          <view class="field-block">
+            <view class="field-head">
+              <text class="field-label"><text class="required-mark">*</text>款式名称</text>
+            </view>
+            <input
+              class="field-input"
+              data-index="{{index}}"
+              data-field="skuName"
+              maxlength="30"
+              placeholder="例如：默认款式 / 礼盒版 / 大师版"
+              placeholder-class="field-placeholder"
+              value="{{item.skuName}}"
+              bindinput="onSkuFieldInput"
+            />
+          </view>
+
+          <view class="field-grid">
+            <view class="field-block field-half">
+              <view class="field-head">
+                <text class="field-label"><text class="required-mark">*</text>现价</text>
+                <text class="field-unit">元</text>
+              </view>
+              <input
+                class="field-input"
+                data-index="{{index}}"
+                data-field="price"
+                type="digit"
+                placeholder="输入现价"
+                placeholder-class="field-placeholder"
+                value="{{item.price}}"
+                bindinput="onSkuFieldInput"
+              />
+            </view>
+
+            <view class="field-block field-half">
+              <view class="field-head">
+                <text class="field-label">原价</text>
+                <text class="field-unit">选填</text>
+              </view>
+              <input
+                class="field-input"
+                data-index="{{index}}"
+                data-field="originalPrice"
+                type="digit"
+                placeholder="例如 299"
+                placeholder-class="field-placeholder"
+                value="{{item.originalPrice}}"
+                bindinput="onSkuFieldInput"
+              />
+            </view>
+          </view>
+
+          <view class="field-block">
+            <view class="field-head">
+              <text class="field-label"><text class="required-mark">*</text>库存数量</text>
+              <text class="field-unit">件</text>
+            </view>
+            <input
+              class="field-input"
+              data-index="{{index}}"
+              data-field="stock"
+              type="number"
+              placeholder="请输入库存数量"
+              placeholder-class="field-placeholder"
+              value="{{item.stock}}"
+              bindinput="onSkuFieldInput"
+            />
+          </view>
+
+          <view class="field-block">
+            <view class="field-head">
+              <text class="field-label">SKU 缩略图</text>
+              <text class="field-unit">选填</text>
+            </view>
+            <view class="sku-image-row">
+              <view class="sku-image-preview" wx:if="{{item.image}}">
+                <image class="sku-image" src="{{item.image}}" mode="aspectFill" />
+              </view>
+              <view class="sku-image-picker {{item.image ? 'has-image' : ''}}" data-index="{{index}}" bindtap="chooseSkuImage">
+                <van-icon name="{{item.image ? 'photograph' : 'plus'}}" size="18" color="#9D938A" />
+                <text class="sku-image-picker-text">{{item.image ? '更换图片' : '上传图片'}}</text>
+              </view>
+              <view class="sku-image-clear" wx:if="{{item.image}}" data-index="{{index}}" bindtap="clearSkuImage">
+                清空
+              </view>
+            </view>
           </view>
         </view>
       </view>
 
-      <view class="field-grid">
-        <view class="field-block field-half">
-          <view class="field-head">
-            <text class="field-label"><text class="required-mark">*</text>现价</text>
-            <text class="field-unit">元</text>
-          </view>
-          <input
-            class="field-input"
-            type="digit"
-            placeholder="输入现价"
-            placeholder-class="field-placeholder"
-            value="{{price}}"
-            bindinput="onPriceInput"
-          />
-        </view>
-
-        <view class="field-block field-half">
-          <view class="field-head">
-            <text class="field-label">原价</text>
-            <text class="field-unit">选填</text>
-          </view>
-          <input
-            class="field-input"
-            type="digit"
-            placeholder="例如 299"
-            placeholder-class="field-placeholder"
-            value="{{originalPrice}}"
-            bindinput="onOriginalPriceInput"
-          />
-        </view>
-      </view>
-
-      <view class="field-block">
-        <view class="field-head">
-          <text class="field-label"><text class="required-mark">*</text>库存数量</text>
-          <text class="field-unit">件</text>
-        </view>
-        <input
-          class="field-input"
-          type="number"
-          placeholder="请输入库存数量"
-          placeholder-class="field-placeholder"
-          value="{{stock}}"
-          bindinput="onStockInput"
-        />
+      <view class="sku-add-btn" bindtap="addSku">
+        <van-icon name="plus" size="16" color="#B63B36" />
+        <text>新增一款 SKU</text>
       </view>
     </view>
 
@@ -336,7 +404,7 @@
     </view>
 
     <view class="category-picker-summary">
-      <text class="category-summary-text">用于商城归类展示</text>
+      <text class="category-summary-text">用于商城分类展示</text>
       <text class="category-summary-text is-active" wx:if="{{category}}">当前：{{category}}</text>
     </view>
 
@@ -468,7 +536,7 @@
 
     <view class="project-picker-status" wx:if="{{loadingProjects && projectAllList.length === 0}}">
       <text class="project-status-title">正在加载非遗项目</text>
-      <text class="project-status-desc">请稍候…</text>
+      <text class="project-status-desc">请稍候...</text>
     </view>
 
     <view class="project-picker-status" wx:elif="{{projectLoadFailed}}">

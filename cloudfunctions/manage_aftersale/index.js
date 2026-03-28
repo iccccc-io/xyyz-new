@@ -31,6 +31,15 @@ const _ = db.command
 const AFTERSALE_WINDOW_DAYS = 7
 const MAX_REAPPLY = 3
 
+function getSafeString(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function findSkuIndex(product, skuId) {
+  const skus = Array.isArray(product && product.skus) ? product.skus : []
+  return skus.findIndex((item) => getSafeString(item && item.sku_id) === getSafeString(skuId))
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID || ''
@@ -517,6 +526,7 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
   const buyerWallet = buyerWalletRes.data[0]
 
   const productId = order.product_snapshot && order.product_snapshot.product_id
+  const skuId = order.product_snapshot && order.product_snapshot.sku_id
   const quantity = order.quantity || 1
 
   const transaction = await db.startTransaction()
@@ -542,6 +552,24 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
     await transaction.collection('shopping_orders').doc(order_id).update({
       data: { status: 60, settled: true, has_aftersale: false, aftersale_result: 'refunded', update_time: db.serverDate() }
     })
+
+    if (productId && quantity > 0) {
+      const productRes = await transaction.collection('shopping_products').doc(productId).get()
+      const product = productRes.data
+      const skuIndex = findSkuIndex(product, skuId)
+      if (skuIndex < 0) {
+        throw new Error('订单对应的商品款式不存在，无法回滚库存')
+      }
+
+      await transaction.collection('shopping_products').doc(productId).update({
+        data: {
+          total_stock: _.inc(quantity),
+          [`skus.${skuIndex}.stock`]: _.inc(quantity),
+          update_time: db.serverDate()
+        }
+      })
+    }
+
     await transaction.commit()
     console.log(`[退款] 成功: 售后=${aftersale_id}, 退款=${refund_fee}分`)
   } catch (txErr) {
@@ -552,13 +580,6 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
 
   // 事务外：库存回滚 + 账本
   const productTitle = (order.product_snapshot && order.product_snapshot.title) || '未知商品'
-  if (productId && quantity > 0) {
-    try {
-      await db.collection('shopping_products').doc(productId).update({
-        data: { stock: _.inc(quantity), update_time: db.serverDate() }
-      })
-    } catch (e) { console.warn('[退款] 库存回滚失败:', e.message) }
-  }
   await Promise.all([
     db.collection('shopping_ledger').add({ data: {
       order_id, user_id: buyer_id, type: 'REFUND_IN', amount: refund_fee,

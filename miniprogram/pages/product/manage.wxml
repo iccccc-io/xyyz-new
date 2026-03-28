@@ -13,7 +13,7 @@
       <view class="dashboard-head">
         <view class="dashboard-copy">
           <text class="dashboard-title">商品管理</text>
-          <text class="dashboard-subtitle">{{workshopInfo ? workshopInfo.name : '我的工坊'}}，库存、价格与上下架都可以在这里快速处理。</text>
+          <text class="dashboard-subtitle">{{workshopInfo ? workshopInfo.name : '我的工坊'}}，SKU 库存、价格与上下架都在这里统一维护。</text>
         </view>
         <view class="publish-btn" bindtap="goToPublish">
           <van-icon name="plus" size="16" color="#fff" />
@@ -28,7 +28,7 @@
           bindtap="switchTab"
         >
           <text class="stat-num">{{stats.selling}}</text>
-          <text class="stat-label">出售中</text>
+          <text class="stat-label">在售中</text>
           <text class="stat-note">正在对外展示</text>
         </view>
         <view
@@ -65,10 +65,10 @@
         </view>
 
         <view class="card-main">
-        <view class="card-top">
-          <view class="title-block">
-            <text class="title">{{item.title}}</text>
-            <view class="meta-pills">
+          <view class="card-top">
+            <view class="title-block">
+              <text class="title">{{item.title}}</text>
+              <view class="meta-pills">
                 <view class="meta-pill">
                   <text class="meta-key">销量</text>
                   <text class="meta-value">{{item.sales}}</text>
@@ -77,18 +77,17 @@
                   <text class="meta-key">浏览</text>
                   <text class="meta-value">{{item.views}}</text>
                 </view>
+                <view class="meta-pill" wx:if="{{item.skuCount}}">
+                  <text class="meta-key">SKU</text>
+                  <text class="meta-value">{{item.skuCount}}</text>
+                </view>
               </view>
             </view>
-            <text class="price">¥{{item.priceDisplay}}</text>
+            <text class="price">楼{{item.priceDisplay}}{{item.priceSuffix}}</text>
           </view>
 
           <view class="card-middle">
-            <view class="stock-line">
-              <text class="info-text">库存 {{item.stock}} 件</text>
-              <view class="stock-edit" data-id="{{item._id}}" bindtap="quickEditStock">
-                <van-icon name="edit" size="14" color="#b63b36" />
-              </view>
-            </view>
+            <text class="info-text">总库存 {{item.totalStock}} 件</text>
             <text class="info-text">{{item.isOnSale ? '当前可售' : '当前下架'}}</text>
           </view>
 

@@ -1,21 +1,6 @@
-/**
- * pages/mall/checkout.js
- * 下单确认页
- *
- * 完整流程：
- * 1. 展示商品信息 + 默认地址
- * 2. 用户选择/修改收货地址
- * 3. 点击「提交订单」→ 调用 create_order 云函数（库存扣减+订单创建）
- * 4. 弹出支付键盘 → 输入密码 → 调用 process_payment 云函数
- * 5. 支付成功 → 跳转订单列表；取消 → 调用 cancel_order 云函数
- *
- * --- 上线切换说明 ---
- * 步骤 4 替换为：
- *   create_order 返回 prepay_id → wx.requestPayment 拉起微信支付
- *   process_payment 改为微信支付回调通知处理
- */
 const app = getApp()
 const db = wx.cloud.database()
+const { formatPrice, createProductSelectionView } = require('../../common/mall-sku')
 
 const LOGISTICS_POSTAGE_TEXT = {
   free: '快递包邮',
@@ -35,13 +20,6 @@ function normalizeLogistics(logistics, origin) {
   }
 }
 
-function formatPrice(fen) {
-  if (!fen && fen !== 0) return '0.00'
-  const yuan = fen / 100
-  if (yuan >= 10000) return (yuan / 10000).toFixed(1).replace(/\.0$/, '') + '万'
-  return yuan.toFixed(2).replace(/\.?0+$/, '') || '0'
-}
-
 Page({
   data: {
     loading: true,
@@ -55,16 +33,22 @@ Page({
     submitting: false,
     showPayKeyboard: false,
     paying: false,
-    pendingOrderId: ''
+    pendingOrderId: '',
+    selectedSkuId: ''
   },
 
   onLoad(options) {
     const quantity = Math.max(1, Number(options.quantity) || 1)
-    this.setData({ quantity })
+    const skuId = options.skuId || ''
 
-    if (options.productId) {
+    this.setData({
+      quantity,
+      selectedSkuId: skuId
+    })
+
+    if (options.productId && skuId) {
       this._productId = options.productId
-      this.loadProduct(options.productId)
+      this.loadProduct(options.productId, skuId)
       this.loadDefaultAddress()
     } else {
       wx.showToast({ title: '参数错误', icon: 'none' })
@@ -72,31 +56,38 @@ Page({
     }
   },
 
-  // ===================================================================
-  //  数据加载
-  // ===================================================================
-
-  async loadProduct(productId) {
+  async loadProduct(productId, skuId) {
     try {
       const res = await db.collection('shopping_products').doc(productId).get()
       if (!res.data) throw new Error('商品不存在')
 
-      const product = res.data
+      const product = createProductSelectionView(res.data, skuId)
+      const selectedSku = product.selectedSku
+
+      if (!selectedSku) {
+        throw new Error('所选款式不存在')
+      }
       if (product.status !== 1 || product.is_on_sale === false) {
         throw new Error('商品已下架')
       }
-      if (!product.stock || product.stock < this.data.quantity) {
+      if (!product.total_stock || product.total_stock < this.data.quantity) {
         throw new Error('商品库存不足')
       }
-      const { quantity } = this.data
-      const totalFen = product.price * quantity
+      if (selectedSku.stock < this.data.quantity) {
+        throw new Error('该款式库存不足')
+      }
+
+      const totalFen = selectedSku.price * this.data.quantity
       const logistics = normalizeLogistics(product.logistics, product.origin || '')
 
       this.setData({
         product: {
           ...product,
-          priceDisplay: formatPrice(product.price),
-          logistics
+          logistics,
+          skuImage: product.displayImage || product.cover_img,
+          skuName: selectedSku.sku_name,
+          priceDisplay: formatPrice(selectedSku.price),
+          originalPriceDisplay: selectedSku.original_price > selectedSku.price ? formatPrice(selectedSku.original_price) : ''
         },
         totalFen,
         totalDisplay: formatPrice(totalFen),
@@ -106,7 +97,7 @@ Page({
       })
     } catch (err) {
       console.error('加载商品失败:', err)
-      wx.showToast({ title: '商品加载失败', icon: 'none' })
+      wx.showToast({ title: err.message || '商品加载失败', icon: 'none' })
       this.setData({ loading: false })
     }
   },
@@ -148,20 +139,15 @@ Page({
     }
   },
 
-  // ===================================================================
-  //  地址选择（跳转到地址管理页，选择模式）
-  // ===================================================================
-
   chooseAddress() {
     wx.navigateTo({ url: '/pages/address/list?select=1' })
   },
 
-  // ===================================================================
-  //  提交订单 → 调用 create_order 云函数
-  // ===================================================================
-
   async submitOrder() {
-    if (!app.checkLogin()) { app.requireLogin(); return }
+    if (!app.checkLogin()) {
+      app.requireLogin()
+      return
+    }
 
     const { address, product, quantity, submitting } = this.data
     if (submitting) return
@@ -170,7 +156,7 @@ Page({
       wx.showToast({ title: '请选择收货地址', icon: 'none' })
       return
     }
-    if (!product) {
+    if (!product || !product.selectedSku) {
       wx.showToast({ title: '商品信息异常', icon: 'none' })
       return
     }
@@ -183,7 +169,8 @@ Page({
         name: 'create_order',
         data: {
           product_id: product._id,
-          quantity: quantity,
+          sku_id: product.selectedSku.sku_id,
+          quantity,
           delivery_address: address
         }
       })
@@ -192,11 +179,10 @@ Page({
 
       const result = res.result
       if (result && result.success) {
-        const totalDisplay = formatPrice(result.total_price)
         this.setData({
           submitting: false,
           pendingOrderId: result.order_id,
-          totalDisplay,
+          totalDisplay: formatPrice(result.total_price),
           showPayKeyboard: true
         })
       } else {
@@ -210,10 +196,6 @@ Page({
       wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
     }
   },
-
-  // ===================================================================
-  //  支付键盘：确认支付 → 调用 process_payment 云函数
-  // ===================================================================
 
   async onPayConfirm(e) {
     const { password } = e.detail
@@ -233,7 +215,6 @@ Page({
       })
 
       const result = res.result
-
       if (result && result.success) {
         this.setData({ showPayKeyboard: false, paying: false, pendingOrderId: '' })
         wx.showToast({ title: '支付成功', icon: 'success' })
@@ -251,10 +232,6 @@ Page({
     }
   },
 
-  // ===================================================================
-  //  支付键盘：关闭/取消 → 调用 cancel_order 云函数
-  // ===================================================================
-
   async onPayKeyboardClose() {
     const { pendingOrderId } = this.data
     this.setData({ showPayKeyboard: false })
@@ -262,13 +239,14 @@ Page({
     if (!pendingOrderId) return
     this.setData({ pendingOrderId: '' })
 
-    // 异步取消订单（不阻塞 UI）
     wx.cloud.callFunction({
       name: 'cancel_order',
       data: {
         order_id: pendingOrderId,
         reason: '用户取消支付'
       }
-    }).catch(e => console.warn('取消订单失败（定时器会兜底）:', e))
+    }).catch((err) => {
+      console.warn('取消订单失败（定时器会兜底）:', err)
+    })
   }
 })

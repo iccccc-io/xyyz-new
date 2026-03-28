@@ -497,6 +497,145 @@
   box-shadow: 0 10rpx 22rpx rgba(182, 59, 54, 0.08);
 }
 
+.sku-list {
+  margin-top: 22rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.sku-card {
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: #FBFAF8;
+  border: 1rpx solid rgba(125, 100, 81, 0.08);
+}
+
+.sku-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.sku-title-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.sku-index-badge {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #F7EEE8;
+  color: #B63B36;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 40rpx;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sku-title-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.sku-title {
+  font-size: 28rpx;
+  line-height: 1.3;
+  color: #2C231E;
+  font-weight: 700;
+}
+
+.sku-lock-tip {
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: #9F7A64;
+}
+
+.sku-remove {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
+  background: rgba(182, 59, 54, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sku-image-row {
+  margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.sku-image-preview {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: #EDE4DB;
+  flex-shrink: 0;
+}
+
+.sku-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sku-image-picker {
+  flex: 1;
+  min-height: 96rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  border: 2rpx dashed #D9CFC4;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.sku-image-picker.has-image {
+  min-height: 80rpx;
+}
+
+.sku-image-picker-text {
+  font-size: 24rpx;
+  color: #6F6258;
+}
+
+.sku-image-clear {
+  padding: 14rpx 18rpx;
+  border-radius: 999rpx;
+  background: #F5F2EE;
+  color: #8A7A6E;
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.sku-add-btn {
+  margin-top: 20rpx;
+  height: 84rpx;
+  border-radius: 22rpx;
+  border: 2rpx dashed rgba(182, 59, 54, 0.32);
+  background: rgba(182, 59, 54, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  color: #B63B36;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
 .category-picker {
   height: 100%;
   display: flex;

@@ -8,7 +8,7 @@ const CATEGORY_OPTIONS = [
   { name: '文房雅器', desc: '笔墨纸砚、雅致器具' },
   { name: '服饰配件', desc: '穿戴饰品、日常配搭' },
   { name: '家居装饰', desc: '家居陈设、空间点缀' },
-  { name: '文创礼品', desc: '伴手礼、纪念礼物' },
+  { name: '文创礼品', desc: '伴手礼、纪念礼品' },
   { name: '其他', desc: '暂未归类的作品' }
 ]
 
@@ -52,14 +52,34 @@ function formatFenToInput(fen) {
   return yuan.toFixed(2).replace(/\.?0+$/, '')
 }
 
+function createEmptySku(defaultName = '默认款式') {
+  return {
+    skuId: '',
+    skuName: defaultName,
+    price: '',
+    originalPrice: '',
+    stock: '',
+    image: ''
+  }
+}
+
+function normalizeSkuForm(item, index) {
+  return {
+    skuId: item && item.sku_id ? String(item.sku_id) : '',
+    skuName: item && item.sku_name ? String(item.sku_name) : (index === 0 ? '默认款式' : ''),
+    price: formatFenToInput(item && item.price),
+    originalPrice: formatFenToInput(item && (item.original_price || item.price)),
+    stock: item && (item.stock || item.stock === 0) ? String(item.stock) : '',
+    image: item && item.image ? String(item.image) : ''
+  }
+}
+
 Page({
   data: {
     title: '',
     intro: '',
     category: '',
-    price: '',
-    originalPrice: '',
-    stock: '',
+    skus: [createEmptySku()],
     deliveryMethod: 'express',
     postage: 'free',
     carrier: 'sf_jd',
@@ -89,9 +109,9 @@ Page({
     projectLoadFailed: false,
     submitting: false,
     safeAreaBottom: 0,
-    pageTitle: '\u53d1\u5e03\u5546\u54c1',
-    submitText: '\u53d1\u5e03\u5546\u54c1',
-    submittingText: '\u53d1\u5e03\u4e2d...',
+    pageTitle: '发布商品',
+    submitText: '发布商品',
+    submittingText: '发布中...',
     isEditMode: false,
     editProductId: '',
     originalIsOnSale: true
@@ -109,9 +129,9 @@ Page({
       this.setData({
         isEditMode: true,
         editProductId: productId,
-        pageTitle: '\u7f16\u8f91\u5546\u54c1',
-        submitText: '\u4fdd\u5b58\u4fee\u6539',
-        submittingText: '\u4fdd\u5b58\u4e2d...'
+        pageTitle: '编辑商品',
+        submitText: '保存修改',
+        submittingText: '保存中...'
       })
       this.loadProductForEdit(productId)
     }
@@ -131,13 +151,15 @@ Page({
         throw new Error('无权编辑该商品')
       }
 
+      const skus = Array.isArray(product.skus) && product.skus.length
+        ? product.skus.map((item, index) => normalizeSkuForm(item, index))
+        : [createEmptySku()]
+
       this.setData({
         title: product.title || '',
         intro: product.intro || '',
         category: product.category || '',
-        price: formatFenToInput(product.price),
-        originalPrice: formatFenToInput(product.original_price || product.price),
-        stock: String(product.stock ?? ''),
+        skus,
         deliveryMethod: product.logistics && product.logistics.method ? product.logistics.method : 'express',
         postage: product.logistics && product.logistics.postage ? product.logistics.postage : 'free',
         carrier: product.logistics && product.logistics.carrier ? product.logistics.carrier : 'sf_jd',
@@ -170,20 +192,130 @@ Page({
     this.setData({ intro: getInputValue(e) })
   },
 
-  onPriceInput(e) {
-    this.setData({ price: getInputValue(e) })
-  },
-
-  onOriginalPriceInput(e) {
-    this.setData({ originalPrice: getInputValue(e) })
-  },
-
-  onStockInput(e) {
-    this.setData({ stock: getInputValue(e) })
-  },
-
   onOriginInput(e) {
     this.setData({ origin: getInputValue(e) })
+  },
+
+  updateSkuField(index, field, value) {
+    const skus = this.data.skus.slice()
+    if (!skus[index]) return
+    skus[index][field] = value
+    this.setData({ skus })
+  },
+
+  onSkuFieldInput(e) {
+    const { index, field } = e.currentTarget.dataset
+    this.updateSkuField(Number(index), field, getInputValue(e))
+  },
+
+  addSku() {
+    const skus = this.data.skus.concat(createEmptySku(`款式 ${this.data.skus.length + 1}`))
+    this.setData({ skus })
+  },
+
+  removeSku(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    const skus = this.data.skus.slice()
+    const target = skus[index]
+    if (!target) return
+
+    if (skus.length <= 1) {
+      wx.showToast({ title: '至少保留一个 SKU', icon: 'none' })
+      return
+    }
+
+    if (target.skuId) {
+      wx.showToast({ title: '已发布 SKU 不允许删除，请将库存改为 0', icon: 'none' })
+      return
+    }
+
+    skus.splice(index, 1)
+    this.setData({ skus })
+  },
+
+  async uploadImage(filePath, folder = 'products') {
+    const ext = (filePath.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '') || 'jpg'
+    const cloudPath = `${folder}/${Date.now()}_${Math.floor(Math.random() * 100000)}.${ext}`
+    const res = await wx.cloud.uploadFile({ cloudPath, filePath })
+    return res.fileID
+  },
+
+  chooseImages() {
+    const maxCount = 9 - this.data.imageFiles.length
+    if (maxCount <= 0) {
+      wx.showToast({ title: '最多上传 9 张图片', icon: 'none' })
+      return
+    }
+
+    wx.chooseMedia({
+      count: maxCount,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: (res) => {
+        const files = (res.tempFiles || []).map((item) => item.tempFilePath).filter(Boolean)
+        this.uploadChosenImages(files)
+      }
+    })
+  },
+
+  async uploadChosenImages(filePaths) {
+    if (!filePaths.length) return
+
+    wx.showLoading({ title: '上传中...', mask: true })
+    try {
+      const uploaded = await Promise.all(filePaths.map((filePath) => this.uploadImage(filePath, 'products')))
+      const imageFiles = this.data.imageFiles.concat(uploaded.map((url, index) => ({
+        url,
+        name: `img_${Date.now()}_${index}`
+      })))
+      this.setData({ imageFiles })
+      wx.showToast({ title: '上传成功', icon: 'success' })
+    } catch (err) {
+      console.error('图片上传失败:', err)
+      wx.showToast({ title: '上传失败', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  chooseSkuImage(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: async (res) => {
+        const filePath = res.tempFiles && res.tempFiles[0] && res.tempFiles[0].tempFilePath
+        if (!filePath) return
+
+        wx.showLoading({ title: '上传中...', mask: true })
+        try {
+          const fileID = await this.uploadImage(filePath, 'products/skus')
+          this.updateSkuField(index, 'image', fileID)
+          wx.showToast({ title: '上传成功', icon: 'success' })
+        } catch (err) {
+          console.error('SKU 图片上传失败:', err)
+          wx.showToast({ title: '上传失败', icon: 'none' })
+        } finally {
+          wx.hideLoading()
+        }
+      }
+    })
+  },
+
+  clearSkuImage(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    this.updateSkuField(index, 'image', '')
+  },
+
+  handleDeleteImage(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(index)) return
+    const imageFiles = this.data.imageFiles.slice()
+    imageFiles.splice(index, 1)
+    this.setData({ imageFiles })
   },
 
   selectDeliveryMethod(e) {
@@ -195,9 +327,7 @@ Page({
       updates.carrier = 'pickup'
     } else if (value === 'heavy_cargo') {
       updates.carrier = 'heavy_cargo'
-    } else if (this.data.carrier === 'pickup') {
-      updates.carrier = 'sf_jd'
-    } else if (this.data.carrier === 'heavy_cargo') {
+    } else if (this.data.carrier === 'pickup' || this.data.carrier === 'heavy_cargo') {
       updates.carrier = 'sf_jd'
     }
 
@@ -219,8 +349,7 @@ Page({
   },
 
   selectCategory(e) {
-    const { index } = e.currentTarget.dataset
-    const category = this.data.categoryOptions[index]
+    const category = this.data.categoryOptions[e.currentTarget.dataset.index]
     if (!category) return
     this.setData({
       category: category.name,
@@ -238,8 +367,7 @@ Page({
   },
 
   selectCarrier(e) {
-    const { index } = e.currentTarget.dataset
-    const carrier = this.data.carrierOptions[index]
+    const carrier = this.data.carrierOptions[e.currentTarget.dataset.index]
     if (!carrier) return
     this.setData({
       carrier: carrier.value,
@@ -256,8 +384,7 @@ Page({
   },
 
   selectHandlingTime(e) {
-    const { index } = e.currentTarget.dataset
-    const handlingTime = this.data.handlingTimeOptions[index]
+    const handlingTime = this.data.handlingTimeOptions[e.currentTarget.dataset.index]
     if (!handlingTime) return
     this.setData({
       handlingTime: handlingTime.value,
@@ -297,8 +424,7 @@ Page({
   },
 
   selectProjectFromPicker(e) {
-    const { index } = e.currentTarget.dataset
-    const project = this.data.projectFilteredList[index]
+    const project = this.data.projectFilteredList[e.currentTarget.dataset.index]
     if (!project) return
 
     this.setData({
@@ -324,15 +450,13 @@ Page({
         return
       }
 
-      const MAX_LIMIT = 20
-      const batchCount = Math.ceil(total / MAX_LIMIT)
+      const limit = 20
       const tasks = []
-
-      for (let i = 0; i < batchCount; i += 1) {
+      for (let index = 0; index < Math.ceil(total / limit); index += 1) {
         tasks.push(
           db.collection('ich_projects')
-            .skip(i * MAX_LIMIT)
-            .limit(MAX_LIMIT)
+            .skip(index * limit)
+            .limit(limit)
             .field({ _id: true, project_id: true, title: true, name: true, category: true, city: true, level: true })
             .get()
         )
@@ -346,7 +470,6 @@ Page({
           const name = String(item.name || item.title || '').trim()
           const projectId = String(item.project_id || item._id || '').trim()
           if (!name || !projectId || projectMap.has(projectId)) return
-
           projectMap.set(projectId, {
             project_id: projectId,
             name,
@@ -384,114 +507,8 @@ Page({
     const normalizedKeyword = String(keyword || '').trim().toLowerCase()
     if (!normalizedKeyword) return list
 
-    return list.filter((item) => {
-      const haystacks = [
-        item.name,
-        item.category,
-        item.city,
-        item.level
-      ]
-      return haystacks.some((field) => String(field || '').toLowerCase().includes(normalizedKeyword))
-    })
-  },
-
-  async afterReadImage(e) {
-    const files = Array.isArray(e.detail.file) ? e.detail.file : [e.detail.file]
-    if (!files.length) return
-
-    wx.showLoading({ title: '上传中...', mask: true })
-    try {
-      const tasks = files.map((file) => {
-        // van-uploader 返回的临时路径在 file.url 中
-        const filePath = file.url || file.tempFilePath || file.path
-        const cloudPath = `products/${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`
-        return wx.cloud.uploadFile({ cloudPath, filePath })
-      })
-      const results = await Promise.all(tasks)
-      const newFiles = results.map((item, index) => ({
-        url: item.fileID,
-        name: `img_${Date.now()}_${index}`
-      }))
-      this.setData({
-        imageFiles: this.data.imageFiles.concat(newFiles)
-      })
-      wx.showToast({ title: '上传成功', icon: 'success' })
-    } catch (err) {
-      console.error('图片上传失败:', err)
-      wx.showToast({ title: '上传失败', icon: 'none' })
-    } finally {
-      wx.hideLoading()
-    }
-  },
-
-  // 选择图片（替代 van-uploader）
-  chooseImages() {
-    const maxCount = 9 - this.data.imageFiles.length
-    if (maxCount <= 0) {
-      wx.showToast({ title: '最多上传9张图片', icon: 'none' })
-      return
-    }
-
-    wx.chooseMedia({
-      count: maxCount,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      sizeType: ['compressed'],
-      success: (res) => {
-        const files = res.tempFiles.map(f => ({ tempFilePath: f.tempFilePath }))
-        this.uploadChosenImages(files)
-      }
-    })
-  },
-
-  // 上传选中的图片
-  async uploadChosenImages(files) {
-    if (!files.length) return
-
-    wx.showLoading({ title: '上传中...', mask: true })
-    try {
-      const tasks = files.map((file) => {
-        const filePath = file.tempFilePath
-        const cloudPath = `products/${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`
-        return wx.cloud.uploadFile({ cloudPath, filePath })
-      })
-      const results = await Promise.all(tasks)
-      const newFiles = results.map((item, index) => ({
-        url: item.fileID,
-        name: `img_${Date.now()}_${index}`
-      }))
-      this.setData({
-        imageFiles: this.data.imageFiles.concat(newFiles)
-      })
-      wx.showToast({ title: '上传成功', icon: 'success' })
-    } catch (err) {
-      console.error('图片上传失败:', err)
-      wx.showToast({ title: '上传失败', icon: 'none' })
-    } finally {
-      wx.hideLoading()
-    }
-  },
-
-  // 自定义删除图片
-  handleDeleteImage(e) {
-    const index = e.currentTarget.dataset.index
-    if (typeof index === 'number' && index >= 0 && index < this.data.imageFiles.length) {
-      const imageFiles = this.data.imageFiles.slice()
-      imageFiles.splice(index, 1)
-      this.setData({ imageFiles })
-      wx.showToast({ title: '已删除', icon: 'success', duration: 1000 })
-    }
-  },
-
-  onDeleteImage(e) {
-    // van-uploader 的 delete 事件备用
-    const detail = e.detail || {}
-    const index = detail.index
-    if (typeof index === 'number' && index >= 0 && index < this.data.imageFiles.length) {
-      const imageFiles = this.data.imageFiles.slice()
-      imageFiles.splice(index, 1)
-      this.setData({ imageFiles })
-    }
+    return list.filter((item) => [item.name, item.category, item.city, item.level]
+      .some((field) => String(field || '').toLowerCase().includes(normalizedKeyword)))
   },
 
   togglePresetTag(e) {
@@ -507,10 +524,7 @@ Page({
     }
 
     if (selectedTags.length >= 10) {
-      wx.showToast({
-        title: '最多添加10个话题',
-        icon: 'none'
-      })
+      wx.showToast({ title: '最多添加 10 个话题', icon: 'none' })
       return
     }
 
@@ -519,7 +533,7 @@ Page({
   },
 
   removeTag(e) {
-    const index = e.currentTarget.dataset.index
+    const index = Number(e.currentTarget.dataset.index)
     const selectedTags = [...this.data.selectedTags]
     const removedTag = selectedTags[index]
     if (typeof removedTag === 'undefined') return
@@ -531,10 +545,7 @@ Page({
 
   openTopicSearch() {
     if (this.data.selectedTags.length >= 10) {
-      wx.showToast({
-        title: '最多添加10个话题',
-        icon: 'none'
-      })
+      wx.showToast({ title: '最多添加 10 个话题', icon: 'none' })
       return
     }
     this.setData({ showTopicSearch: true })
@@ -546,14 +557,8 @@ Page({
 
   onTopicSelect(e) {
     const { name, isNew } = e.detail
-    const selectedTags = [...this.data.selectedTags]
-    const newTopics = [...this.data.newTopics]
-
-    selectedTags.push(name)
-    if (isNew) {
-      newTopics.push(name)
-    }
-
+    const selectedTags = [...this.data.selectedTags, name]
+    const newTopics = isNew ? [...this.data.newTopics, name] : this.data.newTopics
     this.setData({
       selectedTags,
       newTopics,
@@ -605,40 +610,72 @@ Page({
     }
   },
 
+  validateSkus() {
+    const skus = this.data.skus || []
+    if (!skus.length) {
+      wx.showToast({ title: '请至少配置一个 SKU', icon: 'none' })
+      return false
+    }
+
+    let totalStock = 0
+
+    for (let index = 0; index < skus.length; index += 1) {
+      const item = skus[index]
+      const skuName = (item.skuName || '').trim() || (index === 0 ? '默认款式' : '')
+      const price = Number(item.price)
+      const originalPrice = item.originalPrice ? Number(item.originalPrice) : price
+      const stock = Number(item.stock)
+
+      if (!skuName) {
+        wx.showToast({ title: `请填写第 ${index + 1} 个 SKU 名称`, icon: 'none' })
+        return false
+      }
+      if (!price || price <= 0) {
+        wx.showToast({ title: `请填写第 ${index + 1} 个 SKU 现价`, icon: 'none' })
+        return false
+      }
+      if (!originalPrice || originalPrice < price) {
+        wx.showToast({ title: `第 ${index + 1} 个 SKU 原价不能低于现价`, icon: 'none' })
+        return false
+      }
+      if (!Number.isInteger(stock) || stock < 0) {
+        wx.showToast({ title: `第 ${index + 1} 个 SKU 库存必须是非负整数`, icon: 'none' })
+        return false
+      }
+
+      totalStock += stock
+    }
+
+    if (!this.data.isEditMode && totalStock <= 0) {
+      wx.showToast({ title: '发布商品时总库存必须大于 0', icon: 'none' })
+      return false
+    }
+
+    return true
+  },
+
   validateForm() {
     const title = (this.data.title || '').trim()
     const intro = (this.data.intro || '').trim()
     const category = (this.data.category || '').trim()
-    const price = Number(this.data.price)
-    const originalPrice = this.data.originalPrice ? Number(this.data.originalPrice) : 0
-    const stock = Number(this.data.stock)
 
     if (this.data.imageFiles.length === 0) {
       wx.showToast({ title: '请至少上传一张商品图片', icon: 'none' })
       return false
     }
     if (title.length < 5) {
-      wx.showToast({ title: '商品标题至少5个字', icon: 'none' })
+      wx.showToast({ title: '商品标题至少 5 个字', icon: 'none' })
       return false
     }
     if (intro.length < 20) {
-      wx.showToast({ title: '商品描述至少20字', icon: 'none' })
+      wx.showToast({ title: '商品描述至少 20 个字', icon: 'none' })
       return false
     }
     if (!category) {
       wx.showToast({ title: '请选择商品分类', icon: 'none' })
       return false
     }
-    if (!price || price <= 0) {
-      wx.showToast({ title: '请输入正确的现价（元）', icon: 'none' })
-      return false
-    }
-    if (this.data.originalPrice && (!originalPrice || originalPrice < price)) {
-      wx.showToast({ title: '原价应不低于现价', icon: 'none' })
-      return false
-    }
-    if ((!this.data.isEditMode && (!stock || stock <= 0)) || (this.data.isEditMode && stock < 0) || !Number.isInteger(stock)) {
-      wx.showToast({ title: '请输入正确的库存数量（正整数）', icon: 'none' })
+    if (!this.validateSkus()) {
       return false
     }
     if (!this.data.handlingTime) {
@@ -665,7 +702,7 @@ Page({
     if (!userInfo.is_certified) {
       wx.showModal({
         title: '需要认证',
-        content: '只有认证传承人才能发布商品',
+        content: '只有认证传承人才可以发布商品',
         confirmText: '去认证',
         confirmColor: '#b63b36',
         success: (res) => {
@@ -679,25 +716,37 @@ Page({
     return true
   },
 
+  buildSkuPayload() {
+    return this.data.skus.map((item, index) => {
+      const skuName = (item.skuName || '').trim() || (index === 0 ? '默认款式' : '')
+      const priceFen = Math.round(Number(item.price) * 100)
+      const originalPriceYuan = item.originalPrice ? Number(item.originalPrice) : Number(item.price)
+      const originalPriceFen = Math.round(originalPriceYuan * 100)
+
+      return {
+        sku_id: item.skuId || '',
+        sku_name: skuName,
+        price: priceFen,
+        original_price: originalPriceFen,
+        stock: Number(item.stock),
+        image: item.image || ''
+      }
+    })
+  },
+
   async submitProduct() {
     if (this.data.submitting) return
     if (!this.ensureCertified()) return
     if (!this.validateForm()) return
 
     this.setData({ submitting: true })
-    wx.showLoading({ title: '发布中...', mask: true })
+    wx.showLoading({ title: this.data.isEditMode ? '保存中...' : '发布中...', mask: true })
 
     try {
-      const selectedTags = [...this.data.selectedTags]
-
-      // 用户输入元，存储统一使用分（×100），严格遵守顶层设计规范
-      const priceYuan = Number(this.data.price)
-      const originalPriceYuan = this.data.originalPrice ? Number(this.data.originalPrice) : priceYuan
-      const priceFen = Math.round(priceYuan * 100)
-      const originalPriceFen = Math.round(originalPriceYuan * 100)
-
       await this.syncTopicsToDatabase()
 
+      const skus = this.buildSkuPayload()
+      const totalStock = skus.reduce((sum, item) => sum + item.stock, 0)
       const origin = this.data.origin.trim()
       const logistics = {
         method: this.data.deliveryMethod,
@@ -716,17 +765,15 @@ Page({
             title: this.data.title.trim(),
             intro: this.data.intro.trim(),
             category: this.data.category,
-            price: priceFen,
-            original_price: originalPriceFen,
-            stock: Number(this.data.stock),
+            skus,
             cover_img: this.data.imageFiles[0].url,
             detail_imgs: this.data.imageFiles.map((file) => file.url),
             related_project_id: this.data.projectId,
             related_project_name: this.data.projectName,
             origin,
             logistics,
-            tags: selectedTags,
-            is_on_sale: Number(this.data.stock) > 0 ? this.data.originalIsOnSale : false
+            tags: [...this.data.selectedTags],
+            is_on_sale: totalStock > 0 ? this.data.originalIsOnSale : false
           }
         }
       })
@@ -734,23 +781,23 @@ Page({
       wx.hideLoading()
 
       if (result.result && result.result.success) {
-        wx.showToast({ title: '发布成功', icon: 'success' })
+        wx.showToast({ title: this.data.isEditMode ? '保存成功' : '发布成功', icon: 'success' })
         setTimeout(() => {
           wx.redirectTo({ url: `/pages/mall/detail?id=${result.result.product_id}` })
         }, 1200)
       } else {
         wx.showModal({
-          title: '发布失败',
-          content: (result.result && result.result.message) || '发布失败，请稍后重试',
+          title: this.data.isEditMode ? '保存失败' : '发布失败',
+          content: (result.result && result.result.message) || '请稍后重试',
           showCancel: false,
           confirmColor: '#b63b36'
         })
       }
     } catch (err) {
-      console.error('发布失败:', err)
+      console.error('提交商品失败:', err)
       wx.hideLoading()
       wx.showModal({
-        title: '发布失败',
+        title: this.data.isEditMode ? '保存失败' : '发布失败',
         content: '网络异常，请稍后重试',
         showCancel: false,
         confirmColor: '#b63b36'
@@ -760,4 +807,3 @@ Page({
     }
   }
 })
-
