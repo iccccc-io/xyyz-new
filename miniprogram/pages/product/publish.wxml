@@ -9,163 +9,373 @@
   />
 
   <view class="content">
-    <view class="card">
-      <view class="section-title">商品图片</view>
-      <view class="section-desc">建议尺寸 750x750，最多 9 张，第一张为封面</view>
-      
-      <!-- 自定义图片上传区域，支持首图标记 -->
-      <view class="image-upload-area">
-        <view class="image-list">
-          <view 
-            class="image-item" 
-            wx:for="{{imageFiles}}" 
-            wx:key="url"
-          >
-            <image class="preview-image" src="{{item.url}}" mode="aspectFill" />
-            <view class="first-badge" wx:if="{{index === 0}}">首图</view>
-            <view class="delete-btn" data-index="{{index}}" catchtap="handleDeleteImage">
-              <text class="delete-icon">×</text>
-            </view>
-          </view>
-          
-          <!-- 添加按钮 -->
-          <view class="add-image-btn" wx:if="{{imageFiles.length < 9}}" bindtap="chooseImages">
-            <van-icon name="plus" size="28" color="#999" />
-            <text class="add-text">{{imageFiles.length}}/9</text>
+    <view class="panel panel-media">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">01</text>
+          <view class="panel-copy">
+            <text class="panel-title">作品图片</text>
           </view>
         </view>
+        <text class="panel-meta">{{imageFiles.length}} / 9</text>
       </view>
-    </view>
 
-    <view class="card">
-      <view class="section-title">基本信息</view>
-      <van-cell-group border="{{false}}">
-        <van-field
-          label="商品标题"
-          placeholder="请输入商品标题（至少5字）"
-          value="{{title}}"
-          maxlength="60"
-          required
-          bind:change="onTitleInput"
-        />
-        <van-field
-          label="商品描述"
-          type="textarea"
-          autosize
-          maxlength="500"
-          required
-          placeholder="描述工艺、材质、文化内涵等（至少20字）"
-          value="{{intro}}"
-          bind:change="onIntroInput"
-        />
-        <van-cell
-          title="商品分类"
-          is-link
-          clickable
-          value="{{category || '请选择'}}"
-          value-class="{{category ? 'value-text' : 'value-placeholder'}}"
-          bind:click="openCategorySheet"
-        />
-      </van-cell-group>
-    </view>
-
-    <view class="card">
-      <view class="section-title">价格与库存</view>
-      <van-cell-group border="{{false}}">
-        <van-field
-          label="现价"
-          type="digit"
-          placeholder="输入现价（元）"
-          value="{{price}}"
-          required
-          bind:change="onPriceInput"
-        />
-        <van-field
-          label="原价"
-          type="digit"
-          placeholder="选填"
-          value="{{originalPrice}}"
-          bind:change="onOriginalPriceInput"
-        />
-        <van-field
-          label="库存"
-          type="digit"
-          placeholder="输入库存数量"
-          value="{{stock}}"
-          required
-          bind:change="onStockInput"
-        />
-      </van-cell-group>
-    </view>
-
-    <view class="card">
-      <view class="section-title">文化属性</view>
-      <van-cell-group border="{{false}}">
-        <van-cell
-          title="关联非遗项目"
-          is-link
-          clickable
-          value="{{projectName || '请选择'}}"
-          value-class="{{projectName ? 'value-text' : 'value-placeholder'}}"
-          bind:click="openProjectSheet"
-        />
-        <van-field
-          label="产地信息"
-          placeholder="如：湖南长沙（选填）"
-          value="{{origin}}"
-          maxlength="30"
-          bind:change="onOriginInput"
-        />
-      </van-cell-group>
-      <view wx:if="{{projectEmpty}}" class="hint">
-        暂无可选非遗项目，请先在 ich_projects 集合中添加数据
+      <view class="cover-tip" wx:if="{{imageFiles.length > 0}}">
+        当前封面：第 1 张图片将展示在商城列表与详情首屏
       </view>
-    </view>
 
-    <view class="card">
-      <view class="section-title">商品标签</view>
-      <view class="tag-grid">
+      <view class="image-grid">
         <view
-          class="tag-item {{item.selected ? 'selected' : ''}}"
-          wx:for="{{tagList}}"
-          wx:key="name"
-          data-index="{{index}}"
-          bindtap="toggleTag"
+          class="image-card {{index === 0 ? 'is-cover' : ''}}"
+          wx:for="{{imageFiles}}"
+          wx:key="url"
         >
-          {{item.name}}
+          <image class="preview-image" src="{{item.url}}" mode="aspectFill" />
+          <view class="image-overlay"></view>
+          <view class="cover-badge" wx:if="{{index === 0}}">封面</view>
+          <view class="delete-btn" data-index="{{index}}" catchtap="handleDeleteImage">
+            <text class="delete-icon">×</text>
+          </view>
+        </view>
+
+        <view class="add-image-card" wx:if="{{imageFiles.length < 9}}" bindtap="chooseImages">
+          <van-icon name="plus" size="24" color="#9D938A" />
+          <text class="add-title">添加图片</text>
+          <text class="add-desc">支持相册与拍摄</text>
         </view>
       </view>
     </view>
 
-    <view class="footer">
-      <van-button
-        type="primary"
-        block
-        round
-        color="#b63b36"
-        loading="{{submitting}}"
-        disabled="{{submitting}}"
-        bind:click="submitProduct"
-      >
-        {{submitting ? '发布中...' : '立即发布'}}
-      </van-button>
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">02</text>
+          <view class="panel-copy">
+            <text class="panel-title">基本信息</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>商品标题</text>
+          <text class="field-counter">{{title.length}}/60</text>
+        </view>
+        <input
+          class="field-input"
+          maxlength="60"
+          placeholder="请输入商品标题（至少 5 字）"
+          placeholder-class="field-placeholder"
+          value="{{title}}"
+          bindinput="onTitleInput"
+        />
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>商品描述</text>
+          <text class="field-counter">{{intro.length}}/500</text>
+        </view>
+        <textarea
+          class="field-textarea"
+          maxlength="500"
+          auto-height
+          placeholder="描述工艺、材质、制作过程与文化内涵（至少 20 字）"
+          placeholder-class="field-placeholder"
+          value="{{intro}}"
+          bindinput="onIntroInput"
+        />
+      </view>
+
+      <view class="select-block" bindtap="openCategoryPicker">
+        <view class="select-copy">
+          <text class="field-label">商品分类</text>
+        </view>
+        <view class="select-value-wrap">
+          <text class="select-value {{category ? 'is-filled' : ''}}">{{category || '请选择'}}</text>
+          <van-icon name="arrow" size="16" color="#B1A79C" />
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">03</text>
+          <view class="panel-copy">
+            <text class="panel-title">价格与库存</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="field-grid">
+        <view class="field-block field-half">
+          <view class="field-head">
+            <text class="field-label"><text class="required-mark">*</text>现价</text>
+            <text class="field-unit">元</text>
+          </view>
+          <input
+            class="field-input"
+            type="digit"
+            placeholder="输入现价"
+            placeholder-class="field-placeholder"
+            value="{{price}}"
+            bindinput="onPriceInput"
+          />
+        </view>
+
+        <view class="field-block field-half">
+          <view class="field-head">
+            <text class="field-label">原价</text>
+            <text class="field-unit">选填</text>
+          </view>
+          <input
+            class="field-input"
+            type="digit"
+            placeholder="例如 299"
+            placeholder-class="field-placeholder"
+            value="{{originalPrice}}"
+            bindinput="onOriginalPriceInput"
+          />
+        </view>
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>库存数量</text>
+          <text class="field-unit">件</text>
+        </view>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="请输入库存数量"
+          placeholder-class="field-placeholder"
+          value="{{stock}}"
+          bindinput="onStockInput"
+        />
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">04</text>
+          <view class="panel-copy">
+            <text class="panel-title">文化属性</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="select-block" bindtap="openProjectPicker">
+        <view class="select-copy">
+          <text class="field-label"><text class="required-mark">*</text>关联非遗项目</text>
+        </view>
+        <view class="select-value-wrap">
+          <text class="select-value {{projectName ? 'is-filled' : ''}}">{{projectName || '请选择'}}</text>
+          <van-icon name="arrow" size="16" color="#B1A79C" />
+        </view>
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label">产地信息</text>
+          <text class="field-unit">选填</text>
+        </view>
+        <input
+          class="field-input"
+          maxlength="30"
+          placeholder="如：湖南长沙、湘西凤凰"
+          placeholder-class="field-placeholder"
+          value="{{origin}}"
+          bindinput="onOriginInput"
+        />
+      </view>
+
+      <view wx:if="{{projectEmpty}}" class="hint-card">
+        <van-icon name="warning-o" size="16" color="#B63B36" />
+        <text class="hint-text">暂无可选非遗项目，请先补充非遗项目数据后再进行关联。</text>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">05</text>
+          <view class="panel-copy">
+            <text class="panel-title">商品标签</text>
+          </view>
+        </view>
+        <text class="panel-meta">{{selectedTags.length}} 已选</text>
+      </view>
+
+      <scroll-view class="preset-tags-scroll" scroll-x enable-flex enhanced show-scrollbar="{{false}}" scroll-with-animation>
+        <view
+          class="preset-tag {{selectedTags.includes(item) ? 'selected' : ''}}"
+          wx:for="{{recommendTags}}"
+          wx:key="index"
+          data-tag="{{item}}"
+          bindtap="togglePresetTag"
+        >
+          <text class="tag-hash">#</text>
+          <text class="tag-name">{{item}}</text>
+        </view>
+      </scroll-view>
+
+      <view class="selected-tags-row">
+        <view class="topic-entry-btn" bindtap="openTopicSearch">
+          <van-icon name="add-o" size="16" color="#b63b36" />
+          <text>话题</text>
+        </view>
+
+        <view
+          class="selected-tag"
+          wx:for="{{selectedTags}}"
+          wx:key="index"
+        >
+          <text class="selected-tag-text"># {{item}}</text>
+          <view class="selected-tag-close" bindtap="removeTag" data-index="{{index}}">
+            <van-icon name="cross" size="12" color="#fff" />
+          </view>
+        </view>
+      </view>
+
+      <view class="tags-count-tip" wx:if="{{selectedTags.length > 0}}">
+        <text>已选 {{selectedTags.length}}/10 个话题</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="submit-bar" style="padding-bottom: calc(20rpx + {{safeAreaBottom}}px);">
+    <view class="submit-btn {{submitting ? 'is-disabled' : ''}}" bindtap="submitProduct">
+      {{submitting ? '发布中...' : '发布商品'}}
     </view>
   </view>
 </view>
 
-<van-action-sheet
-  show="{{showCategorySheet}}"
-  actions="{{categoryActions}}"
-  cancel-text="取消"
-  bind:close="onCloseCategorySheet"
-  bind:select="onSelectCategory"
-/>
+<van-popup
+  show="{{showCategoryPicker}}"
+  position="bottom"
+  round
+  bind:close="closeCategoryPicker"
+  custom-style="height: 58vh;"
+>
+  <view class="category-picker">
+    <view class="category-picker-header">
+      <text class="category-picker-title">选择商品分类</text>
+      <view class="category-picker-close" bindtap="closeCategoryPicker">
+        <van-icon name="cross" size="18" color="#8F847A" />
+      </view>
+    </view>
 
-<van-action-sheet
-  show="{{showProjectSheet}}"
-  actions="{{projectActions}}"
-  cancel-text="取消"
-  bind:close="onCloseProjectSheet"
-  bind:select="onSelectProject"
-/>
+    <view class="category-picker-summary">
+      <text class="category-summary-text">用于商城归类展示</text>
+      <text class="category-summary-text is-active" wx:if="{{category}}">当前：{{category}}</text>
+    </view>
 
+    <view class="category-grid">
+      <view
+        class="category-card {{category === item.name ? 'is-active' : ''}}"
+        wx:for="{{categoryOptions}}"
+        wx:key="name"
+        data-index="{{index}}"
+        bindtap="selectCategory"
+      >
+        <view class="category-card-main">
+          <text class="category-card-name">{{item.name}}</text>
+          <text class="category-card-desc">{{item.desc}}</text>
+        </view>
+        <view class="category-card-check {{category === item.name ? 'is-active' : ''}}">
+          <van-icon wx:if="{{category === item.name}}" name="success" size="14" color="#FFFFFF" />
+        </view>
+      </view>
+    </view>
+  </view>
+</van-popup>
+
+<van-popup
+  show="{{showProjectPicker}}"
+  position="bottom"
+  round
+  bind:close="closeProjectPicker"
+  custom-style="height: 72vh;"
+>
+  <view class="project-picker">
+    <view class="project-picker-header">
+      <text class="project-picker-title">选择非遗项目</text>
+      <view class="project-picker-close" bindtap="closeProjectPicker">
+        <van-icon name="cross" size="18" color="#8F847A" />
+      </view>
+    </view>
+
+    <view class="project-search-bar">
+      <van-icon name="search" size="17" color="#A79A8D" />
+      <input
+        class="project-search-input"
+        placeholder="搜索项目名称、类别或地区"
+        placeholder-class="project-search-placeholder"
+        value="{{projectSearchKeyword}}"
+        bindinput="onProjectSearchInput"
+        confirm-type="search"
+      />
+      <view class="project-search-clear" wx:if="{{projectSearchKeyword}}" bindtap="clearProjectSearch">
+        <van-icon name="clear" size="15" color="#B6ABA0" />
+      </view>
+    </view>
+
+    <view class="project-picker-summary" wx:if="{{!loadingProjects && projectAllList.length > 0}}">
+      <text class="project-summary-text">共 {{projectAllList.length}} 项</text>
+      <text class="project-summary-text" wx:if="{{projectSearchKeyword}}">搜索结果 {{projectFilteredList.length}} 项</text>
+      <text class="project-summary-text is-active" wx:if="{{projectName}}">已选：{{projectName}}</text>
+    </view>
+
+    <view class="project-picker-status" wx:if="{{loadingProjects && projectAllList.length === 0}}">
+      <text class="project-status-title">正在加载非遗项目</text>
+      <text class="project-status-desc">请稍候…</text>
+    </view>
+
+    <view class="project-picker-status" wx:elif="{{projectLoadFailed}}">
+      <text class="project-status-title">项目数据加载失败</text>
+      <text class="project-status-action" bindtap="loadProjectsFromDB">点击重新加载</text>
+    </view>
+
+    <view class="project-picker-status" wx:elif="{{projectEmpty && !projectSearchKeyword}}">
+      <text class="project-status-title">暂无可选非遗项目</text>
+      <text class="project-status-desc">请先补充项目数据后再进行关联</text>
+    </view>
+
+    <view class="project-picker-status" wx:elif="{{projectFilteredList.length === 0}}">
+      <text class="project-status-title">未找到相关项目</text>
+      <text class="project-status-desc">试试搜索别的名称或地区</text>
+    </view>
+
+    <scroll-view wx:else class="project-list" scroll-y>
+      <view
+        class="project-item"
+        wx:for="{{projectFilteredList}}"
+        wx:key="project_id"
+        data-index="{{index}}"
+        bindtap="selectProjectFromPicker"
+      >
+        <view class="project-item-main">
+          <text class="project-item-name">{{item.name}}</text>
+          <view class="project-item-meta-row" wx:if="{{item.category || item.city || item.level}}">
+            <text class="project-item-meta" wx:if="{{item.category}}">{{item.category}}</text>
+            <text class="project-item-meta" wx:if="{{item.city}}">{{item.city}}</text>
+            <text class="project-item-meta" wx:if="{{item.level}}">{{item.level}}</text>
+          </view>
+        </view>
+        <view class="project-item-check {{projectId === item.project_id ? 'is-active' : ''}}">
+          <van-icon wx:if="{{projectId === item.project_id}}" name="success" size="14" color="#FFFFFF" />
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</van-popup>
+
+<topic-search
+  show="{{showTopicSearch}}"
+  selected-tags="{{selectedTags}}"
+  max-count="{{10}}"
+  bind:select="onTopicSelect"
+  bind:close="closeTopicSearch"
+/>

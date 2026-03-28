@@ -2,15 +2,22 @@ const app = getApp()
 const db = wx.cloud.database()
 
 const CATEGORY_OPTIONS = [
-  '手工体验',
-  '非遗摆件',
-  '地道风物',
-  '文房雅器',
-  '服饰配件',
-  '家居装饰',
-  '文创礼品',
-  '其他'
+  { name: '手工体验', desc: '体验课、手作活动' },
+  { name: '非遗摆件', desc: '陈设器物、案头摆件' },
+  { name: '地道风物', desc: '地方特产、风味好物' },
+  { name: '文房雅器', desc: '笔墨纸砚、雅致器具' },
+  { name: '服饰配件', desc: '穿戴饰品、日常配搭' },
+  { name: '家居装饰', desc: '家居陈设、空间点缀' },
+  { name: '文创礼品', desc: '伴手礼、纪念礼物' },
+  { name: '其他', desc: '暂未归类的作品' }
 ]
+
+function getInputValue(e) {
+  if (!e) return ''
+  if (e.detail && typeof e.detail.value !== 'undefined') return e.detail.value
+  if (typeof e.detail !== 'undefined') return e.detail
+  return ''
+}
 
 Page({
   data: {
@@ -24,141 +31,201 @@ Page({
     projectName: '',
     origin: '',
     imageFiles: [],
-    tagList: [
-      { name: '手工体验', selected: false },
-      { name: '新品', selected: false },
-      { name: '大师作', selected: false },
-      { name: '限量', selected: false },
-      { name: '热卖', selected: false },
-      { name: '匠心', selected: false },
-      { name: '收藏级', selected: false },
-      { name: '送礼佳品', selected: false }
-    ],
-    showCategorySheet: false,
-    showProjectSheet: false,
-    categoryActions: CATEGORY_OPTIONS.map((name) => ({ name })),
-    projectActions: [],
-    projectIdMap: {},
+    selectedTags: [],
+    newTopics: [],
+    showTopicSearch: false,
+    recommendTags: ['非遗打卡', '周末去哪儿', '匠心', '手艺人', '传统文化'],
+    showCategoryPicker: false,
+    categoryOptions: CATEGORY_OPTIONS,
+    showProjectPicker: false,
+    projectAllList: [],
+    projectFilteredList: [],
+    projectSearchKeyword: '',
     loadingProjects: false,
     projectEmpty: false,
-    submitting: false
+    projectLoadFailed: false,
+    submitting: false,
+    safeAreaBottom: 0
   },
 
   onLoad() {
+    const systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      safeAreaBottom: systemInfo.safeArea ? (systemInfo.screenHeight - systemInfo.safeArea.bottom) : 0
+    })
     this.loadProjectsFromDB()
   },
 
   onTitleInput(e) {
-    this.setData({ title: e.detail })
+    this.setData({ title: getInputValue(e) })
   },
 
   onIntroInput(e) {
-    this.setData({ intro: e.detail })
+    this.setData({ intro: getInputValue(e) })
   },
 
   onPriceInput(e) {
-    this.setData({ price: e.detail })
+    this.setData({ price: getInputValue(e) })
   },
 
   onOriginalPriceInput(e) {
-    this.setData({ originalPrice: e.detail })
+    this.setData({ originalPrice: getInputValue(e) })
   },
 
   onStockInput(e) {
-    this.setData({ stock: e.detail })
+    this.setData({ stock: getInputValue(e) })
   },
 
   onOriginInput(e) {
-    this.setData({ origin: e.detail })
+    this.setData({ origin: getInputValue(e) })
   },
 
-  openCategorySheet() {
-    this.setData({ showCategorySheet: true })
+  openCategoryPicker() {
+    this.setData({ showCategoryPicker: true })
   },
 
-  onCloseCategorySheet() {
-    this.setData({ showCategorySheet: false })
+  closeCategoryPicker() {
+    this.setData({ showCategoryPicker: false })
   },
 
-  onSelectCategory(e) {
-    const { name } = e.detail || {}
-    if (!name) return
+  selectCategory(e) {
+    const { index } = e.currentTarget.dataset
+    const category = this.data.categoryOptions[index]
+    if (!category) return
     this.setData({
-      category: name,
-      showCategorySheet: false
+      category: category.name,
+      showCategoryPicker: false
     })
   },
 
-  openProjectSheet() {
-    if (this.data.loadingProjects) {
-      wx.showToast({ title: '项目加载中', icon: 'none' })
-      return
-    }
-    this.setData({ showProjectSheet: true })
-  },
-
-  onCloseProjectSheet() {
-    this.setData({ showProjectSheet: false })
-  },
-
-  onSelectProject(e) {
-    const { name, disabled } = e.detail || {}
-    if (disabled || !name) return
-    const projectId = this.data.projectIdMap[name]
+  openProjectPicker() {
     this.setData({
-      projectName: name,
-      projectId: projectId || '',
-      showProjectSheet: false
+      showProjectPicker: true,
+      projectSearchKeyword: '',
+      projectFilteredList: this.data.projectAllList
+    })
+
+    if (!this.data.projectAllList.length && !this.data.loadingProjects) {
+      this.loadProjectsFromDB()
+    }
+  },
+
+  closeProjectPicker() {
+    this.setData({ showProjectPicker: false })
+  },
+
+  onProjectSearchInput(e) {
+    const projectSearchKeyword = getInputValue(e).trim()
+    this.setData({
+      projectSearchKeyword,
+      projectFilteredList: this.filterProjects(projectSearchKeyword)
+    })
+  },
+
+  clearProjectSearch() {
+    this.setData({
+      projectSearchKeyword: '',
+      projectFilteredList: this.data.projectAllList
+    })
+  },
+
+  selectProjectFromPicker(e) {
+    const { index } = e.currentTarget.dataset
+    const project = this.data.projectFilteredList[index]
+    if (!project) return
+
+    this.setData({
+      projectName: project.name,
+      projectId: project.project_id,
+      showProjectPicker: false
     })
   },
 
   async loadProjectsFromDB() {
     this.setData({ loadingProjects: true })
     try {
-      const res = await db.collection('ich_projects')
-        .field({ _id: true, title: true, name: true })
-        .limit(200)
-        .get()
+      const countRes = await db.collection('ich_projects').count()
+      const total = countRes.total || 0
 
-      // 兼容 title 和 name 两种字段名
-      const list = (res.data || [])
-        .map((item) => {
-          const projectName = item.title || item.name || ''
-          return projectName ? String(projectName).trim() : ''
+      if (!total) {
+        this.setData({
+          projectAllList: [],
+          projectFilteredList: [],
+          projectEmpty: true,
+          projectLoadFailed: false
         })
-        .filter((name) => name)
+        return
+      }
 
-      const projectIdMap = {}
-      ;(res.data || []).forEach((item) => {
-        const projectName = item.title || item.name || ''
-        if (projectName) {
-          projectIdMap[String(projectName).trim()] = item._id
-        }
+      const MAX_LIMIT = 20
+      const batchCount = Math.ceil(total / MAX_LIMIT)
+      const tasks = []
+
+      for (let i = 0; i < batchCount; i += 1) {
+        tasks.push(
+          db.collection('ich_projects')
+            .skip(i * MAX_LIMIT)
+            .limit(MAX_LIMIT)
+            .field({ _id: true, project_id: true, title: true, name: true, category: true, city: true, level: true })
+            .get()
+        )
+      }
+
+      const results = await Promise.all(tasks)
+      const projectMap = new Map()
+
+      results.forEach((res) => {
+        ;(res.data || []).forEach((item) => {
+          const name = String(item.name || item.title || '').trim()
+          const projectId = String(item.project_id || item._id || '').trim()
+          if (!name || !projectId || projectMap.has(projectId)) return
+
+          projectMap.set(projectId, {
+            project_id: projectId,
+            name,
+            category: item.category ? String(item.category).trim() : '',
+            city: item.city ? String(item.city).trim() : '',
+            level: item.level ? String(item.level).trim() : ''
+          })
+        })
       })
 
-      if (list.length === 0) {
-        this.setData({
-          projectActions: [{ name: '暂无可选项目', disabled: true }],
-          projectIdMap: {},
-          projectEmpty: true
-        })
-      } else {
-        this.setData({
-          projectActions: list.map((name) => ({ name })),
-          projectIdMap,
-          projectEmpty: false
-        })
-      }
+      const projectAllList = Array.from(projectMap.values())
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'))
+
+      this.setData({
+        projectAllList,
+        projectFilteredList: this.filterProjects(this.data.projectSearchKeyword, projectAllList),
+        projectEmpty: projectAllList.length === 0,
+        projectLoadFailed: false
+      })
     } catch (err) {
       console.error('加载非遗项目失败:', err)
       this.setData({
-        projectActions: [{ name: '加载失败，稍后重试', disabled: true }],
-        projectIdMap: {},
-        projectEmpty: true
+        projectAllList: [],
+        projectFilteredList: [],
+        projectEmpty: true,
+        projectLoadFailed: true
       })
     } finally {
       this.setData({ loadingProjects: false })
     }
+  },
+
+  filterProjects(keyword, sourceList) {
+    const list = Array.isArray(sourceList) ? sourceList : this.data.projectAllList
+    const normalizedKeyword = String(keyword || '').trim().toLowerCase()
+    if (!normalizedKeyword) return list
+
+    return list.filter((item) => {
+      const haystacks = [
+        item.name,
+        item.category,
+        item.city,
+        item.level
+      ]
+      return haystacks.some((field) => String(field || '').toLowerCase().includes(normalizedKeyword))
+    })
   },
 
   async afterReadImage(e) {
@@ -260,12 +327,114 @@ Page({
     }
   },
 
-  toggleTag(e) {
-    const { index } = e.currentTarget.dataset
-    const tagList = this.data.tagList.slice()
-    if (tagList[index]) {
-      tagList[index].selected = !tagList[index].selected
-      this.setData({ tagList })
+  togglePresetTag(e) {
+    const tag = e.currentTarget.dataset.tag
+    const selectedTags = [...this.data.selectedTags]
+    const index = selectedTags.indexOf(tag)
+
+    if (index > -1) {
+      selectedTags.splice(index, 1)
+      const newTopics = this.data.newTopics.filter((item) => item !== tag)
+      this.setData({ selectedTags, newTopics })
+      return
+    }
+
+    if (selectedTags.length >= 10) {
+      wx.showToast({
+        title: '最多添加10个话题',
+        icon: 'none'
+      })
+      return
+    }
+
+    selectedTags.push(tag)
+    this.setData({ selectedTags })
+  },
+
+  removeTag(e) {
+    const index = e.currentTarget.dataset.index
+    const selectedTags = [...this.data.selectedTags]
+    const removedTag = selectedTags[index]
+    if (typeof removedTag === 'undefined') return
+
+    selectedTags.splice(index, 1)
+    const newTopics = this.data.newTopics.filter((item) => item !== removedTag)
+    this.setData({ selectedTags, newTopics })
+  },
+
+  openTopicSearch() {
+    if (this.data.selectedTags.length >= 10) {
+      wx.showToast({
+        title: '最多添加10个话题',
+        icon: 'none'
+      })
+      return
+    }
+    this.setData({ showTopicSearch: true })
+  },
+
+  closeTopicSearch() {
+    this.setData({ showTopicSearch: false })
+  },
+
+  onTopicSelect(e) {
+    const { name, isNew } = e.detail
+    const selectedTags = [...this.data.selectedTags]
+    const newTopics = [...this.data.newTopics]
+
+    selectedTags.push(name)
+    if (isNew) {
+      newTopics.push(name)
+    }
+
+    this.setData({
+      selectedTags,
+      newTopics,
+      showTopicSearch: false
+    })
+  },
+
+  async syncTopicsToDatabase() {
+    const selectedTags = this.data.selectedTags
+    const newTopics = this.data.newTopics
+
+    if (!selectedTags.length) return
+
+    for (const tagName of selectedTags) {
+      try {
+        if (newTopics.includes(tagName)) {
+          await db.collection('community_topics').add({
+            data: {
+              name: tagName,
+              count: 1,
+              create_time: db.serverDate()
+            }
+          })
+        } else {
+          const result = await wx.cloud.callFunction({
+            name: 'update_stats',
+            data: {
+              collection: 'community_topics',
+              whereField: 'name',
+              whereValue: tagName,
+              field: 'count',
+              amount: 1
+            }
+          })
+
+          if (result.result && result.result.updated === 0) {
+            await db.collection('community_topics').add({
+              data: {
+                name: tagName,
+                count: 1,
+                create_time: db.serverDate()
+              }
+            })
+          }
+        }
+      } catch (err) {
+        console.warn('同步话题失败:', tagName, err)
+      }
     }
   },
 
@@ -344,15 +513,15 @@ Page({
     wx.showLoading({ title: '发布中...', mask: true })
 
     try {
-      const selectedTags = this.data.tagList
-        .filter((tag) => tag.selected)
-        .map((tag) => tag.name)
+      const selectedTags = [...this.data.selectedTags]
 
       // 用户输入元，存储统一使用分（×100），严格遵守顶层设计规范
       const priceYuan = Number(this.data.price)
       const originalPriceYuan = this.data.originalPrice ? Number(this.data.originalPrice) : priceYuan
       const priceFen = Math.round(priceYuan * 100)
       const originalPriceFen = Math.round(originalPriceYuan * 100)
+
+      await this.syncTopicsToDatabase()
 
       const result = await wx.cloud.callFunction({
         name: 'add_shopping_product',
