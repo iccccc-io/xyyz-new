@@ -17,7 +17,7 @@ const PAGE_COPY = {
   login: '登录',
   creatorEyebrow: '传承人工坊',
   creatorDefaultName: '我的工坊',
-  creatorDesc: '工坊经营入口已开启，商品发布、SKU 管理、履约与售后都从这里进入。',
+  creatorDesc: '商品、订单与售后统一在这里处理。',
   viewWorkshop: '查看工坊',
   upgradeEyebrow: '身份升级',
   upgradeTitle: '成为传承人后开通工坊经营',
@@ -825,6 +825,13 @@ Page({
     if (action && typeof this[action] === 'function') {
       this[action](e)
     }
+  },
+
+  onHeroMenuTap() {
+    wx.showToast({
+      title: '功能规划中',
+      icon: 'none'
+    })
   },
 
   switchContentTab(e) {

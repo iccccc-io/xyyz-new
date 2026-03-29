@@ -17,18 +17,13 @@
 
       <view class="hero-safe" style="padding-top: {{statusBarHeight}}px;">
         <view class="hero-topbar">
-          <view class="brand-block">
-            <text class="brand-caption">{{copy.brand}}</text>
-            <text class="brand-title">{{copy.pageTitle}}</text>
+          <view
+            class="hero-menu-btn"
+            bindtap="onHeroMenuTap"
+          >
+            <van-icon name="wap-nav" size="20" color="#fff" />
           </view>
-          <view class="hero-top-actions" wx:if="{{isLoggedIn}}">
-            <view
-              class="hero-icon-btn"
-              bindtap="onChangeHeroCover"
-            >
-              <van-icon name="photo-o" size="18" color="#fff7ef" />
-            </view>
-          </view>
+          <view class="hero-top-spacer"></view>
         </view>
 
         <view class="hero-main-card">
@@ -70,9 +65,8 @@
 
     <view class="page-body" style="padding-bottom: {{safeAreaBottom + 36}}px;">
       <view class="identity-card creator-card" wx:if="{{showCreatorCard}}">
-        <view class="section-head compact">
+        <view class="section-head">
           <view class="section-head-text">
-            <text class="section-eyebrow">{{copy.creatorEyebrow}}</text>
             <text class="section-title">{{workshopData && workshopData.name ? workshopData.name : copy.creatorDefaultName}}</text>
             <text class="section-desc">{{copy.creatorDesc}}</text>
           </view>
@@ -108,7 +102,6 @@
               <view class="creator-action-badge" wx:if="{{actionItem.badge}}">{{actionItem.badge}}</view>
             </view>
             <text class="creator-action-title">{{actionItem.title}}</text>
-            <text class="creator-action-desc">{{actionItem.desc}}</text>
           </view>
         </view>
       </view>

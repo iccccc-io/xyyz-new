@@ -16,7 +16,8 @@
 
 .hero-shell {
   position: relative;
-  padding: 0 28rpx 36rpx;
+  min-height: 520rpx;
+  padding: 0 28rpx 60rpx;
   overflow: hidden;
   background: linear-gradient(180deg, #403632 0%, #655956 48%, #8a7e7a 100%);
 }
@@ -24,7 +25,7 @@
 .hero-safe {
   position: relative;
   z-index: 2;
-  padding-bottom: 6rpx;
+  padding-bottom: 0;
 }
 
 .hero-shell.is-default-cover .hero-orb {
@@ -81,42 +82,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 40rpx;
+  padding-bottom: 42rpx;
 }
 
-.brand-block {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.brand-caption {
-  font-size: 22rpx;
-  color: rgba(255, 247, 239, 0.72);
-  letter-spacing: 6rpx;
-}
-
-.brand-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #fff7ef;
-}
-
-.hero-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.hero-icon-btn {
-  width: 64rpx;
-  height: 64rpx;
+.hero-menu-btn {
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1rpx solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hero-menu-btn:active {
+  transform: scale(0.94);
+}
+
+.hero-top-spacer {
+  width: 72rpx;
+  height: 72rpx;
 }
 
 .hero-main-card {
@@ -218,6 +206,7 @@
 
 .page-body {
   padding: 0 24rpx 0;
+  margin-top: 18rpx;
   position: relative;
   z-index: 4;
 }
@@ -232,7 +221,8 @@
 }
 
 .creator-card {
-  background: linear-gradient(180deg, rgba(255, 248, 241, 0.98) 0%, rgba(253, 244, 236, 0.98) 100%);
+  background: rgba(255, 252, 248, 0.96);
+  padding: 22rpx;
 }
 
 .upgrade-card,
@@ -265,18 +255,18 @@
 
 .section-title {
   display: block;
-  margin-top: 8rpx;
-  font-size: 34rpx;
-  line-height: 1.35;
+  margin-top: 4rpx;
+  font-size: 32rpx;
+  line-height: 1.28;
   font-weight: 700;
   color: #1e1a17;
 }
 
 .section-desc {
   display: block;
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
   color: #7d736c;
 }
 
@@ -285,7 +275,7 @@
   display: flex;
   align-items: center;
   gap: 6rpx;
-  padding: 16rpx 18rpx;
+  padding: 12rpx 16rpx;
   border-radius: 999rpx;
   background: #f2ece4;
   font-size: 22rpx;
@@ -307,21 +297,21 @@
 .creator-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
-  margin-top: 28rpx;
+  gap: 6rpx;
+  margin-top: 16rpx;
 }
 
 .metric-item {
-  padding: 24rpx 18rpx;
-  border-radius: 26rpx;
-  background: #fffaf5;
+  padding: 12rpx 8rpx;
+  border-radius: 18rpx;
+  background: #fff8f3;
   text-align: center;
 }
 
 .metric-value {
   display: block;
   font-family: "DIN Alternate", "Avenir Next", sans-serif;
-  font-size: 40rpx;
+  font-size: 34rpx;
   font-weight: 700;
   color: #231f1c;
 }
@@ -332,30 +322,41 @@
 
 .metric-label {
   display: block;
-  margin-top: 10rpx;
-  font-size: 22rpx;
-  color: #7a6e65;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: #8a7e75;
 }
 
 .creator-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18rpx;
-  margin-top: 22rpx;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8rpx;
+  margin-top: 14rpx;
+  justify-items: center;
 }
 
 .creator-action-card {
   position: relative;
-  padding: 22rpx;
-  border-radius: 28rpx;
-  background: #fffdfb;
+  width: 100%;
+  max-width: 110rpx;
+  min-height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .creator-action-icon {
   position: relative;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 24rpx;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 28rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -379,18 +380,9 @@
 
 .creator-action-title {
   display: block;
-  margin-top: 18rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #231f1c;
-}
-
-.creator-action-desc {
-  display: block;
-  margin-top: 8rpx;
   font-size: 22rpx;
-  line-height: 1.6;
-  color: #81766e;
+  line-height: 1.35;
+  color: #6e645d;
 }
 
 .benefit-list {
