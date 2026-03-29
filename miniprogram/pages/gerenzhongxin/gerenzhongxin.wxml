@@ -1,404 +1,393 @@
-<!--pages/gerenzhongxin/gerenzhongxin.wxml-->
-<view class="user-container">
-  <!-- 头部沉浸区 -->
-  <view class="immersive-header">
-    <!-- 用户信息 -->
-    <view class="user-profile">
-      <image class="user-avatar" src="{{isLoggedIn ? userInfo.avatar_url : '/images/icons/avatar.png'}}" />
-      <view class="user-info">
-        <view class="user-name-row">
-          <text class="user-nickname">{{isLoggedIn ? userInfo.nickname : '游客用户'}}</text>
-          <van-icon 
-            wx:if="{{isLoggedIn && userInfo.is_certified}}" 
-            name="medal-o" 
-            size="20" 
-            color="#FFD700" 
-          />
-        </view>
-        <view class="certified-tag" wx:if="{{isLoggedIn && userInfo.is_certified && userInfo.certified_title}}">
-          <text>{{userInfo.certified_title}}</text>
-        </view>
-        <view class="normal-tag" wx:if="{{isLoggedIn && !userInfo.is_certified}}">
-          <text>非遗爱好者</text>
-        </view>
-        <view class="guest-tag" wx:if="{{!isLoggedIn}}">
-          <text>点击登录体验更多功能</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 数据统计栏 (毛玻璃) -->
-    <view class="stats-bar">
-      <view class="stat-item" bindtap="goToFollowing">
-        <text class="stat-number">{{userInfo.stats.following || 0}}</text>
-        <text class="stat-label">关注</text>
-      </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item" bindtap="goToFollowers">
-        <text class="stat-number">{{userInfo.stats.followers || 0}}</text>
-        <text class="stat-label">粉丝</text>
-      </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item">
-        <text class="stat-number">{{userInfo.stats.likes || 0}}</text>
-        <text class="stat-label">获赞</text>
-      </view>
-      <view class="stat-divider"></view>
-      <view class="stat-item">
-        <text class="stat-number">{{viewsFormatted}}</text>
-        <text class="stat-label">浏览</text>
-      </view>
-    </view>
+<view class="profile-page">
+  <view class="page-loading" wx:if="{{pageLoading}}">
+    <van-loading size="28px" color="#d84f45" vertical>{{copy.loading}}</van-loading>
   </view>
 
-  <!-- 核心功能区 (悬浮白色卡片) -->
-  <view class="floating-body">
+  <block wx:else>
+    <view class="hero-shell {{headerBackdrop ? 'has-cover' : 'is-default-cover'}}">
+      <image
+        wx:if="{{headerBackdrop}}"
+        class="hero-backdrop-image"
+        src="{{headerBackdrop}}"
+        mode="aspectFill"
+      />
+      <view class="hero-backdrop-mask {{headerBackdrop ? 'has-image' : 'is-default'}}"></view>
+      <view class="hero-orb hero-orb-a"></view>
+      <view class="hero-orb hero-orb-b"></view>
 
-    <!-- ===== 工坊管理中心（仅认证传承人 Role 1 可见）===== -->
-    <view class="workshop-studio-card" wx:if="{{isLoggedIn && userInfo.is_certified && workshopData}}">
-      <!-- 卡片头部 -->
-      <view class="studio-header">
-        <view class="studio-title-row">
-          <view class="studio-icon-wrap">
-            <van-icon name="shop-o" size="22" color="#fff" />
+      <view class="hero-safe" style="padding-top: {{statusBarHeight}}px;">
+        <view class="hero-topbar">
+          <view class="brand-block">
+            <text class="brand-caption">{{copy.brand}}</text>
+            <text class="brand-title">{{copy.pageTitle}}</text>
           </view>
-          <text class="studio-title">工坊管理中心</text>
-          <van-tag type="warning" size="small" custom-style="margin-left:12rpx;">传承人</van-tag>
+          <view class="hero-top-actions" wx:if="{{isLoggedIn}}">
+            <view
+              class="hero-icon-btn"
+              bindtap="onChangeHeroCover"
+            >
+              <van-icon name="photo-o" size="18" color="#fff7ef" />
+            </view>
+          </view>
         </view>
-        <view class="studio-workshop-name" bindtap="goToMyWorkshop">
-          <text>{{workshopData.name}}</text>
-          <van-icon name="arrow" size="14" color="#8B2E2A" />
-        </view>
-      </view>
 
-      <!-- 关键数据指标 -->
-      <view class="studio-stats">
-        <view class="studio-stat-item">
-          <text class="studio-stat-num">{{workshopData.product_count || 0}}</text>
-          <text class="studio-stat-label">在售商品</text>
-        </view>
-        <view class="studio-stat-divider"></view>
-        <view class="studio-stat-item">
-          <text class="studio-stat-num">{{workshopData.total_sales || 0}}</text>
-          <text class="studio-stat-label">累计销量</text>
-        </view>
-        <view class="studio-stat-divider"></view>
-        <view class="studio-stat-item">
-          <text class="studio-stat-num {{workshopPendingOrders > 0 ? 'studio-stat-alert' : ''}}">{{workshopPendingOrders}}</text>
-          <text class="studio-stat-label">待发货</text>
-        </view>
-      </view>
+        <view class="hero-main-card">
+          <view class="hero-profile-row">
+            <view class="avatar-wrap">
+              <view class="avatar-ring">
+                <image
+                  class="avatar-image"
+                  src="{{isLoggedIn ? (userInfo.avatar_url || userInfo.avatar_file_id || userInfo.avatar || '/images/icons/avatar.png') : '/images/icons/avatar.png'}}"
+                  mode="aspectFill"
+                />
+              </view>
+            </view>
 
-      <!-- 快捷操作九宫格 -->
-      <view class="studio-actions">
-        <view class="studio-action-item" bindtap="goToPublish">
-          <view class="studio-action-icon publish-icon">
-            <van-icon name="plus" size="24" color="#fff" />
+            <view class="hero-content">
+              <view class="name-row">
+                <text class="display-name">{{displayName}}</text>
+              </view>
+              <text class="profile-bio" wx:if="{{profileBio}}">{{profileBio}}</text>
+            </view>
           </view>
-          <text class="studio-action-label">发布商品</text>
-        </view>
-        <view class="studio-action-item" bindtap="goToProductManage">
-          <view class="studio-action-icon manage-icon">
-            <van-icon name="orders-o" size="24" color="#fff" />
+
+          <view class="stats-strip">
+            <view
+              class="stat-card"
+              wx:for="{{statItems}}"
+              wx:key="key"
+              wx:for-item="stat"
+              data-action="{{stat.action}}"
+              bindtap="handleActionTap"
+            >
+              <text class="stat-value">{{stat.value}}</text>
+              <text class="stat-label">{{stat.label}}</text>
+            </view>
           </view>
-          <text class="studio-action-label">商品管理</text>
-        </view>
-        <view class="studio-action-item" bindtap="goToSellerOrders">
-          <view class="studio-action-icon {{workshopPendingOrders > 0 ? 'order-icon-alert' : 'order-icon'}}">
-            <van-icon name="logistics" size="24" color="#fff" />
-            <view class="action-badge" wx:if="{{workshopPendingOrders > 0}}">{{workshopPendingOrders}}</view>
-          </view>
-          <text class="studio-action-label">待发货</text>
-        </view>
-        <view class="studio-action-item" bindtap="goToAftersaleCenter">
-          <view class="studio-action-icon aftersale-icon">
-            <van-icon name="service-o" size="24" color="#fff" />
-          </view>
-          <text class="studio-action-label">售后处理</text>
-        </view>
-        <view class="studio-action-item" bindtap="goToWorkshopFinance">
-          <view class="studio-action-icon finance-icon">
-            <van-icon name="balance-o" size="24" color="#fff" />
-          </view>
-          <text class="studio-action-label">工坊财务</text>
         </view>
       </view>
     </view>
 
-    <!-- 我的订单 -->
-    <view class="section-card">
-      <view class="section-header">
-        <text class="section-title">我的文创订单</text>
-        <view class="section-more" bindtap="goToAllOrders">
-          <text>全部</text>
-          <van-icon name="arrow" size="14" color="#999" />
-        </view>
-      </view>
-      <view class="order-grid">
-        <view class="order-item" bindtap="goToOrders" data-status="10">
-          <view class="order-icon-wrapper">
-            <van-icon name="balance-o" size="28" color="#b63b36" />
-            <view class="order-badge" wx:if="{{orderCounts.pending > 0}}">{{orderCounts.pending}}</view>
+    <view class="page-body" style="padding-bottom: {{safeAreaBottom + 36}}px;">
+      <view class="identity-card creator-card" wx:if="{{showCreatorCard}}">
+        <view class="section-head compact">
+          <view class="section-head-text">
+            <text class="section-eyebrow">{{copy.creatorEyebrow}}</text>
+            <text class="section-title">{{workshopData && workshopData.name ? workshopData.name : copy.creatorDefaultName}}</text>
+            <text class="section-desc">{{copy.creatorDesc}}</text>
           </view>
-          <text class="order-label">待支付</text>
-        </view>
-        <view class="order-item" bindtap="goToOrders" data-status="20">
-          <view class="order-icon-wrapper">
-            <van-icon name="gift-o" size="28" color="#b63b36" />
-            <view class="order-badge" wx:if="{{orderCounts.toShip > 0}}">{{orderCounts.toShip}}</view>
+          <view class="section-link" bindtap="goToMyWorkshop">
+            <text>{{copy.viewWorkshop}}</text>
+            <van-icon name="arrow" size="14" color="#2b2724" />
           </view>
-          <text class="order-label">待发货</text>
         </view>
-        <view class="order-item" bindtap="goToOrders" data-status="30">
-          <view class="order-icon-wrapper">
-            <van-icon name="logistics" size="28" color="#b63b36" />
-            <view class="order-badge" wx:if="{{orderCounts.toReceive > 0}}">{{orderCounts.toReceive}}</view>
-          </view>
-          <text class="order-label">待收货</text>
-        </view>
-        <view class="order-item" bindtap="goToOrders" data-status="40">
-          <view class="order-icon-wrapper">
-            <van-icon name="passed" size="28" color="#b63b36" />
-          </view>
-          <text class="order-label">已完成</text>
-        </view>
-        <view class="order-item" bindtap="goToOrders" data-status="60">
-          <view class="order-icon-wrapper">
-            <van-icon name="service-o" size="28" color="#b63b36" />
-          </view>
-          <text class="order-label">售后</text>
-        </view>
-      </view>
-    </view>
 
-    <!-- 常用工具 -->
-    <view class="section-card tools-card">
-      <view class="section-header">
-        <text class="section-title">常用工具</text>
+        <view class="creator-metrics">
+          <view
+            class="metric-item"
+            wx:for="{{creatorMetrics}}"
+            wx:key="label"
+            wx:for-item="metric"
+          >
+            <text class="metric-value {{metric.highlight ? 'metric-value-hot' : ''}}">{{metric.value}}</text>
+            <text class="metric-label">{{metric.label}}</text>
+          </view>
+        </view>
+
+        <view class="creator-actions">
+          <view
+            class="creator-action-card"
+            wx:for="{{creatorActions}}"
+            wx:key="key"
+            wx:for-item="actionItem"
+            data-action="{{actionItem.action}}"
+            bindtap="handleActionTap"
+          >
+            <view class="creator-action-icon {{actionItem.tone}}">
+              <van-icon name="{{actionItem.icon}}" size="20" color="#2b2724" />
+              <view class="creator-action-badge" wx:if="{{actionItem.badge}}">{{actionItem.badge}}</view>
+            </view>
+            <text class="creator-action-title">{{actionItem.title}}</text>
+            <text class="creator-action-desc">{{actionItem.desc}}</text>
+          </view>
+        </view>
       </view>
-      <van-cell-group border="{{false}}">
-        <!-- 我的钱包（含余额预览） -->
-        <van-cell
-          title="我的钱包"
-          icon="gold-coin-o"
-          is-link
-          bindtap="goToWallet"
+
+      <view class="identity-card upgrade-card" wx:if="{{showUpgradeCard}}">
+        <view class="section-head compact">
+          <view class="section-head-text">
+            <text class="section-eyebrow">{{copy.upgradeEyebrow}}</text>
+            <text class="section-title">{{copy.upgradeTitle}}</text>
+            <text class="section-desc">{{copy.upgradeDesc}}</text>
+          </view>
+          <view class="upgrade-mark">
+            <van-icon name="certificate" size="22" color="#d84f45" />
+          </view>
+        </view>
+
+        <view class="benefit-list">
+          <view
+            class="benefit-pill"
+            wx:for="{{upgradeBenefits}}"
+            wx:key="*this"
+            wx:for-item="benefit"
+          >
+            <view class="benefit-dot"></view>
+            <text>{{benefit}}</text>
+          </view>
+        </view>
+
+        <view class="upgrade-footer">
+          <view class="upgrade-cta" bindtap="goToCertify">
+            <text>{{copy.upgradeCta}}</text>
+            <van-icon name="arrow" size="14" color="#fff" />
+          </view>
+        </view>
+      </view>
+
+      <view class="identity-card guest-card" wx:if="{{showGuestCard}}">
+        <view class="section-head compact">
+          <view class="section-head-text">
+            <text class="section-eyebrow">{{copy.guestEyebrow}}</text>
+            <text class="section-title">{{copy.guestTitle}}</text>
+            <text class="section-desc">{{copy.guestDesc}}</text>
+          </view>
+          <view class="guest-mark">
+            <van-icon name="friends-o" size="22" color="#d84f45" />
+          </view>
+        </view>
+
+        <view class="guest-actions">
+          <view class="guest-btn guest-btn-primary" bindtap="goToLogin">
+            <text>{{copy.guestPrimary}}</text>
+          </view>
+          <view class="guest-btn guest-btn-secondary" bindtap="goToCommunity">
+            <text>{{copy.guestSecondary}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="panel-card">
+        <view class="section-head">
+          <view class="section-head-text">
+            <text class="section-title">{{copy.ordersTitle}}</text>
+            <text class="section-desc">{{copy.ordersDesc}}</text>
+          </view>
+          <view class="section-link" bindtap="goToAllOrders">
+            <text>{{copy.allOrders}}</text>
+            <van-icon name="arrow" size="14" color="#2b2724" />
+          </view>
+        </view>
+
+        <view class="order-grid">
+          <view
+            class="order-entry"
+            wx:for="{{orderEntries}}"
+            wx:key="key"
+            wx:for-item="entry"
+            data-status="{{entry.status}}"
+            bindtap="onOrderEntryTap"
+          >
+            <view class="order-icon {{entry.tone}}">
+              <van-icon name="{{entry.icon}}" size="20" color="#2b2724" />
+              <view class="order-badge" wx:if="{{entry.count > 0}}">{{entry.count}}</view>
+            </view>
+            <text class="order-label">{{entry.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="panel-card">
+        <view class="section-head">
+          <view class="section-head-text">
+            <text class="section-title">{{copy.servicesTitle}}</text>
+            <text class="section-desc">{{copy.servicesDesc}}</text>
+          </view>
+        </view>
+
+        <view
+          class="service-group"
+          wx:for="{{serviceGroups}}"
+          wx:key="key"
+          wx:for-item="group"
         >
-          <view slot="right-icon" class="wallet-preview-slot">
-            <text class="wallet-preview-balance" wx:if="{{walletBalance !== null}}">¥{{walletBalance}}</text>
-            <van-icon name="arrow" size="16" color="#ccc" />
-          </view>
-        </van-cell>
-        <van-cell 
-          title="收货地址" 
-          icon="location-o" 
-          is-link 
-          bindtap="goToAddress"
-        />
-        <van-cell 
-          title="{{userInfo.is_certified ? '我的工坊' : '传承人认证'}}" 
-          icon="{{userInfo.is_certified ? 'shop-o' : 'certificate'}}" 
-          is-link
-          bindtap="goToCertify"
-        />
-        <van-cell 
-          title="非遗足迹" 
-          icon="guide-o" 
-          is-link
-          bindtap="goToFootprint"
-        />
-        <van-cell 
-          title="联系客服" 
-          icon="service-o" 
-          is-link
-          bindtap="contactService"
-        />
-        <!-- 退出登录（仅登录后显示） -->
-        <van-cell 
-          wx:if="{{isLoggedIn}}"
-          title="退出登录" 
-          icon="revoke" 
-          is-link
-          title-class="logout-cell-title"
-          bindtap="onLogout"
-        />
-      </van-cell-group>
-    </view>
-
-    <!-- 内容瀑布流 Tabs -->
-    <view class="content-tabs-wrapper">
-      <van-tabs 
-        active="{{ activeTab }}" 
-        bind:change="onTabChange"
-        sticky
-        offset-top="{{0}}"
-        color="#b63b36"
-        title-active-color="#b63b36"
-      >
-        <van-tab title="我的笔记">
-          <view class="waterfall-container" wx:if="{{userPosts.length > 0}}">
-            <!-- 左列 -->
-            <view class="waterfall-column">
-              <view 
-                class="post-card"
-                wx:for="{{leftPosts}}"
-                wx:key="_id"
-                bindtap="goToPostDetail"
-                data-id="{{item._id}}"
-              >
-                <view class="card-cover">
-                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
-                  <view class="image-count" wx:if="{{item.images.length > 1}}">
-                    <van-icon name="photo-o" size="12" color="#fff" />
-                    <text>{{item.images.length}}</text>
-                  </view>
+          <text class="service-group-title">{{group.title}}</text>
+          <view class="service-list">
+            <view
+              class="service-row"
+              wx:for="{{group.items}}"
+              wx:key="title"
+              wx:for-item="serviceItem"
+              data-action="{{serviceItem.action}}"
+              bindtap="handleActionTap"
+            >
+              <view class="service-row-left">
+                <view class="service-icon {{serviceItem.tone}}">
+                  <van-icon name="{{serviceItem.icon}}" size="18" color="#2b2724" />
                 </view>
-                <view class="card-content">
-                  <view class="title-row">
-                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-                  </view>
-                  <view class="card-footer">
-                    <view class="like-info">
-                      <van-icon name="like-o" size="14" color="#999" />
-                      <text class="like-count">{{item.likes}}</text>
-                    </view>
-                  </view>
+                <view class="service-text">
+                  <text class="service-title {{serviceItem.danger ? 'service-title-danger' : ''}}">{{serviceItem.title}}</text>
+                  <text class="service-desc">{{serviceItem.desc}}</text>
                 </view>
               </view>
-            </view>
-            <!-- 右列 -->
-            <view class="waterfall-column">
-              <view 
-                class="post-card"
-                wx:for="{{rightPosts}}"
-                wx:key="_id"
-                bindtap="goToPostDetail"
-                data-id="{{item._id}}"
-              >
-                <view class="card-cover">
-                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
-                  <view class="image-count" wx:if="{{item.images.length > 1}}">
-                    <van-icon name="photo-o" size="12" color="#fff" />
-                    <text>{{item.images.length}}</text>
-                  </view>
-                </view>
-                <view class="card-content">
-                  <view class="title-row">
-                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-                  </view>
-                  <view class="card-footer">
-                    <view class="like-info">
-                      <van-icon name="like-o" size="14" color="#999" />
-                      <text class="like-count">{{item.likes}}</text>
-                    </view>
-                  </view>
-                </view>
-              </view>
+              <van-icon name="arrow" size="14" color="#9b938c" />
             </view>
           </view>
-          <view class="empty-posts" wx:if="{{userPosts.length === 0}}">
-            <van-empty description="{{isLoggedIn ? '还没有发布笔记' : '登录后查看您的笔记'}}" />
-          </view>
-        </van-tab>
-        <van-tab title="我的收藏">
-          <!-- 加载中 -->
-          <view class="loading-posts" wx:if="{{collectionsLoading}}">
-            <van-loading type="spinner" color="#b63b36">加载中...</van-loading>
-          </view>
-          
-          <!-- 收藏列表 -->
-          <view class="waterfall-container" wx:if="{{!collectionsLoading && collectedPosts.length > 0}}">
-            <!-- 左列 -->
-            <view class="waterfall-column">
-              <view 
-                class="post-card"
-                wx:for="{{leftCollectedPosts}}"
-                wx:key="_id"
-                bindtap="goToPostDetail"
-                data-id="{{item._id}}"
-              >
-                <view class="card-cover">
-                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
-                  <view class="image-count" wx:if="{{item.images.length > 1}}">
-                    <van-icon name="photo-o" size="12" color="#fff" />
-                    <text>{{item.images.length}}</text>
-                  </view>
-                </view>
-                <view class="card-content">
-                  <view class="title-row">
-                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-                  </view>
-                  <view class="card-footer">
-                    <view class="author-info">
-                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
-                      <text class="author-name">{{item.author_info.nickname}}</text>
-                    </view>
-                    <view class="like-info">
-                      <van-icon name="like-o" size="14" color="#999" />
-                      <text class="like-count">{{item.likes || 0}}</text>
-                    </view>
-                  </view>
-                </view>
-              </view>
-            </view>
-            <!-- 右列 -->
-            <view class="waterfall-column">
-              <view 
-                class="post-card"
-                wx:for="{{rightCollectedPosts}}"
-                wx:key="_id"
-                bindtap="goToPostDetail"
-                data-id="{{item._id}}"
-              >
-                <view class="card-cover">
-                  <image class="cover-image" src="{{item.images[0]}}" mode="widthFix" lazy-load />
-                  <view class="image-count" wx:if="{{item.images.length > 1}}">
-                    <van-icon name="photo-o" size="12" color="#fff" />
-                    <text>{{item.images.length}}</text>
-                  </view>
-                </view>
-                <view class="card-content">
-                  <view class="title-row">
-                    <text class="project-tag" wx:if="{{item.related_projects && item.related_projects.length > 0}}">{{item.related_projects[0].name}}</text><text class="post-title">{{item.title}}</text>
-                  </view>
-                  <view class="card-footer">
-                    <view class="author-info">
-                      <image class="author-avatar" src="{{item.author_info.avatar_file_id}}" />
-                      <text class="author-name">{{item.author_info.nickname}}</text>
-                    </view>
-                    <view class="like-info">
-                      <van-icon name="like-o" size="14" color="#999" />
-                      <text class="like-count">{{item.likes || 0}}</text>
-                    </view>
-                  </view>
-                </view>
-              </view>
-            </view>
-          </view>
-          
-          <!-- 空状态 -->
-          <view class="empty-posts" wx:if="{{!collectionsLoading && collectedPosts.length === 0}}">
-            <van-empty description="{{isLoggedIn ? '暂无收藏内容' : '登录后查看您的收藏'}}" />
-          </view>
-        </van-tab>
-      </van-tabs>
-    </view>
-  </view>
-
-  <!-- 游客蒙版（未登录时显示） -->
-  <view class="guest-overlay" wx:if="{{!isLoggedIn}}">
-    <view class="overlay-content">
-      <view class="overlay-icon">
-        <van-icon name="user-circle-o" size="80" color="#8B2E2A" />
+        </view>
       </view>
-      <text class="overlay-title">登录后体验更多功能</text>
-      <text class="overlay-desc">查看订单、发布笔记、收藏好物</text>
-      <button class="overlay-login-btn" bindtap="goToLogin">
-        <text>立即登录</text>
-      </button>
-      <view class="overlay-skip" bindtap="goToLogin">
-        <text>或 注册新账号</text>
+
+      <view class="panel-card content-card">
+        <view class="section-head">
+          <view class="section-head-text">
+            <text class="section-title">{{copy.contentTitle}}</text>
+            <text class="section-desc">{{copy.contentDesc}}</text>
+          </view>
+          <view
+            class="content-head-action"
+            wx:if="{{isLoggedIn}}"
+            bindtap="goToPost"
+          >
+            <van-icon name="plus" size="14" color="#d84f45" />
+            <text>{{copy.writeNote}}</text>
+          </view>
+          <view
+            class="content-head-action"
+            wx:if="{{!isLoggedIn}}"
+            bindtap="goToCommunity"
+          >
+            <text>{{copy.goCommunity}}</text>
+          </view>
+        </view>
+
+        <view class="content-tabs">
+          <view
+            class="content-tab {{activeTabKey === tab.key ? 'is-active' : ''}}"
+            wx:for="{{contentTabs}}"
+            wx:key="key"
+            wx:for-item="tab"
+            data-key="{{tab.key}}"
+            bindtap="switchContentTab"
+          >
+            <text class="content-tab-label">{{tab.label}}</text>
+            <text class="content-tab-count" wx:if="{{tab.countText}}">{{tab.countText}}</text>
+          </view>
+        </view>
+
+        <view class="content-loading" wx:if="{{contentLoading}}">
+          <van-loading size="22px" color="#d84f45" vertical>{{copy.loadingContent}}</van-loading>
+        </view>
+
+        <view class="waterfall-wrap" wx:elif="{{displayLeftPosts.length || displayRightPosts.length}}">
+          <view class="waterfall-column">
+            <view
+              class="note-card"
+              wx:for="{{displayLeftPosts}}"
+              wx:key="_id"
+              wx:for-item="note"
+              bindtap="goToPostDetail"
+              data-id="{{note._id}}"
+            >
+              <view class="note-cover-wrap">
+                <image
+                  class="note-cover"
+                  src="{{note.coverImage || note.authorAvatar || '/images/icons/avatar.png'}}"
+                  mode="widthFix"
+                  lazy-load
+                />
+                <view class="note-tag" wx:if="{{note.tagText}}">
+                  <text>{{note.tagText}}</text>
+                </view>
+                <view class="note-photo-count" wx:if="{{note.images.length > 1}}">
+                  <van-icon name="photo-o" size="12" color="#fff" />
+                  <text>{{note.images.length}}</text>
+                </view>
+              </view>
+              <view class="note-body">
+                <text class="note-title">{{note.title}}</text>
+                <view class="note-footer" wx:if="{{activeTabKey === 'collections'}}">
+                  <view class="note-author">
+                    <image class="note-author-avatar" src="{{note.authorAvatar}}" mode="aspectFill" />
+                    <text class="note-author-name">{{note.authorName}}</text>
+                  </view>
+                  <view class="note-like">
+                    <van-icon name="like-o" size="14" color="#7d756e" />
+                    <text>{{note.likeCount}}</text>
+                  </view>
+                </view>
+                <view class="note-footer" wx:else>
+                  <text class="note-date">{{note.dateLabel || copy.updatedNow}}</text>
+                  <view class="note-like">
+                    <van-icon name="like-o" size="14" color="#7d756e" />
+                    <text>{{note.likeCount}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="waterfall-column">
+            <view
+              class="note-card"
+              wx:for="{{displayRightPosts}}"
+              wx:key="_id"
+              wx:for-item="note"
+              bindtap="goToPostDetail"
+              data-id="{{note._id}}"
+            >
+              <view class="note-cover-wrap">
+                <image
+                  class="note-cover"
+                  src="{{note.coverImage || note.authorAvatar || '/images/icons/avatar.png'}}"
+                  mode="widthFix"
+                  lazy-load
+                />
+                <view class="note-tag" wx:if="{{note.tagText}}">
+                  <text>{{note.tagText}}</text>
+                </view>
+                <view class="note-photo-count" wx:if="{{note.images.length > 1}}">
+                  <van-icon name="photo-o" size="12" color="#fff" />
+                  <text>{{note.images.length}}</text>
+                </view>
+              </view>
+              <view class="note-body">
+                <text class="note-title">{{note.title}}</text>
+                <view class="note-footer" wx:if="{{activeTabKey === 'collections'}}">
+                  <view class="note-author">
+                    <image class="note-author-avatar" src="{{note.authorAvatar}}" mode="aspectFill" />
+                    <text class="note-author-name">{{note.authorName}}</text>
+                  </view>
+                  <view class="note-like">
+                    <van-icon name="like-o" size="14" color="#7d756e" />
+                    <text>{{note.likeCount}}</text>
+                  </view>
+                </view>
+                <view class="note-footer" wx:else>
+                  <text class="note-date">{{note.dateLabel || copy.updatedNow}}</text>
+                  <view class="note-like">
+                    <van-icon name="like-o" size="14" color="#7d756e" />
+                    <text>{{note.likeCount}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-panel" wx:else>
+          <view class="empty-icon">
+            <van-icon name="notes-o" size="24" color="#d84f45" />
+          </view>
+          <text class="empty-title">{{contentEmptyTitle}}</text>
+          <text class="empty-desc">{{contentEmptyDesc}}</text>
+          <view
+            class="empty-btn"
+            data-action="{{contentEmptyAction}}"
+            bindtap="handleActionTap"
+          >
+            <text>{{contentEmptyActionText}}</text>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
+  </block>
 </view>

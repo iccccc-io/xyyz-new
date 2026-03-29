@@ -223,6 +223,7 @@ Page({
         data: {
           nickname: nickname.trim(),
           avatar_url: avatarFileId,
+          profile_bg_url: '',
           is_certified: false,
           create_time: now,
           update_time: now,
@@ -268,6 +269,7 @@ Page({
         _openid: openid,
         nickname: nickname.trim(),
         avatar_url: avatarFileId,
+        profile_bg_url: '',
         is_certified: false,
         create_time: now,
         update_time: now,
