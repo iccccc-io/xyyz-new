@@ -1,0 +1,82 @@
+<view class="review-submit-page">
+  <nav-bar
+    title="提交评价"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <view class="page-body" wx:elif="{{order}}">
+    <view class="product-card">
+      <image
+        class="product-image"
+        src="{{order.product_snapshot.sku_image || order.product_snapshot.cover_img}}"
+        mode="aspectFill"
+      />
+      <view class="product-main">
+        <text class="product-title">{{order.product_snapshot.title}}</text>
+        <text class="product-sku" wx:if="{{order.product_snapshot.sku_name}}">款式：{{order.product_snapshot.sku_name}}</text>
+        <text class="product-meta">购买于 {{order.buyTimeText}}</text>
+        <text class="product-meta">实付 ¥{{order.totalPriceDisplay}}</text>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">评分</view>
+
+      <view class="rate-row">
+        <text class="rate-label">商品质量</text>
+        <van-rate value="{{rating.product}}" bind:change="onRateChange" data-key="product" color="#b63b36" />
+      </view>
+
+      <view class="rate-row">
+        <text class="rate-label">物流速度</text>
+        <van-rate value="{{rating.logis}}" bind:change="onRateChange" data-key="logis" color="#b63b36" />
+      </view>
+
+      <view class="rate-row">
+        <text class="rate-label">服务态度</text>
+        <van-rate value="{{rating.service}}" bind:change="onRateChange" data-key="service" color="#b63b36" />
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">评价内容</view>
+      <textarea
+        class="content-input"
+        maxlength="500"
+        placeholder="聊聊这件作品的细节、包装、物流或你的真实体验"
+        value="{{content}}"
+        bindinput="onContentInput"
+      />
+
+      <view class="upload-label">晒图展示（最多 9 张）</view>
+      <van-uploader
+        file-list="{{fileList}}"
+        max-count="9"
+        bind:after-read="afterRead"
+        bind:delete="deleteImage"
+      />
+    </view>
+
+    <view class="section-card anonymous-card">
+      <view>
+        <text class="section-title">匿名评价</text>
+        <text class="anonymous-tip">匿名后将展示为“非***友”，头像使用平台默认占位图</text>
+      </view>
+      <switch color="#b63b36" checked="{{isAnonymous}}" bindchange="onAnonymousChange" />
+    </view>
+
+    <view class="submit-wrap">
+      <van-button round block color="#8B2E2A" loading="{{submitting}}" bind:click="submitReview">
+        提交评价
+      </van-button>
+    </view>
+  </view>
+</view>

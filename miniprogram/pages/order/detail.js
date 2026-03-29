@@ -25,6 +25,19 @@ function formatTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+function getReviewState(order) {
+  const reviewStatus = Number(order && order.review_status) === 1 ? 1 : 0
+  const reviewId = typeof (order && order.review_id) === 'string' ? order.review_id : ''
+  const canReview = Number(order && order.status) === 40 && order && order.has_aftersale !== true
+
+  return {
+    reviewStatus,
+    reviewId,
+    canReview,
+    reviewButtonText: reviewStatus === 1 ? '我的评价' : '去评价'
+  }
+}
+
 Page({
   data: {
     loading: true,
@@ -66,6 +79,13 @@ Page({
 
   async loadOrder(id) {
     try {
+      this.setData({
+        loading: true,
+        canApplyAftersale: false,
+        aftersaleDeadlineDisplay: '',
+        activeAftersaleId: '',
+        aftersaleLog: null
+      })
       const res = await db.collection('shopping_orders').doc(id).get()
       const raw = res.data
       let info = STATUS_MAP[raw.status] || { text: '未知', icon: 'question-o', desc: '' }
@@ -86,7 +106,8 @@ Page({
         createTimeDisplay: formatTime(raw.create_time),
         payTimeDisplay: formatTime(raw.pay_time),
         shipTimeDisplay: formatTime(raw.ship_time),
-        completeTimeDisplay: formatTime(raw.complete_time)
+        completeTimeDisplay: formatTime(raw.complete_time),
+        ...getReviewState(raw)
       }
 
       this.setData({ order, loading: false })
@@ -351,6 +372,25 @@ Page({
   },
 
   /** 跳转商品详情 */
+  goToReviewSubmit() {
+    const { order } = this.data
+    if (!order || !order._id) return
+    wx.navigateTo({
+      url: `/pages/review/submit?orderId=${order._id}`
+    })
+  },
+
+  goToReviewDetail() {
+    const { order } = this.data
+    if (!order || !order.reviewId) {
+      wx.showToast({ title: '评价信息不存在', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/review/detail?reviewId=${order.reviewId}`
+    })
+  },
+
   goToProduct() {
     const { order } = this.data
     const productId = order.product_snapshot && order.product_snapshot.product_id

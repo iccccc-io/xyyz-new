@@ -1,0 +1,116 @@
+<view class="product-review-page">
+  <nav-bar
+    title="商品评价"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="page-body">
+    <view class="summary-card">
+      <view class="summary-score">
+        <text class="summary-number">{{summary.displayScore}}</text>
+        <text class="summary-label">综合评分</text>
+      </view>
+      <view class="summary-meta">
+        <text class="summary-count">共 {{summary.review_count || 0}} 条评价</text>
+        <view class="summary-tags">
+          <van-tag plain color="#b63b36">好评 {{summary.positive_count || 0}}</van-tag>
+          <van-tag plain color="#8B6F47">差评 {{summary.negative_count || 0}}</van-tag>
+          <van-tag plain color="#3f7d6b">有图 {{summary.with_image_count || 0}}</van-tag>
+        </view>
+      </view>
+    </view>
+
+    <view class="search-wrap">
+      <van-search
+        value="{{keyword}}"
+        placeholder="搜索评价关键词"
+        shape="round"
+        background="transparent"
+        bind:change="onSearchChange"
+        bind:search="onSearchConfirm"
+        bind:clear="onSearchClear"
+      />
+    </view>
+
+    <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          wx:for="{{filterTabs}}"
+          wx:key="key"
+          class="filter-chip {{filterType === item.key ? 'is-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onFilterChange"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <scroll-view class="filter-scroll sku-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          wx:for="{{skuOptions}}"
+          wx:key="sku_id"
+          class="sku-chip {{skuId === item.sku_id ? 'is-active' : ''}}"
+          data-id="{{item.sku_id}}"
+          bindtap="onSkuChange"
+        >
+          {{item.sku_name}}
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="loading-wrap" wx:if="{{loading}}">
+      <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+    </view>
+
+    <van-empty wx:elif="{{reviewList.length === 0}}" description="暂无符合条件的评价" />
+
+    <view class="review-list" wx:else>
+      <view class="review-card" wx:for="{{reviewList}}" wx:key="_id">
+        <view class="review-head">
+          <view class="review-user">
+            <image class="review-avatar" src="{{item.user_info.avatar}}" mode="aspectFill" />
+            <view class="review-meta">
+              <text class="review-name">{{item.user_info.nickname}}</text>
+              <text class="review-time" wx:if="{{item.buy_time_text}}">购买于 {{item.buy_time_text}}</text>
+            </view>
+          </view>
+          <text class="review-score">{{item.avg_score_text}} 分</text>
+        </view>
+
+        <text class="review-sku" wx:if="{{item.sku_text}}">{{item.sku_text}}</text>
+        <text class="review-content" wx:if="{{item.content}}">{{item.content}}</text>
+
+        <view class="review-images" wx:if="{{item.images && item.images.length > 0}}">
+          <image
+            wx:for="{{item.images}}"
+            wx:for-item="image"
+            wx:key="*this"
+            class="review-image"
+            src="{{image}}"
+            mode="aspectFill"
+            data-index="{{index}}"
+            data-urls="{{item.images}}"
+            bindtap="previewImages"
+          />
+        </view>
+
+        <view class="seller-reply" wx:if="{{item.seller_reply}}">
+          <text class="seller-reply-title">{{item.seller_reply.seller_name}}</text>
+          <text class="seller-reply-content">{{item.seller_reply.content}}</text>
+          <text class="seller-reply-time" wx:if="{{item.seller_reply.reply_time_text}}">{{item.seller_reply.reply_time_text}}</text>
+        </view>
+      </view>
+
+      <view class="load-more" wx:if="{{hasMore}}">
+        <van-loading size="18px" color="#8B2E2A" wx:if="{{listLoading}}">加载中...</van-loading>
+        <text wx:else>继续上拉查看更多评价</text>
+      </view>
+    </view>
+  </view>
+</view>

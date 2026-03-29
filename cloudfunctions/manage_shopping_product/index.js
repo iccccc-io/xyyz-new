@@ -216,6 +216,8 @@ async function createProduct(payload) {
     workshop_id: user.workshop_id,
     sales: 0,
     view_count: 0,
+    rating_avg: 0,
+    review_count: 0,
     status: 1,
     is_on_sale: parsed.total_stock > 0,
     create_time: db.serverDate(),

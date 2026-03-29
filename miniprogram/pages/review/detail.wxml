@@ -1,0 +1,87 @@
+<view class="review-detail-page">
+  <nav-bar
+    title="我的评价"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+  </view>
+
+  <view class="page-body" wx:elif="{{review}}">
+    <view class="product-card">
+      <image class="product-image" src="{{review.product_snapshot.cover_img}}" mode="aspectFill" />
+      <view class="product-main">
+        <text class="product-title">{{review.product_snapshot.title}}</text>
+        <text class="product-sku" wx:if="{{review.sku_text}}">{{review.sku_text}}</text>
+        <text class="product-meta" wx:if="{{review.buy_time_text}}">购买于 {{review.buy_time_text}}</text>
+        <text class="product-meta">发布于 {{review.create_time_text}}</text>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="score-head">
+        <view class="user-box">
+          <image class="avatar" src="{{review.user_info.avatar}}" mode="aspectFill" />
+          <view class="user-meta">
+            <text class="name">{{review.user_info.nickname}}</text>
+            <text class="time">{{review.create_time_text}}</text>
+          </view>
+        </view>
+        <view class="score-box">
+          <text class="score-number">{{review.avg_score_text}}</text>
+          <text class="score-label">综合</text>
+        </view>
+      </view>
+
+      <view class="rating-grid">
+        <view class="rating-item">
+          <text class="rating-name">商品质量</text>
+          <text class="rating-value">{{review.rating.product}}</text>
+        </view>
+        <view class="rating-item">
+          <text class="rating-name">物流速度</text>
+          <text class="rating-value">{{review.rating.logis}}</text>
+        </view>
+        <view class="rating-item">
+          <text class="rating-name">服务态度</text>
+          <text class="rating-value">{{review.rating.service}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card" wx:if="{{review.content || (review.images && review.images.length > 0)}}">
+      <view class="section-title">评价内容</view>
+      <text class="review-content" wx:if="{{review.content}}">{{review.content}}</text>
+
+      <view class="image-grid" wx:if="{{review.images && review.images.length > 0}}">
+        <image
+          wx:for="{{review.images}}"
+          wx:for-item="image"
+          wx:key="*this"
+          class="review-image"
+          src="{{image}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          data-urls="{{review.images}}"
+          bindtap="previewImages"
+        />
+      </view>
+    </view>
+
+    <view class="section-card reply-card" wx:if="{{review.seller_reply}}">
+      <view class="section-title">工坊回复</view>
+      <text class="reply-content">{{review.seller_reply.content}}</text>
+      <text class="reply-time" wx:if="{{review.seller_reply.reply_time_text}}">{{review.seller_reply.reply_time_text}}</text>
+    </view>
+
+    <view class="readonly-tip">
+      <van-icon name="shield-o" size="16" color="#8B6F47" />
+      <text>评价已提交，系统不支持二次编辑或删除。</text>
+    </view>
+  </view>
+</view>

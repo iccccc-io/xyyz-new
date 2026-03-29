@@ -5,6 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 const BATCH = 50
+const INTERNAL_AUTO_REVIEW_TOKEN = 'xyyz_review_auto_v1'
 
 function getSafeString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -20,6 +21,7 @@ exports.main = async () => {
   const stats = {
     cancelledUnpaid: 0,
     autoConfirmed: 0,
+    autoReviewed: 0,
     autoSettled: 0,
     autoApprovedAS: 0,
     autoClosedAS: 0,
@@ -31,6 +33,7 @@ exports.main = async () => {
     await Promise.all([
       task1CancelUnpaid(stats),
       task2AutoConfirmReceipt(stats),
+      task25AutoReview(stats),
       task3AutoSettle(stats),
       task4AutoApproveAftersale(stats),
       task5AutoCloseAftersale(stats),
@@ -158,6 +161,60 @@ async function task2AutoConfirmReceipt(stats) {
     }
   } catch (err) {
     stats.errors.push({ task: 'autoConfirm_query', error: err.message })
+  }
+}
+
+async function task25AutoReview(stats) {
+  const cutoff = new Date(Date.now() - 15 * 24 * 3600 * 1000)
+
+  try {
+    const res = await db.collection('shopping_orders')
+      .where({
+        status: 40,
+        has_aftersale: _.neq(true),
+        complete_time: _.lte(cutoff)
+      })
+      .field({
+        _id: true,
+        review_status: true,
+        review_id: true
+      })
+      .limit(BATCH)
+      .get()
+
+    for (const order of (res.data || [])) {
+      if (Number(order.review_status) === 1 || order.review_id) {
+        continue
+      }
+      try {
+        const cfRes = await cloud.callFunction({
+          name: 'manage_review',
+          data: {
+            action: 'submit_auto',
+            order_id: order._id,
+            _internal_token: INTERNAL_AUTO_REVIEW_TOKEN
+          }
+        })
+
+        if (cfRes.result && cfRes.result.success) {
+          stats.autoReviewed += 1
+        } else {
+          stats.errors.push({
+            task: 'autoReview',
+            orderId: order._id,
+            error: (cfRes.result && cfRes.result.message) || 'unknown'
+          })
+        }
+      } catch (err) {
+        stats.errors.push({
+          task: 'autoReview',
+          orderId: order._id,
+          error: err.message
+        })
+      }
+    }
+  } catch (err) {
+    stats.errors.push({ task: 'autoReview_query', error: err.message })
   }
 }
 

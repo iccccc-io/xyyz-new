@@ -1,0 +1,9 @@
+{
+  "name": "manage_review",
+  "version": "1.0.0",
+  "description": "商城评价与卖家回复统一云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

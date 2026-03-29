@@ -333,6 +333,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 20rpx;
   box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
 }

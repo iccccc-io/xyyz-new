@@ -47,7 +47,9 @@
             data-name="{{item.name}}"
             bindtap="onTabChange"
           >
-            <text class="tab-text">{{item.label}}</text>
+            <text class="tab-text">
+              {{item.name === 'all' ? '全部' : item.name === '10' ? '待付款' : item.name === '20' ? '待发货' : item.name === '30' ? '待收货' : item.name === '40' ? '已完成' : '售后'}}
+            </text>
             <view class="tab-ink" wx:if="{{activeTab === item.name}}"></view>
           </view>
         </view>
@@ -62,50 +64,20 @@
         </view>
 
         <view class="drawer-chip-row">
-          <view
-            class="drawer-chip {{draftTimeFilter.granularity === 'year' ? 'is-active' : ''}}"
-            data-value="year"
-            bindtap="selectTimeGranularity"
-          >
-            按年
-          </view>
-          <view
-            class="drawer-chip {{draftTimeFilter.granularity === 'month' ? 'is-active' : ''}}"
-            data-value="month"
-            bindtap="selectTimeGranularity"
-          >
-            按月
-          </view>
-          <view
-            class="drawer-chip {{draftTimeFilter.granularity === 'day' ? 'is-active' : ''}}"
-            data-value="day"
-            bindtap="selectTimeGranularity"
-          >
-            按日
-          </view>
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'year' ? 'is-active' : ''}}" data-value="year" bindtap="selectTimeGranularity">按年</view>
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'month' ? 'is-active' : ''}}" data-value="month" bindtap="selectTimeGranularity">按月</view>
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'day' ? 'is-active' : ''}}" data-value="day" bindtap="selectTimeGranularity">按日</view>
         </view>
 
         <view class="drawer-chip-row drawer-chip-row-secondary">
-          <view
-            class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'single' ? 'is-active' : ''}}"
-            data-value="single"
-            bindtap="selectTimeType"
-          >
-            单个时间
-          </view>
-          <view
-            class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'range' ? 'is-active' : ''}}"
-            data-value="range"
-            bindtap="selectTimeType"
-          >
-            时间区间
-          </view>
+          <view class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'single' ? 'is-active' : ''}}" data-value="single" bindtap="selectTimeType">单选</view>
+          <view class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'range' ? 'is-active' : ''}}" data-value="range" bindtap="selectTimeType">区间</view>
         </view>
 
         <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'year' && draftTimeFilter.type === 'single'}}">
           <picker mode="date" fields="year" value="{{draftTimeFilter.yearSingle}}" data-field="yearSingle" bindchange="onTimePickerChange">
             <view class="picker-card">
-              <text class="picker-label">选择年份</text>
+              <text class="picker-label">年份</text>
               <view class="picker-value-row">
                 <text class="picker-value">{{draftTimeFilter.yearSingleLabel}}</text>
                 <van-icon name="arrow-down" size="14" color="#9A8C7C" />
@@ -138,7 +110,7 @@
         <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'month' && draftTimeFilter.type === 'single'}}">
           <picker mode="date" fields="month" value="{{draftTimeFilter.monthSingle}}" data-field="monthSingle" bindchange="onTimePickerChange">
             <view class="picker-card">
-              <text class="picker-label">选择月份</text>
+              <text class="picker-label">月份</text>
               <view class="picker-value-row">
                 <text class="picker-value">{{draftTimeFilter.monthSingleLabel}}</text>
                 <van-icon name="arrow-down" size="14" color="#9A8C7C" />
@@ -171,7 +143,7 @@
         <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'day' && draftTimeFilter.type === 'single'}}">
           <picker mode="date" fields="day" value="{{draftTimeFilter.daySingle}}" data-field="daySingle" bindchange="onTimePickerChange">
             <view class="picker-card">
-              <text class="picker-label">选择日期</text>
+              <text class="picker-label">日期</text>
               <view class="picker-value-row">
                 <text class="picker-value">{{draftTimeFilter.daySingleLabel}}</text>
                 <van-icon name="arrow-down" size="14" color="#9A8C7C" />
@@ -216,25 +188,22 @@
   <van-empty
     wx:elif="{{!loading && orders.length === 0}}"
     image="order"
-    description="{{searchKeyword ? '没有找到相关订单' : (hasActiveTimeFilter ? '当前时间范围暂无订单' : '还没有符合条件的订单')}}"
+    description="{{searchKeyword ? '没有找到匹配的订单' : (hasActiveTimeFilter ? '该时间范围内暂无订单' : '暂时还没有订单')}}"
   >
-    <view class="empty-action" bindtap="goToMall">去逛市集</view>
+    <view class="empty-action" bindtap="goToMall">去逛商城</view>
   </van-empty>
 
   <view class="orders-wrap {{isTabSwitching ? 'is-switching' : ''}}" wx:else>
-    <view
-      class="order-card"
-      wx:for="{{orders}}"
-      wx:key="_id"
-      style="animation-delay: {{item.cardDelay}}ms;"
-    >
+    <view class="order-card" wx:for="{{orders}}" wx:key="_id" style="animation-delay: {{item.cardDelay}}ms;">
       <view class="card-head">
         <view class="shop-block">
           <van-icon name="shop-o" size="14" color="#999999" />
           <text class="shop-name">{{item.shopName}}</text>
           <text class="shop-arrow">></text>
         </view>
-        <text class="status-text {{item.statusStyle}}">{{item.statusText}}</text>
+        <text class="status-text {{item.statusStyle}}">
+          {{item.status === 10 ? '待付款' : item.status === 20 ? '待发货' : item.status === 30 ? '已发货' : item.status === 40 ? '已完成' : item.status === 50 ? '已取消' : '售后中'}}
+        </text>
       </view>
 
       <view class="product-panel" bindtap="goToDetail" data-id="{{item._id}}">
@@ -261,13 +230,13 @@
             <text class="side-symbol">¥</text>
             <text class="product-price">{{item.productPriceDisplay}}</text>
           </view>
-          <text class="product-qty">共{{item.quantity}}件</text>
+          <text class="product-qty">共 {{item.quantity}} 件</text>
         </view>
       </view>
 
       <view class="countdown-strip" wx:if="{{item.status === 10 && item.countdownDisplay}}">
         <van-icon name="clock-o" size="13" color="#E1251B" />
-        <text class="countdown-text">{{item.countdown > 0 ? '请在 ' + item.countdownDisplay + ' 内完成支付' : '支付超时，订单即将自动取消'}}</text>
+        <text class="countdown-text">{{item.countdown > 0 ? ('请在 ' + item.countdownDisplay + ' 内完成支付') : '支付超时，订单即将自动取消'}}</text>
       </view>
 
       <view class="logistics-strip" wx:if="{{item.status === 30 && item.tracking_number}}">
@@ -307,7 +276,12 @@
 
         <block wx:elif="{{item.status === 40}}">
           <view class="action-btn subtle" wx:if="{{item.tracking_number}}" bindtap="viewLogistics" data-id="{{item._id}}">查看物流</view>
-          <view class="action-btn primary" bindtap="goToDetail" data-id="{{item._id}}">查看详情</view>
+          <view wx:if="{{item.reviewStatus === 1}}" class="action-btn primary" bindtap="goToReviewDetail" data-review-id="{{item.reviewId}}">
+            我的评价
+          </view>
+          <view wx:else class="action-btn primary" bindtap="goToReviewSubmit" data-id="{{item._id}}">
+            去评价
+          </view>
         </block>
 
         <block wx:elif="{{item.status === 60}}">

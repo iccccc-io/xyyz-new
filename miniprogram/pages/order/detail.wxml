@@ -1,4 +1,3 @@
-<!--pages/order/detail.wxml-->
 <view class="detail-page">
   <nav-bar
     title="订单详情"
@@ -9,31 +8,30 @@
     placeholder="{{true}}"
   />
 
-  <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{loading}}">
     <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
   </view>
 
   <block wx:if="{{!loading && order}}">
-
-    <!-- ===== 状态横幅 ===== -->
     <view class="status-banner banner-{{order.status}} {{order.aftersale_result === 'refunded' ? 'banner-refunded' : ''}}">
       <van-icon name="{{order.statusIcon}}" size="44" color="#fff" />
       <view class="status-banner-text">
-        <text class="status-main">{{order.statusText}}</text>
-        <text class="status-sub">{{order.statusDesc}}</text>
-        <!-- 待付款倒计时 -->
+        <text class="status-main">
+          {{order.status === 10 ? '待付款' : order.status === 20 ? '待发货' : order.status === 30 ? '已发货' : order.status === 40 ? '交易完成' : order.status === 50 ? '已取消' : '售后处理'}}
+        </text>
+        <text class="status-sub">
+          {{order.status === 10 ? '请尽快完成支付，超时将自动取消。' : order.status === 20 ? '订单已支付，等待卖家发货。' : order.status === 30 ? '快递已发出，请留意查收。' : order.status === 40 ? '售后窗口期内可申请售后。' : order.status === 50 ? '订单已取消。' : '正在加载售后详情。'}}
+        </text>
         <view class="countdown-row" wx:if="{{order.status === 10 && countdown > 0}}">
           <van-icon name="clock-o" size="16" color="rgba(255,255,255,0.9)" />
           <text class="countdown-text">剩余支付时间 {{countdownDisplay}}</text>
         </view>
         <view class="countdown-row expired" wx:elif="{{order.status === 10 && countdown <= 0}}">
-          <text class="countdown-text">已超时，即将自动取消</text>
+          <text class="countdown-text">支付超时，订单即将自动取消</text>
         </view>
       </view>
     </view>
 
-    <!-- ===== 步骤条 ===== -->
     <view class="steps-card" wx:if="{{order.status !== 50}}">
       <view class="steps-row">
         <view class="step-item {{order.status >= 10 ? 'step-done' : ''}}">
@@ -64,8 +62,8 @@
         </view>
         <view class="step-line {{order.status > 30 ? 'line-done' : ''}}"></view>
         <view class="step-item {{order.status >= 40 ? 'step-done' : ''}}">
-          <view class="step-dot {{order.status === 40 ? 'dot-done' : ''}}">
-            <van-icon wx:if="{{order.status === 40}}" name="success" size="14" color="#fff" />
+          <view class="step-dot {{order.status >= 40 ? 'dot-done' : ''}}">
+            <van-icon wx:if="{{order.status >= 40}}" name="success" size="14" color="#fff" />
             <text wx:else class="dot-num">4</text>
           </view>
           <text class="step-label">已完成</text>
@@ -74,13 +72,12 @@
       </view>
     </view>
 
-    <!-- ===== 物流卡片（已发货时展示） ===== -->
     <view class="info-card logistics-card" wx:if="{{order.status >= 30 && order.tracking_number}}">
       <view class="card-title">
         <van-icon name="logistics" size="18" color="#1989fa" />
         <text>物流信息</text>
         <view class="logistics-query-btn" bindtap="queryLogistics">
-          <text>查询物流</text>
+          <text>查看物流</text>
           <van-icon name="arrow" size="14" color="#8B6F47" />
         </view>
       </view>
@@ -92,7 +89,6 @@
       <text class="logistics-sub">发货时间：{{order.shipTimeDisplay}}</text>
     </view>
 
-    <!-- ===== 收货地址 ===== -->
     <view class="info-card" wx:if="{{order.delivery_address}}">
       <view class="card-title">
         <van-icon name="location-o" size="18" color="#8B2E2A" />
@@ -107,7 +103,6 @@
       </text>
     </view>
 
-    <!-- ===== 商品信息 ===== -->
     <view class="info-card">
       <view class="card-title">
         <van-icon name="shop-o" size="18" color="#8B2E2A" />
@@ -129,7 +124,6 @@
       </view>
     </view>
 
-    <!-- ===== 订单信息 ===== -->
     <view class="info-card">
       <view class="card-title">
         <van-icon name="description" size="18" color="#8B2E2A" />
@@ -160,7 +154,6 @@
       </view>
     </view>
 
-    <!-- ===== 售后记录日志（operation_logs 时间轴） ===== -->
     <view class="info-card aftersale-log-card" wx:if="{{aftersaleLog}}">
       <view class="card-title">
         <van-icon name="service-o" size="18" color="#ff9500" />
@@ -181,7 +174,6 @@
         <text class="as-log-label">原因</text>
         <text class="as-log-val">{{aftersaleLog.reason}}</text>
       </view>
-      <!-- operation_logs 时间轴 -->
       <view class="as-log-timeline" wx:if="{{aftersaleLog.operationLogs.length > 0}}">
         <view class="as-log-tl" wx:for="{{aftersaleLog.operationLogs}}" wx:key="index">
           <view class="as-tl-dot {{item.operator === 'seller' ? 'dot-red' : item.operator === 'system' ? 'dot-orange' : ''}}"></view>
@@ -198,34 +190,46 @@
       </view>
     </view>
 
-    <!-- ===== 售后提示（已完成且在售后窗口内） ===== -->
     <view class="aftersale-hint-card" wx:if="{{canApplyAftersale}}">
       <van-icon name="shield-o" size="18" color="#ff9500" />
       <text class="as-hint-text">售后保障中，截止 {{aftersaleDeadlineDisplay}}</text>
     </view>
 
-    <!-- ===== 底部操作栏 ===== -->
     <view class="detail-footer">
       <block wx:if="{{order.status === 10}}">
         <van-button round plain color="#ee0a24" size="small" bind:click="cancelOrder">取消订单</van-button>
         <van-button round color="#8B2E2A" size="small" bind:click="payOrder">立即支付</van-button>
       </block>
+
       <block wx:elif="{{order.status === 30}}">
         <van-button round plain color="#1989fa" size="small" bind:click="queryLogistics">查看物流</van-button>
         <van-button round color="#8B2E2A" size="small" bind:click="confirmReceipt">确认收货</van-button>
       </block>
+
       <block wx:elif="{{order.status === 40 && order.has_aftersale}}">
-        <van-button round plain color="#8B6F47" size="small" bind:click="goBack">返回列表</van-button>
+        <van-button round plain color="#1989fa" size="small" bind:click="queryLogistics" wx:if="{{order.tracking_number}}">查看物流</van-button>
         <van-button round color="#1989fa" size="small" bind:click="viewAftersale" wx:if="{{activeAftersaleId}}">查看售后进度</van-button>
+        <van-button round plain color="#8B6F47" size="small" bind:click="goBack" wx:if="{{!order.tracking_number && !activeAftersaleId}}">返回列表</van-button>
       </block>
-      <block wx:elif="{{order.status === 40 && canApplyAftersale}}">
-        <van-button round plain color="#8B6F47" size="small" bind:click="goBack">返回列表</van-button>
-        <van-button round color="#ff9500" size="small" bind:click="applyAftersale">{{aftersaleLog ? '重新申请售后' : '申请售后'}}</van-button>
+
+      <block wx:elif="{{order.status === 40}}">
+        <van-button round plain color="#1989fa" size="small" bind:click="queryLogistics" wx:if="{{order.tracking_number}}">查看物流</van-button>
+        <van-button round plain color="#ff9500" size="small" bind:click="applyAftersale" wx:if="{{canApplyAftersale}}">
+          {{aftersaleLog ? '重新申请售后' : '申请售后'}}
+        </van-button>
+        <van-button round color="#8B2E2A" size="small" bind:click="goToReviewDetail" wx:if="{{order.reviewStatus === 1}}">
+          我的评价
+        </van-button>
+        <van-button round color="#8B2E2A" size="small" bind:click="goToReviewSubmit" wx:else>
+          去评价
+        </van-button>
       </block>
+
       <block wx:elif="{{order.status === 60}}">
         <van-button round plain color="#8B6F47" size="small" bind:click="goBack">返回列表</van-button>
         <van-button round color="#1989fa" size="small" bind:click="viewAftersale" wx:if="{{activeAftersaleId}}">查看售后进度</van-button>
       </block>
+
       <block wx:else>
         <van-button round plain color="#8B6F47" size="small" bind:click="goBack">返回列表</van-button>
       </block>
@@ -233,7 +237,6 @@
   </block>
 </view>
 
-<!-- 支付键盘（待付款订单续付） -->
 <pay-keyboard
   id="payKeyboard"
   show="{{showPayKeyboard}}"

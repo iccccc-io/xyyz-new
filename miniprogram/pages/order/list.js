@@ -48,6 +48,19 @@ function formatTime(val) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+function getReviewState(order) {
+  const reviewStatus = Number(order && order.review_status) === 1 ? 1 : 0
+  const reviewId = typeof (order && order.review_id) === 'string' ? order.review_id : ''
+  const canReview = Number(order && order.status) === 40 && order && order.has_aftersale !== true
+
+  return {
+    reviewStatus,
+    reviewId,
+    canReview,
+    reviewButtonText: reviewStatus === 1 ? '我的评价' : '去评价'
+  }
+}
+
 function calcCountdown(createTime) {
   if (!createTime) return { countdown: 0, countdownDisplay: '' }
   const deadline = new Date(createTime).getTime() + TIMEOUT_MS
@@ -247,6 +260,7 @@ function enrichOrder(order, index = 0, withDelay = false) {
 
   const snapshot = order.product_snapshot || {}
   const countdownInfo = order.status === 10 ? calcCountdown(order.create_time) : {}
+  const reviewState = getReviewState(order)
 
   return {
     ...order,
@@ -259,6 +273,7 @@ function enrichOrder(order, index = 0, withDelay = false) {
     productPriceDisplay: formatFen(snapshot.price || 0),
     createTimeDisplay: formatTime(order.create_time),
     cardDelay: withDelay ? index * 70 : 0,
+    ...reviewState,
     ...countdownInfo
   }
 }
@@ -755,6 +770,21 @@ Page({
   viewLogistics(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/order/logistics?orderId=${id}` })
+  },
+
+  goToReviewSubmit(e) {
+    const orderId = e.currentTarget.dataset.id
+    if (!orderId) return
+    wx.navigateTo({ url: `/pages/review/submit?orderId=${orderId}` })
+  },
+
+  goToReviewDetail(e) {
+    const reviewId = e.currentTarget.dataset.reviewId
+    if (!reviewId) {
+      wx.showToast({ title: '评价信息不存在', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: `/pages/review/detail?reviewId=${reviewId}` })
   },
 
   async viewAftersale(e) {

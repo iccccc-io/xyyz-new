@@ -15,16 +15,8 @@
           </view>
         </view>
 
-        <view
-          class="hero-nav hero-nav-prev"
-          wx:if="{{product.heroImages.length > 1}}"
-          catchtap="showPrevHeroImage"
-        ></view>
-        <view
-          class="hero-nav hero-nav-next"
-          wx:if="{{product.heroImages.length > 1}}"
-          catchtap="showNextHeroImage"
-        ></view>
+        <view class="hero-nav hero-nav-prev" wx:if="{{product.heroImages.length > 1}}" catchtap="showPrevHeroImage"></view>
+        <view class="hero-nav hero-nav-next" wx:if="{{product.heroImages.length > 1}}" catchtap="showNextHeroImage"></view>
 
         <view class="hero-indicator" wx:if="{{product.heroImages.length > 1}}">
           <text class="hero-indicator-text">{{currentImageIndex + 1}}/{{product.heroImages.length}}</text>
@@ -46,10 +38,10 @@
       <view class="core-info">
         <view class="price-row">
           <view class="price-main">
-            <text class="price-currency">楼</text>
+            <text class="price-currency">¥</text>
             <text class="price-number">{{product.displayPrice}}</text>
             <text class="price-suffix" wx:if="{{product.displayPriceSuffix}}">{{product.displayPriceSuffix}}</text>
-            <text class="price-original" wx:if="{{product.displayOriginalPrice}}">楼{{product.displayOriginalPrice}}</text>
+            <text class="price-original" wx:if="{{product.displayOriginalPrice}}">¥{{product.displayOriginalPrice}}</text>
           </view>
           <text class="sales-copy">已售 {{product.salesDisplay}}</text>
         </view>
@@ -111,12 +103,7 @@
 
       <view class="workshop-surface" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
         <view class="workshop-main">
-          <image
-            wx:if="{{product.workshop_info.logoDisplay}}"
-            class="workshop-avatar"
-            src="{{product.workshop_info.logoDisplay}}"
-            mode="aspectFill"
-          />
+          <image wx:if="{{product.workshop_info.logoDisplay}}" class="workshop-avatar" src="{{product.workshop_info.logoDisplay}}" mode="aspectFill" />
           <view wx:else class="workshop-avatar workshop-avatar-fallback">
             <text class="workshop-avatar-text">{{product.workshop_info.initial}}</text>
           </view>
@@ -133,6 +120,71 @@
       </view>
     </view>
 
+    <view class="section-divider"></view>
+
+    <view class="review-section">
+      <view class="review-section-head">
+        <view>
+          <text class="review-section-title">匠心评价</text>
+          <text class="review-section-subtitle">来自真实成交订单的买家反馈</text>
+        </view>
+        <view class="review-section-link" bindtap="goToProductReviews">
+          <text>查看全部</text>
+          <van-icon name="arrow" size="14" color="#A12D27" />
+        </view>
+      </view>
+
+      <view class="review-summary-card">
+        <view class="review-summary-score">
+          <text class="review-summary-number">{{reviewSummary.displayScore}}</text>
+          <text class="review-summary-desc">综合评分</text>
+        </view>
+        <view class="review-summary-meta">
+          <text class="review-summary-count">共 {{reviewSummary.review_count || 0}} 条评价</text>
+          <text class="review-summary-tip" wx:if="{{reviewSummary.review_count > 0}}">评价来自已完成订单，支持按款式查看</text>
+          <text class="review-summary-tip" wx:else>暂无买家评价，期待第一条真实反馈</text>
+        </view>
+      </view>
+
+      <view class="review-loading" wx:if="{{reviewLoading}}">
+        <van-loading size="20px" color="#A12D27">加载评价中...</van-loading>
+      </view>
+
+      <view class="review-preview-list" wx:elif="{{reviewPreviewList.length > 0}}">
+        <view class="review-preview-card" wx:for="{{reviewPreviewList}}" wx:key="_id">
+          <view class="review-preview-user">
+            <image class="review-preview-avatar" src="{{item.user_info.avatar}}" mode="aspectFill" />
+            <view class="review-preview-meta">
+              <text class="review-preview-name">{{item.user_info.nickname}}</text>
+              <text class="review-preview-time" wx:if="{{item.buy_time_text}}">购买于 {{item.buy_time_text}}</text>
+            </view>
+            <text class="review-preview-score">{{item.avg_score_text}} 分</text>
+          </view>
+
+          <text class="review-preview-content" wx:if="{{item.content}}">{{item.content}}</text>
+          <text class="review-preview-sku" wx:if="{{item.sku_text}}">{{item.sku_text}}</text>
+
+          <view class="review-preview-images" wx:if="{{item.images && item.images.length > 0}}">
+            <image
+              wx:for="{{item.images}}"
+              wx:for-item="image"
+              wx:key="*this"
+              class="review-preview-image"
+              src="{{image}}"
+              mode="aspectFill"
+              data-index="{{index}}"
+              data-urls="{{item.images}}"
+              bindtap="previewReviewImages"
+            />
+          </view>
+        </view>
+      </view>
+
+      <view class="review-empty" wx:else>
+        <text>暂无评价，欢迎成为第一位分享体验的买家。</text>
+      </view>
+    </view>
+
     <view class="detail-images" wx:if="{{product.detailImages.length > 0}}">
       <view class="detail-top-space"></view>
       <image
@@ -143,7 +195,7 @@
         mode="widthFix"
         lazy-load
         data-index="{{index}}"
-        data-kind="detail"
+        data-kind="{{'detail'}}"
         bindtap="previewImage"
       />
     </view>
@@ -193,9 +245,9 @@
       <image class="sku-popup-image" src="{{product.displayImage || product.cover_img}}" mode="aspectFill" />
       <view class="sku-popup-price-block">
         <view class="sku-popup-price-row">
-          <text class="sku-popup-price">楼{{product.displayPrice}}</text>
+          <text class="sku-popup-price">¥{{product.displayPrice}}</text>
           <text class="sku-popup-price-suffix" wx:if="{{product.displayPriceSuffix}}">{{product.displayPriceSuffix}}</text>
-          <text class="sku-popup-original" wx:if="{{product.displayOriginalPrice}}">楼{{product.displayOriginalPrice}}</text>
+          <text class="sku-popup-original" wx:if="{{product.displayOriginalPrice}}">¥{{product.displayOriginalPrice}}</text>
         </view>
         <text class="sku-popup-stock">库存 {{product.displayStock}} 件</text>
         <text class="sku-popup-selected">{{product.displaySkuName || (product.defaultSku ? product.defaultSku.sku_name : '默认款式')}}</text>
@@ -213,7 +265,7 @@
           bindtap="selectSku"
         >
           <text class="sku-option-name">{{item.sku_name}}</text>
-          <text class="sku-option-meta">楼{{item.priceDisplay}} / 库存 {{item.stock}}</text>
+          <text class="sku-option-meta">¥{{item.priceDisplay}} / 库存 {{item.stock}}</text>
         </view>
       </view>
     </view>

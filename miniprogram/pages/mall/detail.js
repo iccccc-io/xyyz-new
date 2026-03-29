@@ -1,6 +1,7 @@
 const app = getApp()
 const db = wx.cloud.database()
 const { createProductSelectionView, getSelectedOrDefaultSku } = require('../../common/mall-sku')
+const { decorateReview, formatScoreValue } = require('../../common/review')
 
 const LOGISTICS_CARRIER_TEXT = {
   sf_jd: '顺丰/京东',
@@ -136,6 +137,13 @@ Page({
   data: {
     product: null,
     loading: true,
+    reviewLoading: false,
+    reviewSummary: {
+      rating_avg: 0,
+      review_count: 0,
+      displayScore: '暂无评分'
+    },
+    reviewPreviewList: [],
     currentImageIndex: 0,
     isFavorite: false,
     isUnavailable: false,
@@ -188,11 +196,12 @@ Page({
         }
       }
 
-      this._rawProduct = product
-      this.applyProductView('')
+        this._rawProduct = product
+        this.applyProductView('')
+        this.loadReviewSummary(id)
 
-      wx.cloud.callFunction({
-        name: 'report_product_view',
+        wx.cloud.callFunction({
+          name: 'report_product_view',
         data: { product_id: id }
       }).catch(() => {})
 
@@ -229,6 +238,57 @@ Page({
     })
   },
 
+  async loadReviewSummary(productId) {
+    if (!productId) return
+
+    this.setData({ reviewLoading: true })
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'manage_review',
+        data: {
+          action: 'list_product',
+          product_id: productId,
+          page: 1,
+          page_size: 2,
+          filter_type: 'all'
+        }
+      })
+
+      const result = res.result
+      if (result && result.success) {
+        const summary = result.summary || {}
+        this.setData({
+          reviewSummary: {
+            ...summary,
+            displayScore: formatScoreValue(summary.rating_avg, summary.review_count)
+          },
+          reviewPreviewList: (result.list || []).map((item) => decorateReview(item))
+        })
+      } else {
+        this.setData({
+          reviewSummary: {
+            rating_avg: 0,
+            review_count: 0,
+            displayScore: '暂无评分'
+          },
+          reviewPreviewList: []
+        })
+      }
+    } catch (err) {
+      console.warn('[mall/detail] loadReviewSummary failed:', err)
+      this.setData({
+        reviewSummary: {
+          rating_avg: 0,
+          review_count: 0,
+          displayScore: '暂无评分'
+        },
+        reviewPreviewList: []
+      })
+    } finally {
+      this.setData({ reviewLoading: false })
+    }
+  },
+
   showPrevHeroImage() {
     const { product, currentImageIndex } = this.data
     if (!product || !product.heroImages || product.heroImages.length <= 1) return
@@ -256,6 +316,17 @@ Page({
     wx.previewImage({
       urls: imageList,
       current: imageList[currentIndex]
+    })
+  },
+
+  previewReviewImages(e) {
+    const urls = Array.isArray(e.currentTarget.dataset.urls) ? e.currentTarget.dataset.urls : []
+    const index = Number(e.currentTarget.dataset.index || 0)
+    if (!urls.length) return
+
+    wx.previewImage({
+      urls,
+      current: urls[index] || urls[0]
     })
   },
 
@@ -364,6 +435,14 @@ Page({
         url: `/pages/workshop/index?id=${product.workshop_id}`
       })
     }
+  },
+
+  goToProductReviews() {
+    const { product } = this.data
+    if (!product || !product._id) return
+    wx.navigateTo({
+      url: `/pages/review/product-list?productId=${product._id}`
+    })
   },
 
   goBack() {

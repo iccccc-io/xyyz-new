@@ -18,7 +18,7 @@
             <view class="workshop-name">{{workshopInfo.name}}</view>
             <view class="workshop-category">
               <van-tag type="danger" size="medium">{{workshopInfo.ich_category}}</van-tag>
-              <van-tag plain type="primary" size="medium" wx:if="{{isOwner}}">主理人</van-tag>
+              <van-tag plain type="primary" size="medium" wx:if="{{isOwner}}">工坊主</van-tag>
             </view>
           </view>
         </view>
@@ -35,8 +35,8 @@
           </view>
           <view class="stat-divider"></view>
           <view class="stat-item">
-            <text class="stat-num">{{workshopInfo.rating || '5.0'}}</text>
-            <text class="stat-label">评分</text>
+            <text class="stat-num">{{workshopInfo.ratingDisplay}}</text>
+            <text class="stat-label">{{workshopInfo.shop_review_count > 0 ? (workshopInfo.shop_review_count + ' 条评价') : '暂无评分'}}</text>
           </view>
         </view>
       </view>
@@ -73,7 +73,7 @@
       <view class="empty-state" wx:if="{{products.length === 0}}">
         <van-empty description="暂无商品" />
         <view class="empty-tip" wx:if="{{isOwner}}">
-          <text>快去发布您的第一件非遗作品吧</text>
+          <text>快去发布您的第一件非遗商品吧</text>
         </view>
       </view>
 
@@ -92,13 +92,75 @@
           <view class="product-info">
             <text class="product-name">{{item.title}}</text>
             <view class="product-footer">
-              <text class="product-price">楼{{item.priceDisplay}}</text>
+              <text class="product-price">¥{{item.priceDisplay}}</text>
               <text class="product-sales">已售{{item.sales || 0}}</text>
             </view>
             <view class="stock-tip" wx:if="{{isOwner && item.total_stock <= 5}}">
               <text class="stock-warn">总库存仅剩 {{item.total_stock}} 件</text>
             </view>
           </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-card">
+      <view class="section-title">
+        <view class="title-line"></view>
+        <text>匠心评价</text>
+        <text class="title-count">({{workshopInfo.shop_review_count || 0}})</text>
+      </view>
+
+      <view class="empty-state" wx:if="{{!reviewLoading && reviews.length === 0}}">
+        <van-empty description="暂无评价" />
+      </view>
+
+      <view class="review-loading" wx:elif="{{reviewLoading && reviews.length === 0}}">
+        <van-loading size="24px" vertical color="#b63b36">加载评价中...</van-loading>
+      </view>
+
+      <view class="review-list" wx:else>
+        <view class="review-card" wx:for="{{reviews}}" wx:key="_id">
+          <view class="review-head">
+            <view class="review-user">
+              <image class="review-avatar" src="{{item.user_info.avatar}}" mode="aspectFill" />
+              <view class="review-meta">
+                <text class="review-name">{{item.user_info.nickname}}</text>
+                <text class="review-time" wx:if="{{item.buy_time_text}}">购买于 {{item.buy_time_text}}</text>
+              </view>
+            </view>
+            <text class="review-score">{{item.avg_score_text}} 分</text>
+          </view>
+
+          <text class="review-product-title">{{item.product_snapshot.title}}</text>
+          <text class="review-content" wx:if="{{item.content}}">{{item.content}}</text>
+
+          <view class="review-images" wx:if="{{item.images && item.images.length > 0}}">
+            <image
+              wx:for="{{item.images}}"
+              wx:for-item="image"
+              wx:key="*this"
+              class="review-image"
+              src="{{image}}"
+              mode="aspectFill"
+              data-index="{{index}}"
+              data-urls="{{item.images}}"
+              bindtap="previewReviewImages"
+            />
+          </view>
+
+          <view class="seller-reply" wx:if="{{item.seller_reply}}">
+            <text class="seller-reply-title">{{item.seller_reply.seller_name}}</text>
+            <text class="seller-reply-content">{{item.seller_reply.content}}</text>
+            <text class="seller-reply-time" wx:if="{{item.seller_reply.reply_time_text}}">{{item.seller_reply.reply_time_text}}</text>
+          </view>
+
+          <view class="review-action-row" wx:if="{{isOwner && item.can_reply}}">
+            <view class="reply-btn" bindtap="openReplyPopup" data-id="{{item._id}}">回复评价</view>
+          </view>
+        </view>
+
+        <view class="review-more" wx:if="{{reviewHasMore}}" bindtap="loadMoreReviews">
+          <text>{{reviewLoading ? '加载中...' : '查看更多评价'}}</text>
         </view>
       </view>
     </view>
@@ -110,14 +172,31 @@
 
   <view class="error-wrapper" wx:if="{{!loading && !workshopInfo}}">
     <van-empty description="工坊不存在或已被删除" />
-    <van-button
-      round
-      type="primary"
-      size="small"
-      bind:click="goBack"
-      color="#b63b36"
-    >
+    <van-button round type="primary" size="small" bind:click="goBack" color="#b63b36">
       返回
     </van-button>
   </view>
+
+  <van-popup
+    show="{{showReplyPopup}}"
+    position="bottom"
+    round
+    bind:close="closeReplyPopup"
+    custom-style="background: transparent;"
+  >
+    <view class="reply-popup">
+      <view class="reply-popup-title">回复评价</view>
+      <textarea
+        class="reply-textarea"
+        maxlength="200"
+        placeholder="写下工坊对这条评价的回应"
+        value="{{replyContent}}"
+        bindinput="onReplyInput"
+      />
+      <view class="reply-popup-actions">
+        <view class="reply-popup-btn cancel" bindtap="closeReplyPopup">取消</view>
+        <view class="reply-popup-btn confirm" bindtap="submitReply">提交回复</view>
+      </view>
+    </view>
+  </van-popup>
 </view>
