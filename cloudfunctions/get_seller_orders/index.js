@@ -8,6 +8,14 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+function getSafeString(value) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function escapeRegExpKeyword(keyword) {
+  return String(keyword || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 /**
  * @param {number|null} event.status  - 筛选状态（20/30/40），null 则查全部
  * @param {number}      event.limit   - 每页数量，默认 20
@@ -17,7 +25,14 @@ const _ = db.command
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
-  const { status = null, limit = 20, skip = 0 } = event
+  const {
+    status = null,
+    limit = 20,
+    skip = 0,
+    keyword = '',
+    start_time = '',
+    end_time = ''
+  } = event
 
   try {
     // ===== 1. 查询调用者的工坊 ID =====
@@ -35,14 +50,44 @@ exports.main = async (event, context) => {
     }
 
     // ===== 2. 构造查询条件 =====
-    const whereClause = { workshop_id: workshopId }
+    const conditions = [{ workshop_id: workshopId }]
 
     if (status !== null && status !== undefined) {
-      whereClause.status = Number(status)
+      conditions.push({ status: Number(status) })
     } else {
       // 卖家只关心已支付后的订单（10=待付款不显示给卖家）
-      whereClause.status = _.in([20, 30, 40, 60])
+      conditions.push({ status: _.in([20, 30, 40, 60]) })
     }
+
+    const trimmedKeyword = getSafeString(keyword)
+    if (trimmedKeyword) {
+      const keywordRegExp = db.RegExp({
+        regexp: escapeRegExpKeyword(trimmedKeyword),
+        options: 'i'
+      })
+
+      conditions.push(_.or([
+        { _id: keywordRegExp },
+        { 'delivery_address.userName': keywordRegExp },
+        { 'product_snapshot.title': keywordRegExp }
+      ]))
+    }
+
+    if (start_time) {
+      const startDate = new Date(start_time)
+      if (!Number.isNaN(startDate.getTime())) {
+        conditions.push({ create_time: _.gte(startDate) })
+      }
+    }
+
+    if (end_time) {
+      const endDate = new Date(end_time)
+      if (!Number.isNaN(endDate.getTime())) {
+        conditions.push({ create_time: _.lt(endDate) })
+      }
+    }
+
+    const whereClause = conditions.length === 1 ? conditions[0] : _.and(conditions)
 
     // ===== 3. 查询订单 =====
     const [listRes, countRes] = await Promise.all([

@@ -307,6 +307,14 @@ Page({
     })
   },
 
+  onHeroSwiperChange(e) {
+    const current = Number(e.detail && e.detail.current)
+    if (!Number.isFinite(current)) return
+    this.setData({
+      currentImageIndex: current
+    })
+  },
+
   previewImage(e) {
     const { product, currentImageIndex } = this.data
     const { index, kind } = e.currentTarget.dataset

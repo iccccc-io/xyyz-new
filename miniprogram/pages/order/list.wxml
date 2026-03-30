@@ -190,21 +190,28 @@
     image="order"
     description="{{searchKeyword ? '没有找到匹配的订单' : (hasActiveTimeFilter ? '该时间范围内暂无订单' : '暂时还没有订单')}}"
   >
-    <view class="empty-action" bindtap="goToMall">去逛商城</view>
+    <view class="empty-action" bindtap="goToMall">
+      <text class="empty-action-text">去逛商城</text>
+      <van-icon name="arrow" size="16" color="#B66A44" />
+    </view>
   </van-empty>
 
   <view class="orders-wrap {{isTabSwitching ? 'is-switching' : ''}}" wx:else>
-    <view class="order-card" wx:for="{{orders}}" wx:key="_id" style="animation-delay: {{item.cardDelay}}ms;">
-      <view class="card-head">
-        <view class="shop-block">
-          <van-icon name="shop-o" size="14" color="#999999" />
-          <text class="shop-name">{{item.shopName}}</text>
-          <text class="shop-arrow">></text>
+      <view class="order-card" wx:for="{{orders}}" wx:key="_id" style="animation-delay: {{item.cardDelay}}ms;">
+        <view class="card-head">
+          <view class="shop-block">
+            <view class="shop-icon-wrap">
+              <van-icon name="shop-o" size="14" color="#999999" />
+            </view>
+            <view class="shop-text-wrap">
+              <view class="shop-name">{{item.shopName}}</view>
+              <view class="shop-arrow">></view>
+            </view>
+          </view>
+          <view class="status-text {{item.statusStyle}}">
+            {{item.status === 10 ? '待付款' : item.status === 20 ? '待发货' : item.status === 30 ? '已发货' : item.status === 40 ? '已完成' : item.status === 50 ? '已取消' : '售后中'}}
+          </view>
         </view>
-        <text class="status-text {{item.statusStyle}}">
-          {{item.status === 10 ? '待付款' : item.status === 20 ? '待发货' : item.status === 30 ? '已发货' : item.status === 40 ? '已完成' : item.status === 50 ? '已取消' : '售后中'}}
-        </text>
-      </view>
 
       <view class="product-panel" bindtap="goToDetail" data-id="{{item._id}}">
         <image class="product-img" src="{{item.product_snapshot.sku_image || item.product_snapshot.cover_img}}" mode="aspectFill" />
@@ -216,12 +223,6 @@
           <view class="product-tags">
             <text class="mini-tag heritage" wx:if="{{item.projectName}}">{{item.projectName}}</text>
             <text class="mini-tag neutral">{{item.categoryText}}</text>
-          </view>
-
-          <view class="product-desc" wx:if="{{item.projectName || item.categoryText}}">
-            <text wx:if="{{item.projectName}}">{{item.projectName}}</text>
-            <text wx:if="{{item.projectName && item.categoryText}}"> · </text>
-            <text wx:if="{{item.categoryText}}">{{item.categoryText}}</text>
           </view>
         </view>
 
@@ -239,9 +240,9 @@
         <text class="countdown-text">{{item.countdown > 0 ? ('请在 ' + item.countdownDisplay + ' 内完成支付') : '支付超时，订单即将自动取消'}}</text>
       </view>
 
-      <view class="logistics-strip" wx:if="{{item.status === 30 && item.tracking_number}}">
+      <view class="logistics-strip {{item.isPickupOrder ? 'is-pickup' : ''}}" wx:if="{{item.status === 30 && (item.tracking_number || item.isPickupOrder)}}">
         <van-icon name="logistics" size="14" color="#999999" />
-        <text class="logistics-text">{{item.carrier_code}} {{item.tracking_number}}</text>
+        <text class="logistics-text">{{item.logisticsSummary}}</text>
       </view>
 
       <view class="summary-bar">
@@ -256,26 +257,27 @@
       <view class="card-actions">
         <block wx:if="{{item.status === 10}}">
           <view class="action-btn subtle" bindtap="cancelOrder" data-id="{{item._id}}" data-idx="{{index}}">取消订单</view>
-          <view class="action-btn primary strong" bindtap="payOrder" data-id="{{item._id}}" data-total="{{item.totalDisplay}}" data-idx="{{index}}">去支付</view>
+          <view class="action-btn primary" bindtap="payOrder" data-id="{{item._id}}" data-total="{{item.totalDisplay}}" data-idx="{{index}}">去支付</view>
         </block>
 
         <block wx:elif="{{item.status === 20}}">
-          <view class="action-note">工坊正在备货，请耐心等待发货</view>
+          <view class="action-note">{{item.isPickupOrder ? '待工坊交付' : '工坊正在备货，请耐心等待发货'}}</view>
           <view class="action-btn subtle" bindtap="goToDetail" data-id="{{item._id}}">查看详情</view>
         </block>
 
         <block wx:elif="{{item.status === 30}}">
-          <view class="action-btn subtle" bindtap="viewLogistics" data-id="{{item._id}}">查看物流</view>
+          <view class="action-btn subtle {{item.isPickupOrder ? 'is-disabled' : ''}}" bindtap="viewLogistics" data-id="{{item._id}}" data-pickup="{{item.isPickupOrder}}">查看物流</view>
           <view class="action-btn primary" bindtap="confirmReceipt" data-id="{{item._id}}" data-idx="{{index}}">确认收货</view>
         </block>
 
         <block wx:elif="{{item.status === 40 && item.has_aftersale}}">
           <view class="action-btn subtle" bindtap="viewAftersale" data-id="{{item._id}}">查看售后进度</view>
+          <view class="action-btn subtle {{item.isPickupOrder ? 'is-disabled' : ''}}" wx:if="{{item.showLogisticsAction}}" bindtap="viewLogistics" data-id="{{item._id}}" data-pickup="{{item.isPickupOrder}}">查看物流</view>
           <view class="action-btn primary" bindtap="goToDetail" data-id="{{item._id}}">查看详情</view>
         </block>
 
         <block wx:elif="{{item.status === 40}}">
-          <view class="action-btn subtle" wx:if="{{item.tracking_number}}" bindtap="viewLogistics" data-id="{{item._id}}">查看物流</view>
+          <view class="action-btn subtle {{item.isPickupOrder ? 'is-disabled' : ''}}" wx:if="{{item.showLogisticsAction}}" bindtap="viewLogistics" data-id="{{item._id}}" data-pickup="{{item.isPickupOrder}}">查看物流</view>
           <view wx:if="{{item.reviewStatus === 1}}" class="action-btn primary" bindtap="goToReviewDetail" data-review-id="{{item.reviewId}}">
             我的评价
           </view>

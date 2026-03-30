@@ -14,6 +14,24 @@
     <van-loading size="24px" color="#8B2E2A">查询物流中...</van-loading>
   </view>
 
+  <view class="pickup-wrap" wx:elif="{{isPickup}}">
+    <view class="pickup-card">
+      <view class="pickup-icon">
+        <van-icon name="location-o" size="28" color="#C28A42" />
+      </view>
+      <text class="pickup-title">同城自提</text>
+      <text class="pickup-desc">{{notice || '该订单通过同城自提方式交付，无需快递单号与物流轨迹。'}}</text>
+      <view class="pickup-meta-row">
+        <text class="pickup-meta-label">交付状态</text>
+        <text class="pickup-meta-value">{{stateDesc}}</text>
+      </view>
+      <view class="pickup-meta-row" wx:if="{{pickupTime}}">
+        <text class="pickup-meta-label">交付时间</text>
+        <text class="pickup-meta-value">{{pickupTime}}</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 查询失败 -->
   <view class="error-wrap" wx:elif="{{errorMsg}}">
     <view class="error-card">

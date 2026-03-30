@@ -1,19 +1,25 @@
 <view class="detail-page" wx:if="{{!loading && product}}">
+  <view class="hero-back fixed-back" bindtap="goBack" style="top: {{backButtonTop}}px;">
+    <van-icon name="arrow-left" size="18" color="#FFFFFF" />
+  </view>
+
   <view class="hero-section">
     <view class="hero-stage" style="top: {{heroCanvasTop}}px;">
       <view class="hero-canvas">
-        <view class="hero-gallery">
-          <view
-            class="hero-slide {{currentImageIndex === index ? 'is-active' : ''}}"
-            wx:for="{{product.heroImages}}"
-            wx:key="*this"
-            data-index="{{index}}"
-            data-kind="hero"
-            bindtap="previewImage"
-          >
-            <image class="hero-image" src="{{item}}" mode="aspectFill" />
-          </view>
-        </view>
+        <swiper
+          class="hero-swiper"
+          circular="{{product.heroImages.length > 1}}"
+          current="{{currentImageIndex}}"
+          duration="320"
+          easing-function="easeOutCubic"
+          bindchange="onHeroSwiperChange"
+        >
+          <swiper-item wx:for="{{product.heroImages}}" wx:key="*this">
+            <view class="hero-slide" data-index="{{index}}" data-kind="hero" bindtap="previewImage">
+              <image class="hero-image" src="{{item}}" mode="aspectFill" />
+            </view>
+          </swiper-item>
+        </swiper>
 
         <view class="hero-nav hero-nav-prev" wx:if="{{product.heroImages.length > 1}}" catchtap="showPrevHeroImage"></view>
         <view class="hero-nav hero-nav-next" wx:if="{{product.heroImages.length > 1}}" catchtap="showNextHeroImage"></view>
@@ -22,14 +28,6 @@
           <text class="hero-indicator-text">{{currentImageIndex + 1}}/{{product.heroImages.length}}</text>
         </view>
       </view>
-    </view>
-
-    <view
-      class="hero-back"
-      bindtap="goBack"
-      style="top: {{backButtonTop}}px; width: {{backButtonWidth}}px; height: {{backButtonHeight}}px;"
-    >
-      <van-icon name="arrow-left" size="18" color="#FFFFFF" />
     </view>
   </view>
 
@@ -51,10 +49,12 @@
         </view>
 
         <view class="mini-tags" wx:if="{{(product.logistics && product.logistics.shippingPromiseText) || product.displayTags.length > 0}}">
-          <text class="mini-tag promise-tag" wx:if="{{product.logistics && product.logistics.shippingPromiseText}}">
-            {{product.logistics.shippingPromiseText}}
-          </text>
-          <text class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">{{item}}</text>
+          <view class="mini-tag promise-tag" wx:if="{{product.logistics && product.logistics.shippingPromiseText}}">
+            <text class="mini-tag-text">{{product.logistics.shippingPromiseText}}</text>
+          </view>
+          <view class="mini-tag" wx:for="{{product.displayTags}}" wx:key="*this">
+            <text class="mini-tag-text">{{item}}</text>
+          </view>
         </view>
 
         <text class="product-title">{{product.title}}</text>
@@ -84,23 +84,6 @@
     <view class="section-divider" wx:if="{{product.related_project_name || product.workshop_info}}"></view>
 
     <view class="cultural-section" wx:if="{{product.related_project_name || product.workshop_info}}">
-      <view class="traceability-card" wx:if="{{product.related_project_name}}" bindtap="goToProject">
-        <view class="trace-main">
-          <view class="trace-icon-wrap">
-            <van-icon name="bookmark-o" size="22" color="#A12D27" />
-          </view>
-          <view class="trace-copy">
-            <text class="trace-label">非遗溯源</text>
-            <text class="trace-name">{{product.related_project_name}}</text>
-            <text class="trace-desc">这件作品关联的技艺脉络与文化背景，点此继续了解。</text>
-          </view>
-        </view>
-        <view class="trace-action">
-          <text class="trace-action-text">去了解</text>
-          <van-icon name="arrow" size="14" color="#A12D27" />
-        </view>
-      </view>
-
       <view class="workshop-surface" wx:if="{{product.workshop_info}}" bindtap="goToWorkshop">
         <view class="workshop-main">
           <image wx:if="{{product.workshop_info.logoDisplay}}" class="workshop-avatar" src="{{product.workshop_info.logoDisplay}}" mode="aspectFill" />
@@ -117,6 +100,22 @@
         </view>
 
         <view class="store-entry-btn">进店看看</view>
+      </view>
+
+      <view class="traceability-card" wx:if="{{product.related_project_name}}" bindtap="goToProject">
+        <view class="trace-main">
+          <view class="trace-icon-wrap">
+            <van-icon name="bookmark-o" size="22" color="#A12D27" />
+          </view>
+          <view class="trace-copy">
+            <text class="trace-label">非遗溯源</text>
+            <text class="trace-name">{{product.related_project_name}}</text>
+          </view>
+        </view>
+        <view class="trace-action">
+          <text class="trace-action-text">去了解</text>
+          <van-icon name="arrow" size="14" color="#A12D27" />
+        </view>
       </view>
     </view>
 
@@ -136,7 +135,7 @@
 
       <view class="review-summary-card">
         <view class="review-summary-score">
-          <text class="review-summary-number">{{reviewSummary.displayScore}}</text>
+          <text class="review-summary-number {{reviewSummary.review_count > 0 ? '' : 'is-empty'}}">{{reviewSummary.displayScore}}</text>
           <text class="review-summary-desc">综合评分</text>
         </view>
         <view class="review-summary-meta">

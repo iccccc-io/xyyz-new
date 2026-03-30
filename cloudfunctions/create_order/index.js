@@ -39,6 +39,28 @@ function findSkuWithIndex(product, skuId) {
   return { index, sku: skus[index] }
 }
 
+function normalizeProductLogistics(logistics = {}, origin = '') {
+  const method = getSafeString(logistics && logistics.method) || 'express'
+  const shipFrom = getSafeString(logistics && logistics.ship_from) || origin || '湖南·长沙'
+  if (method === 'pickup') {
+    return {
+      method: 'pickup',
+      postage: 'free',
+      carrier: 'pickup',
+      handling_time: getSafeString(logistics && logistics.handling_time) || '48h',
+      ship_from: shipFrom
+    }
+  }
+
+  return {
+    method,
+    postage: getSafeString(logistics && logistics.postage) || 'free',
+    carrier: getSafeString(logistics && logistics.carrier) || 'sf_jd',
+    handling_time: getSafeString(logistics && logistics.handling_time) || '48h',
+    ship_from: shipFrom
+  }
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
@@ -134,6 +156,8 @@ exports.main = async (event, context) => {
       const totalPrice = targetSku.price * quantity
       const skuImage = targetSku.image || latestProduct.cover_img || ''
 
+      const normalizedLogistics = normalizeProductLogistics(latestProduct.logistics || {}, latestProduct.origin || '')
+
       const productSnapshot = {
         product_id: latestProduct._id,
         title: latestProduct.title,
@@ -148,7 +172,7 @@ exports.main = async (event, context) => {
         category: latestProduct.category || '',
         related_project_id: latestProduct.related_project_id || '',
         related_project_name: latestProduct.related_project_name || '',
-        logistics: latestProduct.logistics || null,
+        logistics: normalizedLogistics,
         workshop_id: latestProduct.workshop_id || '',
         workshop_name,
         seller_openid
@@ -175,7 +199,7 @@ exports.main = async (event, context) => {
           has_aftersale: false,
           product_snapshot: productSnapshot,
           delivery_address,
-          carrier_code: '',
+          carrier_code: normalizedLogistics.method === 'pickup' ? 'pickup' : '',
           tracking_number: '',
           cancel_reason: '',
           create_time: db.serverDate(),

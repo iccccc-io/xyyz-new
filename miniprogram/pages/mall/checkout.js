@@ -9,6 +9,16 @@ const LOGISTICS_POSTAGE_TEXT = {
 
 function normalizeLogistics(logistics, origin) {
   const method = logistics && logistics.method ? logistics.method : 'express'
+  if (method === 'pickup') {
+    return {
+      method,
+      postage: 'free',
+      ship_from: (logistics && logistics.ship_from ? logistics.ship_from : origin || '湖南·长沙').trim(),
+      postageDisplay: '同城自提',
+      isPayOnDelivery: false,
+      isPickup: true
+    }
+  }
   const postage = logistics && logistics.postage ? logistics.postage : 'free'
   const shipFrom = (logistics && logistics.ship_from ? logistics.ship_from : origin || '湖南·长沙').trim()
   return {
@@ -16,7 +26,8 @@ function normalizeLogistics(logistics, origin) {
     postage,
     ship_from: shipFrom,
     postageDisplay: LOGISTICS_POSTAGE_TEXT[postage] || '快递包邮',
-    isPayOnDelivery: postage === 'pay_on_delivery'
+    isPayOnDelivery: postage === 'pay_on_delivery',
+    isPickup: false
   }
 }
 
@@ -29,6 +40,7 @@ Page({
     totalFen: 0,
     totalDisplay: '0.00',
     freightDisplay: '0.00',
+    deliverySummaryText: '楼0.00',
     showPayOnDeliveryNote: false,
     submitting: false,
     showPayKeyboard: false,
@@ -103,6 +115,7 @@ Page({
         totalFen,
         totalDisplay: formatPrice(totalFen),
         freightDisplay: '0.00',
+        deliverySummaryText: logistics.isPickup ? '同城自提' : '楼0.00',
         showPayOnDeliveryNote: logistics.isPayOnDelivery,
         loading: false
       })
@@ -164,7 +177,7 @@ Page({
     if (submitting) return
 
     if (!address) {
-      wx.showToast({ title: '请选择收货地址', icon: 'none' })
+      wx.showToast({ title: product && product.logistics && product.logistics.isPickup ? '请选择自提联系信息' : '请选择收货地址', icon: 'none' })
       return
     }
     if (!product || !product.selectedSku) {

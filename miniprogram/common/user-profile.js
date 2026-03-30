@@ -5,6 +5,9 @@ const DEFAULT_USER_STATS = {
   views: 0
 }
 
+const USER_BIO_MAX_LENGTH = 60
+const USER_BIO_MAX_LINES = 5
+
 const DEFAULT_USER_PROFILE = {
   nickname: '',
   avatar_url: '',
@@ -22,6 +25,72 @@ const DEFAULT_USER_PROFILE = {
 
 function cloneDefaultStats() {
   return { ...DEFAULT_USER_STATS }
+}
+
+function normalizeLineBreaks(text = '') {
+  return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
+function countTextLength(text = '') {
+  return Array.from(String(text || '')).length
+}
+
+function getUserBioLength(text = '') {
+  return countTextLength(normalizeLineBreaks(text))
+}
+
+function getUserBioLineCount(text = '') {
+  const normalized = normalizeLineBreaks(text)
+  if (!normalized) return 0
+  return normalized.split('\n').length
+}
+
+function sanitizeUserBio(text = '') {
+  const normalized = normalizeLineBreaks(text)
+  const lines = normalized.split('\n').slice(0, USER_BIO_MAX_LINES)
+
+  let output = ''
+  lines.forEach((line, index) => {
+    const next = index === 0 ? line : `\n${line}`
+    const nextLength = getUserBioLength(output + next)
+    if (nextLength <= USER_BIO_MAX_LENGTH) {
+      output += next
+      return
+    }
+
+    const remain = USER_BIO_MAX_LENGTH - getUserBioLength(output)
+    if (remain > 0) {
+      output += Array.from(next).slice(0, remain).join('')
+    }
+  })
+
+  return output
+}
+
+function validateUserBio(text = '') {
+  const normalized = normalizeLineBreaks(text)
+  const length = getUserBioLength(normalized)
+  const lineCount = getUserBioLineCount(normalized)
+
+  if (length > USER_BIO_MAX_LENGTH) {
+    return {
+      valid: false,
+      message: `个人简介最多${USER_BIO_MAX_LENGTH}字`
+    }
+  }
+
+  if (lineCount > USER_BIO_MAX_LINES) {
+    return {
+      valid: false,
+      message: `个人简介最多${USER_BIO_MAX_LINES}行`
+    }
+  }
+
+  return {
+    valid: true,
+    message: '',
+    value: normalized
+  }
 }
 
 function createDefaultUserProfile() {
@@ -104,7 +173,13 @@ function getMissingUserProfilePatch(userInfo = {}) {
 module.exports = {
   DEFAULT_USER_PROFILE,
   DEFAULT_USER_STATS,
+  USER_BIO_MAX_LENGTH,
+  USER_BIO_MAX_LINES,
   createDefaultUserProfile,
   normalizeUserProfile,
-  getMissingUserProfilePatch
+  getMissingUserProfilePatch,
+  sanitizeUserBio,
+  validateUserBio,
+  getUserBioLength,
+  getUserBioLineCount
 }

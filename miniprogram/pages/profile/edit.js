@@ -2,7 +2,12 @@ const app = getApp()
 const db = wx.cloud.database()
 const {
   createDefaultUserProfile,
-  normalizeUserProfile
+  normalizeUserProfile,
+  sanitizeUserBio,
+  validateUserBio,
+  getUserBioLength,
+  USER_BIO_MAX_LENGTH,
+  USER_BIO_MAX_LINES
 } = require('../../common/user-profile')
 
 const DEFAULT_AVATAR = '/images/icons/avatar.png'
@@ -24,6 +29,8 @@ Page({
     safeAreaBottom: 0,
     loading: true,
     submitting: false,
+    bioMaxLength: USER_BIO_MAX_LENGTH,
+    bioMaxLines: USER_BIO_MAX_LINES,
     form: createDefaultUserProfile(),
     originalUser: createDefaultUserProfile(),
     bioLength: 0,
@@ -54,26 +61,34 @@ Page({
     try {
       const latestUser = await app.refreshUserInfo({ syncDefaults: true, notify: false })
       const normalized = normalizeUserProfile(latestUser || app.globalData.userInfo || {})
+      const nextForm = {
+        ...normalized,
+        bio: sanitizeUserBio(normalized.bio || '')
+      }
       this.setData({
         loading: false,
-        form: normalized,
-        originalUser: normalized,
-        bioLength: (normalized.bio || '').length,
-        nicknameLength: (normalized.nickname || '').length,
-        avatarFiles: createUploadList(normalized.avatar_url || DEFAULT_AVATAR, 'avatar'),
-        coverFiles: createUploadList(normalized.profile_bg_url, 'cover')
+        form: nextForm,
+        originalUser: nextForm,
+        bioLength: getUserBioLength(nextForm.bio || ''),
+        nicknameLength: (nextForm.nickname || '').length,
+        avatarFiles: createUploadList(nextForm.avatar_url || DEFAULT_AVATAR, 'avatar'),
+        coverFiles: createUploadList(nextForm.profile_bg_url, 'cover')
       })
     } catch (err) {
       console.error('加载用户资料失败:', err)
       const fallbackUser = normalizeUserProfile(app.globalData.userInfo || {})
+      const nextForm = {
+        ...fallbackUser,
+        bio: sanitizeUserBio(fallbackUser.bio || '')
+      }
       this.setData({
         loading: false,
-        form: fallbackUser,
-        originalUser: fallbackUser,
-        bioLength: (fallbackUser.bio || '').length,
-        nicknameLength: (fallbackUser.nickname || '').length,
-        avatarFiles: createUploadList(fallbackUser.avatar_url || DEFAULT_AVATAR, 'avatar'),
-        coverFiles: createUploadList(fallbackUser.profile_bg_url, 'cover')
+        form: nextForm,
+        originalUser: nextForm,
+        bioLength: getUserBioLength(nextForm.bio || ''),
+        nicknameLength: (nextForm.nickname || '').length,
+        avatarFiles: createUploadList(nextForm.avatar_url || DEFAULT_AVATAR, 'avatar'),
+        coverFiles: createUploadList(nextForm.profile_bg_url, 'cover')
       })
       wx.showToast({
         title: '资料加载失败',
@@ -94,11 +109,24 @@ Page({
     })
   },
 
+  async onNicknameBlur(e) {
+    const nickname = e.detail.value || ''
+    this.setData({
+      'form.nickname': nickname,
+      nicknameLength: nickname.length
+    })
+
+    await this.checkNicknameUnique({
+      nickname,
+      silent: true
+    })
+  },
+
   onBioInput(e) {
-    const bio = e.detail.value || ''
+    const bio = sanitizeUserBio(e.detail.value || '')
     this.setData({
       'form.bio': bio,
-      bioLength: bio.length
+      bioLength: getUserBioLength(bio)
     })
   },
 
@@ -175,6 +203,7 @@ Page({
 
   validateForm() {
     const nickname = (this.data.form.nickname || '').trim()
+    const bio = sanitizeUserBio(this.data.form.bio || '')
     const avatarUrl = this.data.avatarFiles[0] && this.data.avatarFiles[0].url
     if (!nickname) {
       wx.showToast({
@@ -190,6 +219,14 @@ Page({
       })
       return false
     }
+    const bioValidation = validateUserBio(bio)
+    if (!bioValidation.valid) {
+      wx.showToast({
+        title: bioValidation.message,
+        icon: 'none'
+      })
+      return false
+    }
     if (!avatarUrl) {
       wx.showToast({
         title: '请上传个人头像',
@@ -200,9 +237,53 @@ Page({
     return true
   },
 
+  async checkNicknameUnique({ nickname = '', silent = false } = {}) {
+    const safeNickname = String(nickname || '').trim()
+    if (!safeNickname) return false
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'manage_user_profile',
+        data: {
+          action: 'check_nickname',
+          nickname: safeNickname,
+          exclude_self: true
+        }
+      })
+
+      const result = res.result || {}
+      if (result.success) {
+        return true
+      }
+
+      if (!silent) {
+        wx.showToast({
+          title: result.message || '昵称不可用',
+          icon: 'none'
+        })
+      }
+      return false
+    } catch (err) {
+      console.error('昵称唯一性校验失败:', err)
+      if (!silent) {
+        wx.showToast({
+          title: '昵称校验失败，请稍后重试',
+          icon: 'none'
+        })
+      }
+      return false
+    }
+  },
+
   async onSave() {
     if (this.data.submitting) return
     if (!this.validateForm()) return
+
+    const nicknameUnique = await this.checkNicknameUnique({
+      nickname: this.data.form.nickname,
+      silent: false
+    })
+    if (!nicknameUnique) return
 
     const originalUser = normalizeUserProfile(this.data.originalUser || {})
     const form = normalizeUserProfile(this.data.form || {})
@@ -220,31 +301,40 @@ Page({
     try {
       const avatarUrl = this.data.avatarFiles[0] ? this.data.avatarFiles[0].url : ''
       const backgroundUrl = this.data.coverFiles[0] ? this.data.coverFiles[0].url : ''
-      const now = new Date()
 
       const patch = {
         nickname: (form.nickname || '').trim(),
         avatar_url: avatarUrl || '',
         avatar_file_id: avatarUrl || '',
         avatar: avatarUrl || '',
-        bio: (form.bio || '').trim(),
-        profile_bg_url: backgroundUrl || '',
-        update_time: now
+        bio: sanitizeUserBio((form.bio || '').trim()),
+        profile_bg_url: backgroundUrl || ''
       }
 
-      await db.collection('users').doc(originalUser._id).update({
-        data: patch
+      const updateRes = await wx.cloud.callFunction({
+        name: 'manage_user_profile',
+        data: {
+          action: 'update_profile',
+          nickname: patch.nickname,
+          avatar_url: patch.avatar_url,
+          bio: patch.bio,
+          profile_bg_url: patch.profile_bg_url
+        }
       })
+      const updateResult = updateRes.result || {}
+      if (!updateResult.success || !updateResult.user) {
+        throw new Error(updateResult.message || '保存失败')
+      }
 
       const nextUserInfo = app.setUserInfo({
         ...originalUser,
-        ...patch
+        ...normalizeUserProfile(updateResult.user)
       })
 
       this.setData({
         originalUser: nextUserInfo,
         form: nextUserInfo,
-        bioLength: (nextUserInfo.bio || '').length,
+        bioLength: getUserBioLength(nextUserInfo.bio || ''),
         nicknameLength: (nextUserInfo.nickname || '').length,
         avatarFiles: createUploadList(nextUserInfo.avatar_url || DEFAULT_AVATAR, 'avatar'),
         coverFiles: createUploadList(nextUserInfo.profile_bg_url, 'cover')

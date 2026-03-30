@@ -202,6 +202,15 @@
   border: 1rpx solid rgba(125, 100, 81, 0.06);
 }
 
+.field-block-disabled {
+  background: #F6F3F0;
+  border-color: rgba(125, 100, 81, 0.04);
+}
+
+.field-block-disabled .field-label {
+  color: #BDB3AA;
+}
+
 .field-head {
   display: flex;
   align-items: center;
@@ -255,6 +264,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 18rpx;
+}
+
+.project-select-block {
+  display: block;
+}
+
+.project-select-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.project-select-value {
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #BEB4AB;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+.project-select-value.is-filled {
+  color: #2C231E;
 }
 
 .select-block.single-line-row {
@@ -315,6 +351,13 @@
 
 .select-value.is-filled {
   color: #2C231E;
+}
+
+.logistics-disabled-tip {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #B89A72;
 }
 
 .select-arrow {
@@ -495,6 +538,20 @@
   color: #B63B36;
   font-weight: 600;
   box-shadow: 0 10rpx 22rpx rgba(182, 59, 54, 0.08);
+}
+
+.logistics-chip.disabled {
+  background: #F1ECE6;
+  border-color: transparent;
+  color: #BDB3AA;
+  box-shadow: none;
+}
+
+.logistics-chip.disabled.selected {
+  background: #F1ECE6;
+  border-color: rgba(189, 179, 170, 0.36);
+  color: #A89C91;
+  font-weight: 500;
 }
 
 .sku-list {

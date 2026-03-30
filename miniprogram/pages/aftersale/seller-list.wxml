@@ -9,12 +9,157 @@
   />
 
   <view class="order-top-shell" style="top: {{stickyTopPx}}px;">
-    <view class="seller-head">
-      <view class="seller-head-copy">
-        <text class="seller-head-eyebrow">售后工作台</text>
-        <text class="seller-head-title">集中处理退款、退货与复审</text>
+    <view class="toolbar-row">
+      <view class="toolbar-search">
+        <van-icon name="search" size="18" color="#B8AEA2" />
+        <input
+          class="toolbar-input"
+          placeholder="搜索订单号 / 下单人 / 商品名"
+          placeholder-class="toolbar-placeholder"
+          value="{{searchValue}}"
+          confirm-type="search"
+          bindinput="onSearchInput"
+          bindconfirm="onSearchConfirm"
+        />
+        <view class="search-clear" wx:if="{{searchValue}}" bindtap="onSearchClear">
+          <van-icon name="cross" size="14" color="#B8AEA2" />
+        </view>
+        <view class="search-action" bindtap="onSearchConfirm">
+          <van-icon name="arrow" size="16" color="#A12D27" />
+        </view>
       </view>
-      <view class="seller-head-badge">{{pendingCount}}</view>
+      <view
+        class="toolbar-filter {{showTimeFilterDrawer ? 'is-open' : ''}} {{hasActiveTimeFilter ? 'is-active' : ''}}"
+        bindtap="toggleTimeFilterDrawer"
+      >
+        <van-icon name="clock-o" size="18" color="#A12D27" />
+        <view class="filter-active-dot" wx:if="{{hasActiveTimeFilter}}"></view>
+      </view>
+      <view class="toolbar-count">{{pendingCount}}</view>
+    </view>
+
+    <view class="time-filter-drawer {{showTimeFilterDrawer ? 'is-open' : ''}}">
+      <view class="time-filter-inner">
+        <view class="drawer-head">
+          <text class="drawer-title">按申请时间筛选</text>
+          <text class="drawer-summary" wx:if="{{activeTimeFilterSummary}}">{{activeTimeFilterSummary}}</text>
+        </view>
+
+        <view class="drawer-chip-row">
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'year' ? 'is-active' : ''}}" data-value="year" bindtap="selectTimeGranularity">按年</view>
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'month' ? 'is-active' : ''}}" data-value="month" bindtap="selectTimeGranularity">按月</view>
+          <view class="drawer-chip {{draftTimeFilter.granularity === 'day' ? 'is-active' : ''}}" data-value="day" bindtap="selectTimeGranularity">按日</view>
+        </view>
+
+        <view class="drawer-chip-row drawer-chip-row-secondary">
+          <view class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'single' ? 'is-active' : ''}}" data-value="single" bindtap="selectTimeType">单选</view>
+          <view class="drawer-chip drawer-chip-secondary {{draftTimeFilter.type === 'range' ? 'is-active' : ''}}" data-value="range" bindtap="selectTimeType">区间</view>
+        </view>
+
+        <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'year' && draftTimeFilter.type === 'single'}}">
+          <picker mode="date" fields="year" value="{{draftTimeFilter.yearSingle}}" data-field="yearSingle" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">年份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.yearSingleLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="picker-grid" wx:if="{{draftTimeFilter.granularity === 'year' && draftTimeFilter.type === 'range'}}">
+          <picker mode="date" fields="year" value="{{draftTimeFilter.yearStart}}" data-field="yearStart" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">开始年份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.yearStartLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+          <picker mode="date" fields="year" value="{{draftTimeFilter.yearEnd}}" data-field="yearEnd" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">结束年份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.yearEndLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'month' && draftTimeFilter.type === 'single'}}">
+          <picker mode="date" fields="month" value="{{draftTimeFilter.monthSingle}}" data-field="monthSingle" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">月份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.monthSingleLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="picker-grid" wx:if="{{draftTimeFilter.granularity === 'month' && draftTimeFilter.type === 'range'}}">
+          <picker mode="date" fields="month" value="{{draftTimeFilter.monthStart}}" data-field="monthStart" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">开始月份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.monthStartLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+          <picker mode="date" fields="month" value="{{draftTimeFilter.monthEnd}}" data-field="monthEnd" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">结束月份</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.monthEndLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="picker-group" wx:if="{{draftTimeFilter.granularity === 'day' && draftTimeFilter.type === 'single'}}">
+          <picker mode="date" fields="day" value="{{draftTimeFilter.daySingle}}" data-field="daySingle" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">日期</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.daySingleLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="picker-grid" wx:if="{{draftTimeFilter.granularity === 'day' && draftTimeFilter.type === 'range'}}">
+          <picker mode="date" fields="day" value="{{draftTimeFilter.dayStart}}" data-field="dayStart" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">开始日期</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.dayStartLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+          <picker mode="date" fields="day" value="{{draftTimeFilter.dayEnd}}" data-field="dayEnd" bindchange="onTimePickerChange">
+            <view class="picker-card">
+              <text class="picker-label">结束日期</text>
+              <view class="picker-value-row">
+                <text class="picker-value">{{draftTimeFilter.dayEndLabel}}</text>
+                <van-icon name="arrow-down" size="14" color="#9A8C7C" />
+              </view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="drawer-actions">
+          <view class="drawer-btn drawer-btn-reset" bindtap="onResetTimeFilter">重置</view>
+          <view class="drawer-btn drawer-btn-apply" bindtap="onApplyTimeFilter">应用筛选</view>
+        </view>
+      </view>
     </view>
 
     <view class="tabs-sticky">
@@ -44,8 +189,13 @@
     <van-empty
       wx:elif="{{activeTab === 0 ? list.length === 0 : closedList.length === 0}}"
       image="order"
-      description="{{activeTab === 0 ? '暂无待处理的售后' : '暂无已完结的售后'}}"
-    />
+      description="{{searchKeyword ? '没有找到匹配的售后记录' : (hasActiveTimeFilter ? '该时间范围内暂无售后记录' : (activeTab === 0 ? '暂无待处理的售后' : '暂无已完结的售后'))}}"
+    >
+      <view class="empty-action" bindtap="onEmptyAction">
+        <text class="empty-action-text">{{searchKeyword || hasActiveTimeFilter ? '查看全部售后' : '查看销售订单'}}</text>
+        <van-icon name="arrow" size="16" color="#B66A44" />
+      </view>
+    </van-empty>
 
     <view wx:else>
       <block wx:if="{{activeTab === 0}}">
@@ -61,6 +211,12 @@
           <view class="order-no-row">
             <text class="order-no-label">申请时间</text>
             <text class="order-no-value">{{item.applyTimeDisplay}}</text>
+          </view>
+
+          <view class="order-no-row" wx:if="{{item.orderInfo.order_id || item.orderInfo.buyer_name}}">
+            <text class="order-no-label">关联订单</text>
+            <text class="order-no-value">{{item.orderInfo.order_id}}</text>
+            <text class="order-buyer" wx:if="{{item.orderInfo.buyer_name}}">下单人：{{item.orderInfo.buyer_name}}</text>
           </view>
 
           <view class="product-panel">
@@ -91,7 +247,7 @@
 
           <view class="card-actions">
             <view class="action-note">
-              {{item.status === 0 ? '需尽快审核，超时系统将自动同意' : item.status === 2 ? '买家已寄回商品，待你验收退款' : '点击查看完整售后详情'}}
+              {{item.status === 0 ? '需尽快审核，超时系统将自动同意' : item.status === 2 ? (item.orderInfo.is_pickup ? '买家已确认交还商品，待你确认退款' : '买家已寄回商品，待你验收退款') : item.status === 1 ? (item.orderInfo.is_pickup ? '已同意退货，等待买家交还商品' : '已同意退货，等待买家寄回商品') : '点击查看完整售后详情'}}
             </view>
             <view class="action-btn subtle" catchtap="goDetail" data-id="{{item._id}}">查看详情</view>
             <view class="action-btn primary {{item.status === 0 ? 'strong' : ''}}" catchtap="goDetail" data-id="{{item._id}}">{{item.actionText}}</view>
@@ -112,6 +268,12 @@
           <view class="order-no-row">
             <text class="order-no-label">申请时间</text>
             <text class="order-no-value">{{item.applyTimeDisplay}}</text>
+          </view>
+
+          <view class="order-no-row" wx:if="{{item.orderInfo.order_id || item.orderInfo.buyer_name}}">
+            <text class="order-no-label">关联订单</text>
+            <text class="order-no-value">{{item.orderInfo.order_id}}</text>
+            <text class="order-buyer" wx:if="{{item.orderInfo.buyer_name}}">下单人：{{item.orderInfo.buyer_name}}</text>
           </view>
 
           <view class="product-panel">

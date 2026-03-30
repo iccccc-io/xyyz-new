@@ -70,6 +70,25 @@
           bindblur="onNicknameBlur"
         />
       </view>
+      <text class="nickname-helper">昵称需保持唯一，注册后不可与他人重复</text>
+    </view>
+
+    <view class="form-item bio-item">
+      <view class="bio-head">
+        <text class="bio-label">个人简介</text>
+        <text class="bio-counter">{{bioLength}}/{{bioMaxLength}}</text>
+      </view>
+      <view class="bio-textarea-wrap">
+        <textarea
+          class="bio-textarea"
+          maxlength="{{bioMaxLength}}"
+          placeholder="介绍一下自己吧，最多5行、60字内"
+          placeholder-class="input-placeholder"
+          value="{{bio}}"
+          bindinput="onBioInput"
+        />
+      </view>
+      <text class="bio-helper">个人简介最多 {{bioMaxLines}} 行，且不超过 {{bioMaxLength}} 字</text>
     </view>
 
     <!-- 提交按钮 -->

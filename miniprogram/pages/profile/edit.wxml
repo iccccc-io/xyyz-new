@@ -36,8 +36,10 @@
             placeholder-class="field-placeholder"
             value="{{form.nickname}}"
             bindinput="onNicknameInput"
+            bindblur="onNicknameBlur"
           />
         </view>
+        <text class="field-helper">昵称需保持唯一，不能与其他用户重复</text>
       </view>
     </view>
 
@@ -98,16 +100,17 @@
       <view class="field-block">
         <view class="field-head">
           <text class="field-label">简介内容</text>
-          <text class="field-counter">{{bioLength}}/80</text>
+          <text class="field-counter">{{bioLength}}/{{bioMaxLength}}</text>
         </view>
         <textarea
           class="field-textarea profile-textarea"
-          maxlength="80"
-          placeholder="介绍一下自己吧"
+          maxlength="{{bioMaxLength}}"
+          placeholder="介绍一下自己吧，最多5行、60字内"
           placeholder-class="field-placeholder"
           value="{{form.bio}}"
           bindinput="onBioInput"
         />
+        <text class="field-helper">个人简介最多 {{bioMaxLines}} 行，且不超过 {{bioMaxLength}} 字</text>
       </view>
     </view>
   </view>

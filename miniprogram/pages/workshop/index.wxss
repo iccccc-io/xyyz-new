@@ -622,16 +622,29 @@
 
 .reply-btn,
 .error-back-btn {
-  min-width: 180rpx;
-  height: 66rpx;
-  padding: 0 24rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(90deg, #b63b36 0%, #cb6f46 100%);
-  color: #ffffff;
+  min-width: 164rpx;
+  height: 64rpx;
+  padding: 0 30rpx;
+  border-radius: 32rpx;
+  border: 1rpx solid rgba(182, 59, 54, 0.56);
+  background: rgba(255, 255, 255, 0.92);
+  color: #b63b36;
   font-size: 24rpx;
-  line-height: 66rpx;
+  line-height: 64rpx;
   text-align: center;
   font-weight: 600;
+  box-sizing: border-box;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.reply-btn:active,
+.error-back-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 6rpx 14rpx rgba(92, 79, 66, 0.06);
 }
 
 .review-more {
@@ -669,26 +682,39 @@
 }
 
 .reply-popup-actions {
-  gap: 18rpx;
+  gap: 12rpx;
   margin-top: 24rpx;
 }
 
 .reply-popup-btn {
   flex: 1;
-  height: 82rpx;
-  border-radius: 999rpx;
+  height: 68rpx;
+  border-radius: 34rpx;
+  border: 1rpx solid transparent;
+  background: rgba(255, 255, 255, 0.92);
+  box-sizing: border-box;
   text-align: center;
-  line-height: 82rpx;
-  font-size: 28rpx;
+  line-height: 68rpx;
+  font-size: 24rpx;
   font-weight: 600;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.reply-popup-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 6rpx 14rpx rgba(92, 79, 66, 0.06);
 }
 
 .reply-popup-btn.cancel {
-  background: #efe7de;
-  color: #8d7d70;
+  color: #5f5249;
+  border-color: rgba(129, 107, 89, 0.24);
 }
 
 .reply-popup-btn.confirm {
-  background: linear-gradient(90deg, #b63b36 0%, #cb6f46 100%);
-  color: #ffffff;
+  color: #b63b36;
+  border-color: rgba(182, 59, 54, 0.56);
 }

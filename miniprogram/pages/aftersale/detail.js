@@ -29,6 +29,11 @@ function fmtTime(val) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
 }
 
+function isPickupOrder(order) {
+  const logistics = order && order.product_snapshot && order.product_snapshot.logistics
+  return (logistics && logistics.method === 'pickup') || (order && order.carrier_code === 'pickup')
+}
+
 Page({
   data: {
     loading: true,
@@ -37,6 +42,7 @@ Page({
     ticketTeeth: TICKET_TEETH,
     detail: null,
     order: null,
+    isPickupReturn: false,
     statusInfo: {},
     orderTotalDisplay: '0.00',
     operationLogs: [],  // 格式化后的操作日志
@@ -109,7 +115,13 @@ Page({
         refundDisplay: ((raw.refund_fee || 0) / 100).toFixed(2)
       }
 
-      const statusInfo = STATUS_MAP[String(raw.status)] || { text: '未知', icon: 'question-o', desc: '' }
+      const pickupReturn = !!r.order && detail.type === 'return_refund' && isPickupOrder(r.order)
+      const statusInfo = { ...(STATUS_MAP[String(raw.status)] || { text: '未知', icon: 'question-o', desc: '' }) }
+      if (pickupReturn && raw.status === 1) {
+        statusInfo.desc = '卖家已同意退货，请尽快与商家当面交还商品'
+      } else if (pickupReturn && raw.status === 2) {
+        statusInfo.desc = '买家已确认交还商品，等待商家确认收回并退款'
+      }
 
       // 格式化 operation_logs
       const operationLogs = (raw.operation_logs || []).map(log => ({
@@ -127,6 +139,7 @@ Page({
         role: r.role,       // 由云函数严格判定
         detail,
         order,
+        isPickupReturn: pickupReturn,
         statusInfo,
         orderTotalDisplay,
         operationLogs
@@ -186,10 +199,47 @@ Page({
   },
 
   // --- 退货物流弹窗 ---
-  openShipPopup() { this.setData({ showShipPopup: true }) },
+  openShipPopup() {
+    if (this.data.isPickupReturn) {
+      wx.showModal({
+        title: '确认交还商品',
+        content: '同城自提订单无需填写退货单号。请确认你已经将商品当面交还给商家。',
+        confirmText: '确认交还',
+        confirmColor: '#8B2E2A',
+        success: (res) => {
+          if (res.confirm) {
+            this.submitPickupReturn()
+          }
+        }
+      })
+      return
+    }
+    this.setData({ showShipPopup: true })
+  },
   closeShipPopup() { this.setData({ showShipPopup: false }) },
   selectCarrier(e) { this.setData({ 'shipForm.com': e.currentTarget.dataset.code }) },
   onTrackingInput(e) { this.setData({ 'shipForm.num': e.detail }) },
+
+  async submitPickupReturn() {
+    if (this.data.shipSubmitting) return
+    this.setData({ shipSubmitting: true })
+    try {
+      const r = (await wx.cloud.callFunction({
+        name: 'manage_aftersale',
+        data: { action: 'ship_return', aftersale_id: this._asId }
+      })).result
+      this.setData({ shipSubmitting: false })
+      if (r && r.success) {
+        wx.showToast({ title: '已确认交还', icon: 'success' })
+        setTimeout(() => this._loadData(), 800)
+      } else {
+        wx.showToast({ title: r.message || '失败', icon: 'none' })
+      }
+    } catch (e) {
+      this.setData({ shipSubmitting: false })
+      wx.showToast({ title: '网络异常', icon: 'none' })
+    }
+  },
 
   async submitShipReturn() {
     const { shipForm, shipSubmitting } = this.data
@@ -243,6 +293,36 @@ Page({
   },
 
   async openApprovePopup() {
+    if (this.data.detail && this.data.detail.type === 'refund_only') {
+      wx.showModal({
+        title: '同意退款',
+        content: '确认同意本次仅退款申请？系统会立即执行退款。',
+        confirmText: '确认退款',
+        confirmColor: '#8B2E2A',
+        success: (res) => {
+          if (res.confirm) {
+            this.submitApproveWithoutAddress('已同意退款')
+          }
+        }
+      })
+      return
+    }
+
+    if (this.data.isPickupReturn && this.data.detail && this.data.detail.type === 'return_refund') {
+      wx.showModal({
+        title: '同意退货',
+        content: '同城自提订单无需填写退货地址。确认后买家可与您当面交还商品。',
+        confirmText: '确认同意',
+        confirmColor: '#8B2E2A',
+        success: (res) => {
+          if (res.confirm) {
+            this.submitApproveWithoutAddress('已同意退货')
+          }
+        }
+      })
+      return
+    }
+
     this.setData({ showApprovePopup: true, selectedAddrIdx: -1, showManualAddr: false })
     try {
       const db = wx.cloud.database()
@@ -259,6 +339,30 @@ Page({
     }
   },
   closeApprovePopup() { this.setData({ showApprovePopup: false }) },
+
+  async submitApproveWithoutAddress(successTitle) {
+    if (this.data.approveSubmitting) return
+    this.setData({ approveSubmitting: true })
+    try {
+      const r = (await wx.cloud.callFunction({
+        name: 'manage_aftersale',
+        data: {
+          action: 'approve',
+          aftersale_id: this._asId
+        }
+      })).result
+      this.setData({ approveSubmitting: false })
+      if (r && r.success) {
+        wx.showToast({ title: successTitle || '已处理', icon: 'success' })
+        setTimeout(() => this._loadData(), 800)
+      } else {
+        wx.showToast({ title: r.message || '失败', icon: 'none' })
+      }
+    } catch (e) {
+      this.setData({ approveSubmitting: false })
+      wx.showToast({ title: '网络异常', icon: 'none' })
+    }
+  },
 
   selectSavedAddr(e) {
     const idx = Number(e.currentTarget.dataset.idx)
@@ -332,8 +436,8 @@ Page({
 
   confirmReturn() {
     wx.showModal({
-      title: '确认退货并退款',
-      content: '确认已收到退货？退款立即执行，不可撤销。',
+      title: this.data.isPickupReturn ? '确认收回商品并退款' : '确认退货并退款',
+      content: this.data.isPickupReturn ? '确认你已经当面收回商品？退款将立即执行，不可撤销。' : '确认已收到退货？退款立即执行，不可撤销。',
       confirmColor: '#8B2E2A',
       success: async (res) => {
         if (!res.confirm) return

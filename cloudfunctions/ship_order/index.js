@@ -9,19 +9,16 @@ const db = cloud.database()
  * @param {string} event.order_id       - 订单 ID
  * @param {string} event.carrier_code   - 快递公司代码（如 "SF", "YTO", "ZTO"）
  * @param {string} event.tracking_number - 快递单号
+ * @param {boolean} event.pickup_confirmed - 同城自提时确认已交付商品
  * @returns {{ success: boolean, message: string }}
  */
 exports.main = async (event, context) => {
-  const { order_id, carrier_code, tracking_number } = event
+  const { order_id, carrier_code, tracking_number, pickup_confirmed } = event
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
 
-  // ===== 参数校验 =====
-  if (!order_id || !carrier_code || !tracking_number) {
-    return { success: false, message: '参数错误：缺少订单ID、快递公司或单号' }
-  }
-  if (tracking_number.trim().length < 5) {
-    return { success: false, message: '快递单号格式不正确' }
+  if (!order_id) {
+    return { success: false, message: '参数错误：缺少订单ID' }
   }
 
   try {
@@ -57,6 +54,52 @@ exports.main = async (event, context) => {
     if (workshopRes.data.owner_id !== openid) {
       console.warn(`[安全警告] ${openid} 尝试操作非本人工坊订单 ${order_id}`)
       return { success: false, message: '无权操作此订单' }
+    }
+
+    const logistics = (order.product_snapshot && order.product_snapshot.logistics) || {}
+    const isPickupOrder = logistics.method === 'pickup' || order.carrier_code === 'pickup'
+
+    if (isPickupOrder) {
+      if (!pickup_confirmed) {
+        return { success: false, message: '请先确认已当面交付商品' }
+      }
+
+      await db.collection('shopping_orders').doc(order_id).update({
+        data: {
+          status: 30,
+          carrier_code: 'pickup',
+          tracking_number: '',
+          ship_time: db.serverDate(),
+          update_time: db.serverDate()
+        }
+      })
+
+      console.log(`[发货] 同城自提交付成功：卖家 ${openid}，订单 ${order_id}`)
+
+      cloud.callFunction({
+        name: 'send_notification',
+        data: {
+          type: 'TYPE_SHIPPED',
+          touser: order._openid,
+          page: `/pages/order/list?status=30`,
+          payload: {
+            productTitle: (order.product_snapshot && order.product_snapshot.title) || '商品',
+            carrierCode: 'pickup',
+            carrierName: '同城自提',
+            trackingNumber: '同城自提'
+          }
+        }
+      }).catch(e => console.warn('[ship_order] 发送通知失败（非阻塞）:', e))
+
+      return { success: true, message: '已确认当面交付商品' }
+    }
+
+    // ===== 参数校验 =====
+    if (!order_id || !carrier_code || !tracking_number) {
+      return { success: false, message: '参数错误：缺少订单ID、快递公司或单号' }
+    }
+    if (tracking_number.trim().length < 5) {
+      return { success: false, message: '快递单号格式不正确' }
     }
 
     // ===== 3. 更新订单：状态 20 → 30，写入物流信息 =====

@@ -61,6 +61,21 @@ function getReviewState(order) {
   }
 }
 
+function isPickupOrder(order) {
+  const logistics = order && order.product_snapshot && order.product_snapshot.logistics
+  return (logistics && logistics.method === 'pickup') || (order && order.carrier_code === 'pickup')
+}
+
+function getLogisticsSummary(order) {
+  if (isPickupOrder(order)) {
+    return '同城自提，无需快递单号'
+  }
+  if (order && order.tracking_number) {
+    return `${order.carrier_code || ''} ${order.tracking_number}`.trim()
+  }
+  return ''
+}
+
 function calcCountdown(createTime) {
   if (!createTime) return { countdown: 0, countdownDisplay: '' }
   const deadline = new Date(createTime).getTime() + TIMEOUT_MS
@@ -261,6 +276,8 @@ function enrichOrder(order, index = 0, withDelay = false) {
   const snapshot = order.product_snapshot || {}
   const countdownInfo = order.status === 10 ? calcCountdown(order.create_time) : {}
   const reviewState = getReviewState(order)
+  const pickupOrder = isPickupOrder(order)
+  const logisticsSummary = getLogisticsSummary(order)
 
   return {
     ...order,
@@ -273,6 +290,9 @@ function enrichOrder(order, index = 0, withDelay = false) {
     productPriceDisplay: formatFen(snapshot.price || 0),
     createTimeDisplay: formatTime(order.create_time),
     cardDelay: withDelay ? index * 70 : 0,
+    isPickupOrder: pickupOrder,
+    logisticsSummary,
+    showLogisticsAction: pickupOrder || !!order.tracking_number,
     ...reviewState,
     ...countdownInfo
   }
@@ -769,6 +789,11 @@ Page({
 
   viewLogistics(e) {
     const id = e.currentTarget.dataset.id
+    const isPickup = e.currentTarget.dataset.pickup === true || e.currentTarget.dataset.pickup === 'true'
+    if (isPickup) {
+      wx.showToast({ title: '同城自提无物流轨迹', icon: 'none' })
+      return
+    }
     wx.navigateTo({ url: `/pages/order/logistics?orderId=${id}` })
   },
 

@@ -40,6 +40,11 @@ function getReviewState(order) {
   }
 }
 
+function isPickupOrder(order) {
+  const logistics = order && order.product_snapshot && order.product_snapshot.logistics
+  return (logistics && logistics.method === 'pickup') || (order && order.carrier_code === 'pickup')
+}
+
 Page({
   data: {
     loading: true,
@@ -104,6 +109,15 @@ Page({
       const res = await db.collection('shopping_orders').doc(id).get()
       const raw = res.data
       let info = STATUS_MAP[raw.status] || { text: '未知', icon: 'question-o', desc: '' }
+      const pickupOrder = isPickupOrder(raw)
+
+      if (pickupOrder && raw.status === 20) {
+        info = { ...info, desc: '订单已支付，等待商家确认当面交付商品' }
+      } else if (pickupOrder && raw.status === 30) {
+        info = { ...info, desc: '商家已确认当面交付商品，请及时确认收货' }
+      } else if (pickupOrder && raw.status === 40) {
+        info = { ...info, desc: '同城自提订单已完成，售后窗口期内可申请售后' }
+      }
 
       if (raw.status === 60 && (raw.aftersale_result === 'refunded' || raw.settled === true)) {
         info = { text: '已退款', icon: 'passed', desc: '退款已到账' }
@@ -111,6 +125,11 @@ Page({
 
       const order = {
         ...raw,
+        isPickupOrder: pickupOrder,
+        showLogisticsPanel: raw.status >= 30 && (pickupOrder || !!raw.tracking_number),
+        showLogisticsAction: pickupOrder || !!raw.tracking_number,
+        logisticsBadge: pickupOrder ? '同城自提' : (raw.carrier_code || ''),
+        logisticsText: pickupOrder ? '同城自提，无需快递单号' : (raw.tracking_number || ''),
         statusText: info.text,
         statusIcon: info.icon,
         statusDesc: info.desc,
@@ -189,6 +208,10 @@ Page({
   queryLogistics() {
     const { order } = this.data
     if (!order) return
+    if (order.isPickupOrder) {
+      wx.showToast({ title: '同城自提无物流轨迹', icon: 'none' })
+      return
+    }
     wx.navigateTo({
       url: `/pages/order/logistics?orderId=${order._id}`
     })

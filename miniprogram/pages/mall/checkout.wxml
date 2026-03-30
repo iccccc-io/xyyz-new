@@ -9,9 +9,10 @@
   />
 
   <view class="address-card" bindtap="chooseAddress">
+    <text class="address-card-title">{{product && product.logistics && product.logistics.isPickup ? '自提联系信息' : '收货地址'}}</text>
     <view class="address-empty" wx:if="{{!address}}">
       <van-icon name="location-o" size="24" color="#8B2E2A" />
-      <text class="address-empty-text">点击选择收货地址</text>
+      <text class="address-empty-text">{{product && product.logistics && product.logistics.isPickup ? '点击选择自提联系信息' : '点击选择收货地址'}}</text>
       <van-icon name="arrow" size="16" color="#ccc" />
     </view>
     <view class="address-filled" wx:else>
@@ -20,13 +21,16 @@
       </view>
       <view class="address-info">
         <view class="address-user-row">
-          <text class="address-name">{{address.userName}}</text>
-          <text class="address-tel">{{address.telNumber}}</text>
-        </view>
-        <text class="address-detail">{{address.provinceName}}{{address.cityName}}{{address.countyName}} {{address.detailInfo}}</text>
+        <text class="address-name">{{address.userName}}</text>
+        <text class="address-tel">{{address.telNumber}}</text>
       </view>
-      <van-icon name="arrow" size="16" color="#ccc" />
+      <text class="address-detail">{{address.provinceName}}{{address.cityName}}{{address.countyName}} {{address.detailInfo}}</text>
     </view>
+    <van-icon name="arrow" size="16" color="#ccc" />
+    </view>
+    <text class="pickup-note" wx:if="{{product && product.logistics && product.logistics.isPickup}}">
+      商家将按照这份联系人信息与您约定同城自提交付时间。
+    </text>
   </view>
 
   <view class="product-card" wx:if="{{product}}">
@@ -59,8 +63,8 @@
       <text class="summary-value">楼{{totalDisplay}}</text>
     </view>
     <view class="summary-row">
-      <text class="summary-label">运费</text>
-      <text class="summary-value">楼{{freightDisplay}}</text>
+      <text class="summary-label">{{product && product.logistics && product.logistics.isPickup ? '交付方式' : '运费'}}</text>
+      <text class="summary-value">{{deliverySummaryText}}</text>
     </view>
     <view class="pay-on-delivery-tip" wx:if="{{showPayOnDeliveryNote}}">
       *该商品为邮费到付，收件时请直接支付给快递员。

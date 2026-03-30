@@ -74,6 +74,26 @@ function normalizeSkuForm(item, index) {
   }
 }
 
+function normalizeLogisticsState(logistics = {}) {
+  const method = logistics && logistics.method ? logistics.method : 'express'
+  const normalized = {
+    deliveryMethod: method,
+    postage: logistics && logistics.postage ? logistics.postage : 'free',
+    carrier: logistics && logistics.carrier ? logistics.carrier : 'sf_jd'
+  }
+
+  if (method === 'pickup') {
+    normalized.postage = 'free'
+    normalized.carrier = 'pickup'
+  } else if (method === 'heavy_cargo') {
+    normalized.carrier = 'heavy_cargo'
+  } else if (normalized.carrier === 'pickup' || normalized.carrier === 'heavy_cargo') {
+    normalized.carrier = 'sf_jd'
+  }
+
+  return normalized
+}
+
 Page({
   data: {
     title: '',
@@ -155,14 +175,16 @@ Page({
         ? product.skus.map((item, index) => normalizeSkuForm(item, index))
         : [createEmptySku()]
 
+      const logisticsState = normalizeLogisticsState(product.logistics || {})
+
       this.setData({
         title: product.title || '',
         intro: product.intro || '',
         category: product.category || '',
         skus,
-        deliveryMethod: product.logistics && product.logistics.method ? product.logistics.method : 'express',
-        postage: product.logistics && product.logistics.postage ? product.logistics.postage : 'free',
-        carrier: product.logistics && product.logistics.carrier ? product.logistics.carrier : 'sf_jd',
+        deliveryMethod: logisticsState.deliveryMethod,
+        postage: logisticsState.postage,
+        carrier: logisticsState.carrier,
         handlingTime: product.logistics && product.logistics.handling_time ? product.logistics.handling_time : '48h',
         projectId: product.related_project_id || '',
         projectName: product.related_project_name || '',
@@ -324,6 +346,7 @@ Page({
 
     const updates = { deliveryMethod: value }
     if (value === 'pickup') {
+      updates.postage = 'free'
       updates.carrier = 'pickup'
     } else if (value === 'heavy_cargo') {
       updates.carrier = 'heavy_cargo'
@@ -336,6 +359,7 @@ Page({
 
   selectPostage(e) {
     const value = e.currentTarget.dataset.value
+    if (this.data.deliveryMethod === 'pickup') return
     if (!value) return
     this.setData({ postage: value })
   },
@@ -750,7 +774,7 @@ Page({
       const origin = this.data.origin.trim()
       const logistics = {
         method: this.data.deliveryMethod,
-        postage: this.data.postage,
+        postage: this.data.deliveryMethod === 'pickup' ? 'free' : this.data.postage,
         carrier: this.data.deliveryMethod === 'pickup' ? 'pickup' : this.data.carrier,
         handling_time: this.data.handlingTime,
         ship_from: origin || '湖南·长沙'

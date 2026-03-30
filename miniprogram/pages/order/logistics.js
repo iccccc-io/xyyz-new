@@ -11,11 +11,20 @@ const STATE_COLORS = {
   '6': '#999'      // 退回
 }
 
+function formatTime(val) {
+  if (!val) return ''
+  const d = val instanceof Date ? val : new Date(val)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 Page({
   data: {
     loading: true,
     errorMsg: '',
     orderId: '',
+    isPickup: false,
     trackingNumber: '',
     carrierName: '',
     stateDesc: '',
@@ -23,6 +32,7 @@ Page({
     trackData: [],
     isCache: false,
     notice: '',
+    pickupTime: '',
     latestLocation: {},
     markers: []
   },
@@ -48,6 +58,24 @@ Page({
       const result = res.result
 
       if (result && result.success) {
+        if (result.pickup) {
+          this.setData({
+            loading: false,
+            isPickup: true,
+            trackingNumber: '',
+            carrierName: result.carrierName || '同城自提',
+            stateDesc: result.stateDesc || '无需物流',
+            stateColor: '#C28A42',
+            trackData: [],
+            isCache: false,
+            notice: result.notice || '',
+            pickupTime: formatTime(result.pickupTime),
+            latestLocation: {},
+            markers: []
+          })
+          return
+        }
+
         const data = result.data || []
 
         // 解析最新一条轨迹的坐标（用于地图展示）
@@ -87,6 +115,7 @@ Page({
 
         this.setData({
           loading: false,
+          isPickup: false,
           trackingNumber: result.trackingNumber,
           carrierName: result.carrierName || '快递',
           stateDesc: result.stateDesc || '查询中',
@@ -94,15 +123,18 @@ Page({
           trackData: data,
           isCache: result.isCache || false,
           notice: result.notice || '',
+          pickupTime: '',
           latestLocation,
           markers
         })
       } else {
         this.setData({
           loading: false,
+          isPickup: false,
           errorMsg: result.message || '查询失败',
           trackingNumber: result.trackingNumber || '',
-          carrierName: result.carrierName || ''
+          carrierName: result.carrierName || '',
+          pickupTime: ''
         })
       }
     } catch (err) {

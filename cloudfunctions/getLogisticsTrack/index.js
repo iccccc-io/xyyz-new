@@ -65,6 +65,11 @@ function makeSign(paramStr) {
   return crypto.createHash('md5').update(raw, 'utf8').digest('hex').toUpperCase()
 }
 
+function isPickupOrder(order = {}) {
+  const logistics = (order.product_snapshot && order.product_snapshot.logistics) || {}
+  return logistics.method === 'pickup' || order.carrier_code === 'pickup'
+}
+
 /**
  * 调用快递100实时查询接口
  */
@@ -157,7 +162,23 @@ exports.main = async (event, context) => {
       }
     }
 
-    // ========== 3. 检查物流信息 ==========
+    // ========== 3. 同城自提订单直接返回说明 ==========
+    if (isPickupOrder(order)) {
+      return {
+        success: true,
+        pickup: true,
+        carrier: 'pickup',
+        carrierName: '同城自提',
+        trackingNumber: '',
+        state: order.status >= 40 ? '3' : '5',
+        stateDesc: order.status >= 40 ? '已完成' : '无需物流',
+        notice: '该订单为同城自提，商家已确认当面交付商品，无需快递轨迹。',
+        pickupTime: order.ship_time || null,
+        data: []
+      }
+    }
+
+    // ========== 4. 检查物流信息 ==========
     if (!order.tracking_number) {
       return { success: false, message: '暂无物流信息' }
     }
@@ -165,7 +186,7 @@ exports.main = async (event, context) => {
     const carrierCode = order.carrier_code || ''
     const trackingNumber = order.tracking_number
 
-    // ========== 4. 缓存检查 ==========
+    // ========== 5. 缓存检查 ==========
     if (order.logistics_cache && order.logistics_last_query) {
       const lastQuery = new Date(order.logistics_last_query).getTime()
       const now = Date.now()
@@ -185,7 +206,7 @@ exports.main = async (event, context) => {
       }
     }
 
-    // ========== 5. 请求快递100 ==========
+    // ========== 6. 请求快递100 ==========
     const kd100Com = CARRIER_MAP[carrierCode] || carrierCode.toLowerCase()
 
     if (!kd100Com) {
@@ -200,7 +221,7 @@ exports.main = async (event, context) => {
 
     const kd100Res = await queryKD100(kd100Com, trackingNumber, phone)
 
-    // ========== 6. 处理返回结果 ==========
+    // ========== 7. 处理返回结果 ==========
     if (kd100Res.status === '200' && kd100Res.data && kd100Res.data.length > 0) {
       // 查询成功，缓存结果
       const cacheData = {

@@ -2,9 +2,13 @@
 const app = getApp()
 const db = wx.cloud.database()
 const {
-  createDefaultUserProfile,
   normalizeUserProfile,
-  getMissingUserProfilePatch
+  getMissingUserProfilePatch,
+  sanitizeUserBio,
+  validateUserBio,
+  getUserBioLength,
+  USER_BIO_MAX_LENGTH,
+  USER_BIO_MAX_LINES
 } = require('../../common/user-profile')
 
 // 默认头像
@@ -21,6 +25,11 @@ Page({
     avatarSelected: false,
     // 用户输入的昵称
     nickname: '',
+    // 用户输入的个人简介
+    bio: '',
+    bioLength: 0,
+    bioMaxLength: USER_BIO_MAX_LENGTH,
+    bioMaxLines: USER_BIO_MAX_LINES,
     // 是否正在提交
     submitting: false,
     // 登录成功后重定向的页面
@@ -168,17 +177,68 @@ Page({
   /**
    * 昵称输入框失焦（用于获取最终值）
    */
-  onNicknameBlur(e) {
+  async onNicknameBlur(e) {
     this.setData({
       nickname: e.detail.value
     })
+
+    await this.checkNicknameUnique({
+      nickname: e.detail.value,
+      silent: true
+    })
+  },
+
+  onBioInput(e) {
+    const bio = sanitizeUserBio(e.detail.value || '')
+    this.setData({
+      bio,
+      bioLength: getUserBioLength(bio)
+    })
+  },
+
+  async checkNicknameUnique({ nickname = '', silent = false } = {}) {
+    const safeNickname = String(nickname || '').trim()
+    if (!safeNickname) return false
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'manage_user_profile',
+        data: {
+          action: 'check_nickname',
+          nickname: safeNickname,
+          exclude_self: true
+        }
+      })
+
+      const result = res.result || {}
+      if (result.success) {
+        return true
+      }
+
+      if (!silent) {
+        wx.showToast({
+          title: result.message || '昵称不可用',
+          icon: 'none'
+        })
+      }
+      return false
+    } catch (err) {
+      console.error('昵称唯一性校验失败:', err)
+      if (!silent) {
+        wx.showToast({
+          title: '昵称校验失败，请稍后重试',
+          icon: 'none'
+        })
+      }
+      return false
+    }
   },
 
   /**
    * 提交注册（仅新用户会调用此方法）
    */
   async onSubmit() {
-    const { avatarUrl, avatarSelected, nickname, submitting } = this.data
+    const { avatarUrl, avatarSelected, nickname, bio, submitting } = this.data
     
     // 防止重复提交
     if (submitting) return
@@ -197,6 +257,23 @@ Page({
         title: '请输入昵称',
         icon: 'none'
       })
+      return
+    }
+
+    const bioValidation = validateUserBio(bio)
+    if (!bioValidation.valid) {
+      wx.showToast({
+        title: bioValidation.message,
+        icon: 'none'
+      })
+      return
+    }
+
+    const nicknameUnique = await this.checkNicknameUnique({
+      nickname,
+      silent: false
+    })
+    if (!nicknameUnique) {
       return
     }
     
@@ -232,61 +309,52 @@ Page({
         console.log('头像上传成功:', avatarFileId)
       }
       
-      // 3. 创建新用户记录
-      const now = new Date()
-      const userPayload = normalizeUserProfile({
-        ...createDefaultUserProfile(),
-        nickname: nickname.trim(),
-        avatar_url: avatarFileId,
-        avatar_file_id: avatarFileId,
-        avatar: avatarFileId,
-        bio: '',
-        profile_bg_url: '',
-        is_certified: false,
-        real_name: '',
-        ich_category: '',
-        workshop_id: '',
-        draft_count: 0,
-        create_time: now,
-        update_time: now
+      // 3. 创建新用户记录（服务端兜底昵称唯一）
+      const registerRes = await wx.cloud.callFunction({
+        name: 'manage_user_profile',
+        data: {
+          action: 'register',
+          nickname: nickname.trim(),
+          avatar_url: avatarFileId,
+          bio: sanitizeUserBio(bio || '')
+        }
       })
-      const addRes = await db.collection('users').add({
-        data: userPayload
-      })
-
-      // 4. 初始化虚拟钱包（10000 分 = ¥100 测试金）
-      try {
-        await db.collection('shopping_wallets').add({
-          data: {
-            balance: 10000,
-            frozen_balance: 0,
-            pay_password: '',
-            status: 1,
-            create_time: db.serverDate(),
-            update_time: db.serverDate()
-          }
-        })
-        await db.collection('shopping_ledger').add({
-          data: {
-            order_id: '',
-            user_id: openid,
-            type: 'RECHARGE',
-            amount: 10000,
-            description: '新用户注册赠金 ¥100',
-            create_time: db.serverDate()
-          }
-        })
-        console.log('钱包初始化成功')
-      } catch (walletErr) {
-        // 钱包初始化失败不阻断注册流程
-        console.warn('钱包初始化失败（不影响注册）:', walletErr)
+      const registerResult = registerRes.result || {}
+      if (!registerResult.success || !registerResult.user) {
+        throw new Error(registerResult.message || '注册失败')
       }
 
-      const userInfo = normalizeUserProfile({
-        _id: addRes._id,
-        _openid: openid,
-        ...userPayload
-      })
+      // 4. 初始化虚拟钱包（10000 分 = ¥100 测试金）
+      if (!registerResult.existed) {
+        try {
+          await db.collection('shopping_wallets').add({
+            data: {
+              balance: 10000,
+              frozen_balance: 0,
+              pay_password: '',
+              status: 1,
+              create_time: db.serverDate(),
+              update_time: db.serverDate()
+            }
+          })
+          await db.collection('shopping_ledger').add({
+            data: {
+              order_id: '',
+              user_id: openid,
+              type: 'RECHARGE',
+              amount: 10000,
+              description: '新用户注册赠金 ¥100',
+              create_time: db.serverDate()
+            }
+          })
+          console.log('钱包初始化成功')
+        } catch (walletErr) {
+          // 钱包初始化失败不阻断注册流程
+          console.warn('钱包初始化失败（不影响注册）:', walletErr)
+        }
+      }
+
+      const userInfo = normalizeUserProfile(registerResult.user)
       console.log('新用户注册成功')
       
       // 4. 保存到全局状态

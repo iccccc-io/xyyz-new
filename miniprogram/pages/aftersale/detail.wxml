@@ -46,58 +46,76 @@
     </view>
 
     <view class="content-wrap">
-      <view class="spotlight-card" wx:if="{{order}}">
-        <view class="spotlight-head">
-          <text class="spotlight-title">{{order.product_snapshot.workshop_name || '湘韵遗珍文创商城'}}</text>
-          <text class="spotlight-link">售后关联商品</text>
-        </view>
-        <view class="spotlight-body">
-          <image class="spotlight-image" src="{{order.product_snapshot.sku_image || order.product_snapshot.cover_img}}" mode="aspectFill" />
-          <view class="spotlight-main">
-            <text class="spotlight-name">{{order.product_snapshot.title}}</text>
-            <text class="spotlight-sku" wx:if="{{order.product_snapshot.sku_name}}">款式：{{order.product_snapshot.sku_name}}</text>
-            <view class="spotlight-tags">
-              <text class="spotlight-tag spotlight-tag-brand">{{detail.type === 'refund_only' ? '仅退款' : '退货退款'}}</text>
-              <text class="spotlight-tag">{{statusInfo.text}}</text>
+      <view class="panel panel-product" wx:if="{{order}}">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">01</text>
+            <view class="panel-copy">
+              <text class="panel-title">关联商品</text>
+              <text class="panel-desc">{{order.product_snapshot.workshop_name || '湘韵遗珍文创商城'}}</text>
             </view>
           </view>
-          <view class="spotlight-side">
-            <text class="spotlight-price">¥{{orderTotalDisplay}}</text>
-            <text class="spotlight-count">x {{order.quantity}}</text>
+          <view class="panel-meta">售后关联商品</view>
+        </view>
+        <view class="product-shell">
+          <image class="product-image" src="{{order.product_snapshot.sku_image || order.product_snapshot.cover_img}}" mode="aspectFill" />
+          <view class="product-main">
+            <text class="product-title">{{order.product_snapshot.title}}</text>
+            <text class="product-sku" wx:if="{{order.product_snapshot.sku_name}}">款式：{{order.product_snapshot.sku_name}}</text>
+            <view class="product-tags">
+              <text class="product-tag product-tag-brand">{{detail.type === 'refund_only' ? '仅退款' : '退货退款'}}</text>
+              <text class="product-tag">{{statusInfo.text}}</text>
+            </view>
+          </view>
+          <view class="product-side">
+            <text class="product-price">¥{{orderTotalDisplay}}</text>
+            <text class="product-count">x {{order.quantity}}</text>
           </view>
         </view>
       </view>
 
-      <view class="info-card">
-        <view class="card-title-row">
-          <view class="card-title-main">
-            <van-icon name="description" size="18" color="#A12D27" />
-            <text class="card-title">售后信息</text>
+      <view class="panel">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">02</text>
+            <view class="panel-copy">
+              <text class="panel-title">售后信息</text>
+              <text class="panel-desc">本次售后申请的类型、金额与提交原因</text>
+            </view>
           </view>
-          <text class="card-title-extra" wx:if="{{detail.reapply_count > 0}}">第 {{detail.reapply_count + 1}} 次申请</text>
+          <text class="panel-meta" wx:if="{{detail.reapply_count > 0}}">第 {{detail.reapply_count + 1}} 次申请</text>
         </view>
 
-        <view class="info-grid">
-          <view class="info-grid-item">
-            <text class="grid-label">售后类型</text>
+        <view class="field-grid">
+          <view class="field-block info-grid-item">
+            <view class="field-head">
+              <text class="field-label">售后类型</text>
+            </view>
             <text class="grid-value">{{detail.type === 'refund_only' ? '仅退款' : '退货退款'}}</text>
           </view>
-          <view class="info-grid-item">
-            <text class="grid-label">退款金额</text>
+          <view class="field-block info-grid-item">
+            <view class="field-head">
+              <text class="field-label">退款金额</text>
+            </view>
             <text class="grid-value price-val">¥{{detail.refundDisplay}}</text>
           </view>
-          <view class="info-grid-item grid-span-full">
-            <text class="grid-label">申请原因</text>
+          <view class="field-block info-grid-item grid-span-full">
+            <view class="field-head">
+              <text class="field-label">申请原因</text>
+            </view>
             <text class="grid-value">{{detail.reason}}</text>
           </view>
         </view>
       </view>
 
-      <view class="info-card" wx:if="{{detail.proof_imgs && detail.proof_imgs.length > 0}}">
-        <view class="card-title-row">
-          <view class="card-title-main">
-            <van-icon name="photo-o" size="18" color="#A12D27" />
-            <text class="card-title">凭证图片</text>
+      <view class="panel" wx:if="{{detail.proof_imgs && detail.proof_imgs.length > 0}}">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">03</text>
+            <view class="panel-copy">
+              <text class="panel-title">凭证图片</text>
+              <text class="panel-desc">买家上传的申请凭证，点击可查看大图</text>
+            </view>
           </view>
         </view>
         <view class="proof-imgs">
@@ -113,27 +131,49 @@
         </view>
       </view>
 
-      <view class="info-card" wx:if="{{detail.return_address && detail.status >= 1}}">
-        <view class="card-title-row">
-          <view class="card-title-main">
-            <van-icon name="location-o" size="18" color="#A12D27" />
-            <text class="card-title">退货地址</text>
+      <view class="panel" wx:if="{{!isPickupReturn && detail.return_address && detail.status >= 1}}">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">04</text>
+            <view class="panel-copy">
+              <text class="panel-title">退货地址</text>
+              <text class="panel-desc">卖家确认退货后返回给买家的收件地址</text>
+            </view>
           </view>
         </view>
-        <view class="return-address-card">
+        <view class="field-block address-shell">
           <text class="addr-name">{{detail.return_address.name}} {{detail.return_address.phone}}</text>
           <text class="addr-detail">{{detail.return_address.province || ''}}{{detail.return_address.city || ''}}{{detail.return_address.district || ''}} {{detail.return_address.detail}}</text>
         </view>
       </view>
 
-      <view class="info-card" wx:if="{{operationLogs.length > 0}}">
-        <view class="card-title-row">
-          <view class="card-title-main">
-            <van-icon name="underway-o" size="18" color="#A12D27" />
-            <text class="card-title">处理进度</text>
+      <view class="panel" wx:if="{{isPickupReturn && detail.status >= 1}}">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">04</text>
+            <view class="panel-copy">
+              <text class="panel-title">交还方式</text>
+              <text class="panel-desc">该订单通过同城自提方式完成退货交接，无需填写退货单号</text>
+            </view>
           </view>
         </view>
-        <view class="op-timeline">
+        <view class="field-block address-shell">
+          <text class="addr-name">同城自提交还</text>
+          <text class="addr-detail">{{detail.status >= 2 ? '买家已确认交还商品，等待商家确认收回并退款。' : '卖家已同意退货，买家可与商家约定时间当面交还商品。'}}</text>
+        </view>
+      </view>
+
+      <view class="panel" wx:if="{{operationLogs.length > 0}}">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">05</text>
+            <view class="panel-copy">
+              <text class="panel-title">处理进度</text>
+              <text class="panel-desc">按时间倒序记录买家、卖家与系统的处理动作</text>
+            </view>
+          </view>
+        </view>
+        <view class="timeline-shell op-timeline">
           <view class="op-tl-item {{index === 0 ? 'op-active' : ''}}" wx:for="{{operationLogs}}" wx:key="index">
             <view class="op-tl-left">
               <view class="op-tl-dot {{item.operator === 'system' ? 'dot-sys' : item.operator === 'seller' ? 'dot-seller' : 'dot-buyer'}}"></view>
@@ -159,10 +199,10 @@
         </block>
         <block wx:elif="{{detail.status === 1}}">
           <view class="footer-btn footer-btn-secondary" bindtap="cancelAftersale">撤销申请</view>
-          <view class="footer-btn footer-btn-primary" bindtap="openShipPopup">填写退货单号</view>
+          <view class="footer-btn footer-btn-primary" bindtap="openShipPopup">{{isPickupReturn ? '确认已交还商品' : '填写退货单号'}}</view>
         </block>
         <block wx:elif="{{detail.status === 2}}">
-          <view class="footer-note footer-note-full">退货已寄出，等待卖家验收</view>
+          <view class="footer-note footer-note-full">{{isPickupReturn ? '已确认交还商品，等待商家确认' : '退货已寄出，等待卖家验收'}}</view>
         </block>
         <block wx:elif="{{detail.status === -1}}">
           <view class="footer-btn footer-btn-primary" bindtap="reapply">修改后重新申请</view>
@@ -178,13 +218,13 @@
       <block wx:elif="{{role === 'seller'}}">
         <block wx:if="{{detail.status === 0}}">
           <view class="footer-btn footer-btn-danger" bindtap="openRejectPopup">拒绝申请</view>
-          <view class="footer-btn footer-btn-success" bindtap="openApprovePopup">同意退货</view>
+          <view class="footer-btn footer-btn-success" bindtap="openApprovePopup">{{detail.type === 'refund_only' ? '同意退款' : '同意退货'}}</view>
         </block>
         <block wx:elif="{{detail.status === 1}}">
-          <view class="footer-note footer-note-full">等待买家寄回退货</view>
+          <view class="footer-note footer-note-full">{{isPickupReturn ? '等待买家交还商品' : '等待买家寄回退货'}}</view>
         </block>
         <block wx:elif="{{detail.status === 2}}">
-          <view class="footer-btn footer-btn-primary" bindtap="confirmReturn">确认收到退货并退款</view>
+          <view class="footer-btn footer-btn-primary" bindtap="confirmReturn">{{isPickupReturn ? '确认收到商品并退款' : '确认收到退货并退款'}}</view>
         </block>
         <block wx:elif="{{detail.status === -1}}">
           <view class="footer-note footer-note-full">已拒绝，等待买家决定</view>

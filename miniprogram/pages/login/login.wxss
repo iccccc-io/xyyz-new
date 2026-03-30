@@ -249,8 +249,68 @@ page {
   color: #333333;
 }
 
+.nickname-helper {
+  display: block;
+  margin-top: 16rpx;
+  padding-left: 20rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #9a8e85;
+}
+
 .input-placeholder {
   color: #bbbbbb;
+}
+
+.bio-item {
+  margin-bottom: 52rpx;
+}
+
+.bio-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.bio-label {
+  font-size: 28rpx;
+  color: #5f4a3e;
+  font-weight: 600;
+}
+
+.bio-counter,
+.bio-helper {
+  font-size: 22rpx;
+  color: #9d938a;
+}
+
+.bio-textarea-wrap {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 22rpx 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+  border: 2rpx solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.bio-textarea-wrap:focus-within {
+  border-color: #8B2E2A;
+  box-shadow: 0 4rpx 20rpx rgba(139,46,42,0.15);
+}
+
+.bio-textarea {
+  width: 100%;
+  height: 190rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #333333;
+}
+
+.bio-helper {
+  display: block;
+  margin-top: 12rpx;
+  line-height: 1.6;
 }
 
 /* 提交按钮 */

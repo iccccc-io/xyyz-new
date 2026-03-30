@@ -134,7 +134,9 @@ function validateProductPayload(payload, { allowZeroTotalStock = false } = {}) {
   const skuInputs = Array.isArray(payload.skus) ? payload.skus : []
   const logisticsInput = payload.logistics || {}
   const logisticsMethod = getSafeString(logisticsInput.method) || 'express'
-  const logisticsPostage = getSafeString(logisticsInput.postage) || 'free'
+  const logisticsPostage = logisticsMethod === 'pickup'
+    ? 'free'
+    : (getSafeString(logisticsInput.postage) || 'free')
   const logisticsCarrier = logisticsMethod === 'pickup'
     ? 'pickup'
     : (getSafeString(logisticsInput.carrier) || 'sf_jd')
@@ -302,6 +304,89 @@ async function updateStock(productId, stock) {
   throw new Error('SKU 商品不支持快捷改库存，请进入编辑页逐个调整款式库存')
 }
 
+async function quickUpdateSkus(productId, skuUpdates = []) {
+  const { openid } = await getCurrentUser()
+  const product = await ensureProductOwner(productId, openid)
+
+  const existingSkus = Array.isArray(product.skus) ? product.skus : []
+  if (!existingSkus.length) {
+    throw new Error('当前商品不存在可编辑的 SKU')
+  }
+
+  if (!Array.isArray(skuUpdates) || !skuUpdates.length) {
+    throw new Error('请至少提交一个 SKU 修改项')
+  }
+
+  const updateMap = new Map()
+  skuUpdates.forEach((item) => {
+    const skuId = getSafeString(item && item.sku_id)
+    if (!skuId) return
+
+    const price = getInt(item && item.price, -1)
+    const originalPriceRaw = item && item.original_price
+    const originalPrice = originalPriceRaw === '' || typeof originalPriceRaw === 'undefined'
+      ? price
+      : getInt(originalPriceRaw, -1)
+    const stock = getNonNegativeInt(item && item.stock, -1)
+
+    if (price < 1) {
+      throw new Error('SKU 现价必须大于 0')
+    }
+    if (originalPrice < price) {
+      throw new Error('SKU 原价不能低于现价')
+    }
+    if (stock < 0) {
+      throw new Error('SKU 库存不能小于 0')
+    }
+
+    updateMap.set(skuId, {
+      price,
+      original_price: originalPrice,
+      stock
+    })
+  })
+
+  if (!updateMap.size) {
+    throw new Error('缺少有效的 SKU 修改项')
+  }
+
+  const nextSkus = existingSkus.map((sku) => {
+    const skuId = getSafeString(sku && sku.sku_id)
+    if (!updateMap.has(skuId)) return sku
+    const next = updateMap.get(skuId)
+    return {
+      ...sku,
+      price: next.price,
+      original_price: next.original_price,
+      stock: next.stock
+    }
+  })
+
+  const aggregates = buildSkuAggregates(nextSkus)
+  const nextIsOnSale = aggregates.total_stock > 0
+    ? (product.is_on_sale !== false)
+    : false
+
+  await db.collection('shopping_products').doc(productId).update({
+    data: {
+      skus: nextSkus,
+      min_price: aggregates.min_price,
+      min_original_price: aggregates.min_original_price,
+      total_stock: aggregates.total_stock,
+      is_on_sale: nextIsOnSale,
+      update_time: db.serverDate()
+    }
+  })
+
+  return {
+    success: true,
+    message: 'SKU 信息已更新',
+    product_id: productId,
+    total_stock: aggregates.total_stock,
+    is_on_sale: nextIsOnSale
+  }
+}
+
 async function toggleSale(productId, isOnSale) {
   const { openid } = await getCurrentUser()
   const product = await ensureProductOwner(productId, openid)
@@ -382,6 +467,9 @@ exports.main = async (event) => {
       case 'update_stock':
         if (!product_id) throw new Error('缺少 product_id')
         return await updateStock(product_id, Number(stock))
+      case 'quick_update_skus':
+        if (!product_id) throw new Error('缺少 product_id')
+        return await quickUpdateSkus(product_id, payload.skus || [])
       case 'toggle_sale':
         if (!product_id) throw new Error('缺少 product_id')
         return await toggleSale(product_id, Boolean(is_on_sale))

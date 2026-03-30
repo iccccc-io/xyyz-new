@@ -13,6 +13,67 @@
   height: 60vh;
 }
 
+.pickup-wrap {
+  padding: 80rpx 32rpx 0;
+}
+
+.pickup-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 36rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+
+.pickup-icon {
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #FFF7EC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pickup-title {
+  display: block;
+  margin-top: 22rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.pickup-desc {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #8B7A69;
+  text-align: center;
+}
+
+.pickup-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #F4EBDD;
+}
+
+.pickup-meta-label {
+  font-size: 24rpx;
+  color: #9C8D7E;
+}
+
+.pickup-meta-value {
+  font-size: 26rpx;
+  color: #4A3E34;
+  font-weight: 600;
+}
+
 /* ===== 错误状态 ===== */
 .error-wrap {
   padding: 80rpx 40rpx;

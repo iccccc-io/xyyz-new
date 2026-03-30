@@ -251,13 +251,16 @@
         </view>
       </view>
 
-      <view class="field-block">
+      <view class="field-block {{deliveryMethod === 'pickup' ? 'field-block-disabled' : ''}}">
         <view class="field-head">
           <text class="field-label">邮费设置</text>
         </view>
+        <view class="logistics-disabled-tip" wx:if="{{deliveryMethod === 'pickup'}}">
+          同城自提默认免邮，无需设置邮费
+        </view>
         <view class="logistics-chip-row">
           <view
-            class="logistics-chip {{postage === item.value ? 'selected' : ''}}"
+            class="logistics-chip {{postage === item.value ? 'selected' : ''}} {{deliveryMethod === 'pickup' ? 'disabled' : ''}}"
             wx:for="{{postageOptions}}"
             wx:key="value"
             data-value="{{item.value}}"
@@ -302,13 +305,13 @@
         </view>
       </view>
 
-      <view class="select-block" bindtap="openProjectPicker">
-        <view class="select-copy">
+      <view class="select-block project-select-block" bindtap="openProjectPicker">
+        <view class="project-select-head">
           <text class="field-label"><text class="required-mark">*</text>关联非遗项目</text>
-        </view>
-        <view class="select-value-wrap">
-          <view class="select-value {{projectName ? 'is-filled' : ''}}">{{projectName || '请选择'}}</view>
           <van-icon class="select-arrow" name="arrow" size="16" color="#B1A79C" />
+        </view>
+        <view class="project-select-value {{projectName ? 'is-filled' : ''}}">
+          {{projectName || '请选择'}}
         </view>
       </view>
 

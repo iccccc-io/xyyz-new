@@ -134,6 +134,14 @@
   color: #b1a79c;
 }
 
+.field-helper {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #9a8b80;
+}
+
 .media-group + .media-group {
   margin-top: 30rpx;
 }

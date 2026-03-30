@@ -4,11 +4,7 @@
   "disableScroll": false,
   "usingComponents": {
     "van-icon": "@vant/weapp/icon/index",
-    "van-loading": "@vant/weapp/loading/index",
-    "van-image": "@vant/weapp/image/index",
-    "van-tab": "@vant/weapp/tab/index",
-    "van-tabs": "@vant/weapp/tabs/index",
-    "van-empty": "@vant/weapp/empty/index"
+    "van-loading": "@vant/weapp/loading/index"
   }
 }
 

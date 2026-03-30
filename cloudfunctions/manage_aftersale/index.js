@@ -40,6 +40,11 @@ function findSkuIndex(product, skuId) {
   return skus.findIndex((item) => getSafeString(item && item.sku_id) === getSafeString(skuId))
 }
 
+function isPickupOrder(order = {}) {
+  const logistics = (order.product_snapshot && order.product_snapshot.logistics) || {}
+  return logistics.method === 'pickup' || order.carrier_code === 'pickup'
+}
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID || ''
@@ -119,16 +124,32 @@ async function loadDetail(openid, event) {
 //  管理员读取：load_seller_list
 // =====================================================================
 async function loadSellerList(openid, event) {
-  const { status_filter, skip = 0, limit = 50 } = event
+  const { status_filter, skip = 0, limit = 50, keyword = '', start_time = '', end_time = '' } = event
 
   if (!openid) return { success: false, message: '未登录' }
 
-  let where = { seller_id: openid }
+  const conditions = [{ seller_id: openid }]
   if (status_filter === 'active') {
-    where.status = _.in([0, 1, 2])
+    conditions.push({ status: _.in([0, 1, 2]) })
   } else if (status_filter === 'closed') {
-    where.status = _.in([3, -1, -2])
+    conditions.push({ status: _.in([3, -1, -2]) })
   }
+
+  if (start_time) {
+    const startDate = new Date(start_time)
+    if (!Number.isNaN(startDate.getTime())) {
+      conditions.push({ apply_time: _.gte(startDate) })
+    }
+  }
+
+  if (end_time) {
+    const endDate = new Date(end_time)
+    if (!Number.isNaN(endDate.getTime())) {
+      conditions.push({ apply_time: _.lt(endDate) })
+    }
+  }
+
+  const where = conditions.length === 1 ? conditions[0] : _.and(conditions)
 
   const res = await db.collection('shopping_aftersales')
     .where(where)
@@ -146,15 +167,39 @@ async function loadSellerList(openid, event) {
     try {
       const o = (await db.collection('shopping_orders').doc(oid).get()).data
       orderMap[oid] = {
+        order_id: o._id || oid,
         title: (o.product_snapshot && o.product_snapshot.title) || '未知',
-        cover_img: (o.product_snapshot && o.product_snapshot.cover_img) || ''
+        cover_img: (o.product_snapshot && o.product_snapshot.cover_img) || '',
+        buyer_name: (o.delivery_address && o.delivery_address.userName) || '',
+        apply_time: o.create_time || null,
+        is_pickup: isPickupOrder(o)
       }
     } catch (_) {
-      orderMap[oid] = { title: '已删除', cover_img: '' }
+      orderMap[oid] = { order_id: oid, title: '已删除', cover_img: '', buyer_name: '', apply_time: null, is_pickup: false }
     }
   }
 
-  return { success: true, list, orderMap }
+  const trimmedKeyword = getSafeString(keyword).toLowerCase()
+  const filteredList = trimmedKeyword
+    ? list.filter((item) => {
+      const orderInfo = orderMap[item.order_id] || {}
+      const searchableFields = [
+        item.order_id,
+        item._id,
+        orderInfo.title,
+        orderInfo.buyer_name
+      ]
+
+      return searchableFields.some((field) => getSafeString(field).toLowerCase().includes(trimmedKeyword))
+    })
+    : list
+
+  return {
+    success: true,
+    list: filteredList,
+    orderMap,
+    total: filteredList.length
+  }
 }
 
 // =====================================================================
@@ -329,6 +374,8 @@ async function approveAftersale(openid, event) {
   if (!as) return { success: false, message: '售后记录不存在' }
   if (as.seller_id !== openid) return { success: false, message: '无权操作：您不是该订单的卖家' }
   if (as.status !== 0) return { success: false, message: '当前状态不可审批' }
+  const order = await getDoc('shopping_orders', as.order_id)
+  const pickupOrder = isPickupOrder(order)
 
   // 仅退款 → 直接退款
   if (as.type === 'refund_only') {
@@ -345,6 +392,24 @@ async function approveAftersale(openid, event) {
       }
     })
     return await executeRefund(as, aftersale_id, '卖家同意仅退款')
+  }
+
+  if (pickupOrder) {
+    await db.collection('shopping_aftersales').doc(aftersale_id).update({
+      data: {
+        status: 1,
+        return_address: _.set(null),
+        approve_time: db.serverDate(),
+        operation_logs: _.push({
+          operator: 'seller', action: 'approve',
+          time: new Date().toISOString(),
+          content: '卖家同意退货，买家可通过同城自提方式当面交还商品'
+        }),
+        update_time: db.serverDate()
+      }
+    })
+
+    return { success: true, message: '已同意退货，等待买家交还商品' }
   }
 
   // 退货退款 → 需要退货地址
@@ -412,30 +477,37 @@ async function rejectAftersale(openid, event) {
 async function shipReturn(openid, event) {
   const { aftersale_id, logistics_com, logistics_num } = event
   if (!aftersale_id) return { success: false, message: '参数错误' }
-  if (!logistics_com || !logistics_num || logistics_num.trim().length < 5) {
-    return { success: false, message: '请填写有效的快递公司和单号' }
-  }
 
   const as = await getDoc('shopping_aftersales', aftersale_id)
   if (!as) return { success: false, message: '售后记录不存在' }
   if (as.buyer_id !== openid) return { success: false, message: '无权操作' }
   if (as.status !== 1) return { success: false, message: '当前状态不可填写物流' }
+  const order = await getDoc('shopping_orders', as.order_id)
+  const pickupOrder = isPickupOrder(order)
+
+  if (!pickupOrder && (!logistics_com || !logistics_num || logistics_num.trim().length < 5)) {
+    return { success: false, message: '请填写有效的快递公司和单号' }
+  }
 
   await db.collection('shopping_aftersales').doc(aftersale_id).update({
     data: {
       status: 2,
-      return_logistics: _.set({ com: logistics_com, num: logistics_num.trim() }),
+      return_logistics: _.set(pickupOrder
+        ? { mode: 'pickup', label: '同城自提' }
+        : { com: logistics_com, num: logistics_num.trim() }),
       ship_time: db.serverDate(),
       operation_logs: _.push({
         operator: 'buyer', action: 'ship_return',
         time: new Date().toISOString(),
-        content: `买家已寄出退货，快递：${logistics_com}，单号：${logistics_num.trim()}`
+        content: pickupOrder
+          ? '买家已确认通过同城自提方式交还商品，等待卖家确认'
+          : `买家已寄出退货，快递：${logistics_com}，单号：${logistics_num.trim()}`
       }),
       update_time: db.serverDate()
     }
   })
 
-  return { success: true, message: '退货单号已提交' }
+  return { success: true, message: pickupOrder ? '已确认交还商品' : '退货单号已提交' }
 }
 
 // =====================================================================
