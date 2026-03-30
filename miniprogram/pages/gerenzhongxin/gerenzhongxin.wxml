@@ -28,7 +28,7 @@
 
         <view class="hero-main-card">
           <view class="hero-profile-row">
-            <view class="avatar-wrap">
+            <view class="avatar-wrap" bindtap="goToUserProfile">
               <view class="avatar-ring">
                 <image
                   class="avatar-image"
@@ -39,7 +39,7 @@
             </view>
 
             <view class="hero-content">
-              <view class="name-row">
+              <view class="name-row" bindtap="goToUserProfile">
                 <text class="display-name">{{displayName}}</text>
               </view>
               <text class="profile-bio" wx:if="{{profileBio}}">{{profileBio}}</text>

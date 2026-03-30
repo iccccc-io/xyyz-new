@@ -2,14 +2,14 @@
 
 page {
   height: 100%;
-  background: #e8e8e8;
+  background: #f5f7f8;
   overflow: hidden;
 }
 
 .page {
   height: 100%;
   position: relative;
-  background: #e8e8e8;
+  background: #f5f7f8;
 }
 
 /* ========== 动画定义 ========== */
@@ -57,45 +57,66 @@ page {
   left: 0;
   right: 0;
   z-index: 100;
-  background: #fff;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
 }
 
 .nav-content {
   display: flex;
   align-items: center;
   height: 44px;
-  padding: 0 12px;
+  padding: 0 12px 0 10px;
 }
 
-.back-btn {
+.back-btn,
+.nav-menu-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.05);
+  background: #f5f7f9;
+  border: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
   transition: background 0.2s;
 }
 
-.back-btn:active {
-  background: rgba(0, 0, 0, 0.1);
+.back-btn {
+  margin-right: 10px;
+}
+
+.nav-menu-btn {
+  margin-right: 14px;
+}
+
+.back-btn:active,
+.nav-menu-btn:active {
+  background: #edf1f4;
 }
 
 .nav-nickname {
-  flex: 1;
   font-size: 17px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: 700;
+  color: #18212b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.nav-right {
-  width: 32px;
+.nav-title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nav-subtitle {
+  font-size: 11px;
+  color: #7b8794;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ========== 消息列表 ========== */
@@ -107,7 +128,7 @@ page {
 }
 
 .message-list-inner {
-  padding: 12px 12px 20px;
+  padding: 16px 16px 24px;
 }
 
 .load-tip {
@@ -128,18 +149,18 @@ page {
 
 .time-line text {
   font-size: 12px;
-  color: #8e8e93;
-  background: rgba(0,0,0,0.04);
-  padding: 4px 10px;
-  border-radius: 10px;
+  color: #7b8794;
+  background: #eef2f4;
+  padding: 6px 12px;
+  border-radius: 999px;
 }
 
 /* ========== 消息行 ========== */
 .msg-row {
   display: flex;
   align-items: flex-end;
-  margin-bottom: 12px;
-  gap: 8px;
+  margin-bottom: 16px;
+  gap: 10px;
   animation: msgFadeIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
@@ -165,17 +186,18 @@ page {
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.1);
 }
 
 .msg-content {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  max-width: 70%;
+  gap: 8px;
+  max-width: 74%;
 }
 
 .msg-self .msg-content {
@@ -189,37 +211,39 @@ page {
 
 /* ========== 气泡 ========== */
 .bubble {
-  padding: 10px 14px;
-  border-radius: 18px;
+  padding: 12px 15px;
+  border-radius: 22px;
   max-width: 100%;
   word-break: break-all;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
+  border: 1px solid #e5ebee;
 }
 
 .bubble-other {
-  background: #fff;
-  border-top-left-radius: 4px;
+  background: #ffffff;
+  border-top-left-radius: 8px;
 }
 
 .bubble-self {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-  border-top-right-radius: 4px;
+  background: #e8f3ef;
+  border-top-right-radius: 8px;
+  border-color: #dbe8e2;
 }
 
 .bubble-other .bubble-text {
-  color: #1a1a1a;
+  color: #1f2937;
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
 .bubble-self .bubble-text {
-  color: #fff;
+  color: #163040;
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
 .bubble.sending {
-  opacity: 0.6;
+  opacity: 0.62;
 }
 
 /* ========== 图片消息 ========== */
@@ -227,14 +251,16 @@ page {
   position: relative;
   min-width: 120px;
   max-width: 280px;
-  border-radius: 12px;
+  border-radius: 18px;
   overflow: hidden;
+  border: 1px solid #e3e8ec;
+  box-shadow: 0 8px 20px rgba(148, 163, 184, 0.12);
 }
 
 .msg-img {
   width: 100%;
   display: block;
-  border-radius: 12px;
+  border-radius: 18px;
 }
 
 /* 上传中状态 - 使用固定尺寸避免闪烁 */
@@ -267,7 +293,7 @@ page {
 .msg-fail {
   width: 18px;
   height: 18px;
-  background: #e74c3c;
+  background: #e25c5c;
   color: #fff;
   font-size: 12px;
   font-weight: bold;
@@ -287,42 +313,43 @@ page {
 
 .revoked-msg text {
   font-size: 12px;
-  color: #999;
-  background: rgba(0, 0, 0, 0.04);
-  padding: 4px 12px;
-  border-radius: 10px;
+  color: #8a94a3;
+  background: #eef2f5;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5eaee;
 }
 
 /* ========== 引用块（气泡内） ========== */
 .quote-block {
-  background: rgba(0, 0, 0, 0.06);
-  border-left: 3px solid rgba(0, 0, 0, 0.2);
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  border-radius: 4px;
+  background: #f4f7f8;
+  border-left: 3px solid #b7c4ce;
+  padding: 7px 10px;
+  margin-bottom: 8px;
+  border-radius: 10px;
   max-width: 100%;
 }
 
 .bubble-self .quote-block {
-  background: rgba(255, 255, 255, 0.2);
-  border-left-color: rgba(255, 255, 255, 0.5);
+  background: #deebe6;
+  border-left-color: #98b8ac;
 }
 
 .quote-name {
   font-size: 12px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+  color: rgba(31, 41, 55, 0.72);
   display: block;
   margin-bottom: 2px;
 }
 
 .bubble-self .quote-name {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(22, 48, 64, 0.78);
 }
 
 .quote-content {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(71, 85, 105, 0.76);
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -331,7 +358,7 @@ page {
 }
 
 .bubble-self .quote-content {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(51, 65, 85, 0.8);
 }
 
 /* 图片消息的引用块 */
@@ -340,9 +367,9 @@ page {
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(17, 24, 39, 0.56);
   border-left: none;
-  border-radius: 12px 12px 0 0;
+  border-radius: 18px 18px 0 0;
   z-index: 1;
 }
 
@@ -356,11 +383,11 @@ page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px 12px 0 0;
-  margin: 0 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 18px 18px 0 0;
+  margin: 0 10px;
+  border-bottom: 1px solid #edf1f4;
 }
 
 .quote-preview-content {
@@ -372,7 +399,7 @@ page {
 
 .quote-preview-line {
   width: 3px;
-  background: #007aff;
+  background: #93b7aa;
   border-radius: 2px;
   margin-right: 10px;
 }
@@ -384,15 +411,15 @@ page {
 
 .quote-preview-name {
   font-size: 13px;
-  font-weight: 500;
-  color: #007aff;
+  font-weight: 600;
+  color: #347a98;
   display: block;
   margin-bottom: 2px;
 }
 
 .quote-preview-text {
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -499,23 +526,34 @@ page {
   will-change: transform;
 }
 
+.send-tip {
+  margin: 0 14px 8px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: #eef3f4;
+  border: 1px solid #e3e9ec;
+}
+
+.send-tip text {
+  font-size: 12px;
+  color: #768190;
+}
+
 /* TG 风格胶囊输入框 */
 .input-capsule {
   display: flex;
   align-items: center;
-  margin: 8px;
-  padding: 4px;
-  /* 亮白色玻璃质感 */
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 22px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin: 10px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 26px;
+  border: 1px solid #e5e9ee;
+  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.1);
 }
 
 .capsule-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -525,12 +563,16 @@ page {
 }
 
 .capsule-btn:active {
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: rgba(148, 163, 184, 0.12);
   transform: scale(0.88);
 }
 
 .capsule-btn.active {
-  background-color: rgba(0, 122, 255, 0.12);
+  background-color: rgba(124, 167, 156, 0.12);
+}
+
+.capsule-btn.disabled {
+  opacity: 0.45;
 }
 
 /* 左侧表情/键盘图标切换动画 */
@@ -554,33 +596,45 @@ page {
 
 .input-field {
   flex: 1;
-  height: 36px;
+  height: 40px;
   font-size: 16px;
-  color: #1a1a1a;
+  color: #18212b;
   background: transparent;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .input-placeholder {
   color: rgba(0, 0, 0, 0.35);
 }
 
+.input-field[disabled] {
+  color: #9a9aa0;
+}
+
 /* 附件图标旋转 */
 .attach-icon {
-  transform: rotate(-45deg);
-  transition: transform 0.15s ease;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px #e1e8ec;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .right-btn:active .attach-icon {
-  transform: rotate(-45deg) scale(0.85);
+  transform: scale(0.88);
+  background: #e8edf1;
 }
 
 /* 发送按钮 - 弹性动画 */
 .send-btn {
   width: 0;
-  height: 36px;
-  background: linear-gradient(135deg, #007aff 0%, #0056b3 100%);
-  border-radius: 18px;
+  height: 40px;
+  background: #7ca79c;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -588,7 +642,7 @@ page {
   overflow: hidden;
   opacity: 0;
   margin-left: 0;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0);
+  box-shadow: 0 4px 12px rgba(124, 167, 156, 0);
   transition: 
     width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.2s ease,
@@ -597,15 +651,19 @@ page {
 }
 
 .send-btn.show {
-  width: 36px;
+  width: 40px;
   opacity: 1;
-  margin-left: 4px;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  margin-left: 6px;
+  box-shadow: 0 8px 18px rgba(124, 167, 156, 0.2);
 }
 
 .send-btn:active {
   transform: scale(0.88);
   transition: transform 0.1s ease;
+}
+
+.send-btn.disabled {
+  opacity: 0.4;
 }
 
 /* ========== 表情面板 (TG 风格) ========== */

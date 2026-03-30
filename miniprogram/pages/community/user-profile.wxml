@@ -46,7 +46,10 @@
                   <text>认证</text>
                 </view>
               </view>
-              <text class="profile-id">湘韵遗珍号：{{profileIdText || '未设置'}}</text>
+              <view class="profile-id-row" bindtap="copyProfileId">
+                <text class="profile-id">ID: {{profileIdText || '未设置'}}</text>
+                <text class="profile-id-copy">复制</text>
+              </view>
               <text class="profile-role">{{roleText}}</text>
             </view>
 

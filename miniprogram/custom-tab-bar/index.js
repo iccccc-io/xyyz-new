@@ -1,4 +1,18 @@
+const app = getApp()
+
 Component({
+  lifetimes: {
+    attached() {
+      this.refreshUnreadCount()
+    }
+  },
+
+  pageLifetimes: {
+    show() {
+      this.refreshUnreadCount()
+    }
+  },
+
   data: {
     active: 0,
     unreadCount: 0 // 未读消息数
@@ -31,6 +45,12 @@ Component({
      * 更新未读消息数（由页面调用）
      */
     updateUnreadCount(count) {
+      this.setData({ unreadCount: count })
+    },
+
+    async refreshUnreadCount() {
+      if (!app || typeof app.getChatUnreadTotal !== 'function') return
+      const count = await app.getChatUnreadTotal().catch(() => 0)
       this.setData({ unreadCount: count })
     }
   }

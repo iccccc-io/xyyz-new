@@ -1,6 +1,11 @@
 // pages/chat/room.js
+const app = getApp()
 const db = wx.cloud.database()
 const _ = db.command
+
+const DEFAULT_AVATAR = '/images/avatar.png'
+const WAIT_TARGET_REPLY = 'WAIT_TARGET_REPLY'
+const BLACKLIST_REJECTED = 'BLACKLIST_REJECTED'
 
 // Emoji 分类（可复用）
 const EMOJI_CATEGORIES = [
@@ -119,6 +124,26 @@ Page({
     sourceScene: '',
     targetUser: {},
     currentUser: {},
+    displayName: '用户',
+    relationMeta: {
+      isFollowing: false,
+      isFollowedByTarget: false,
+      isMutual: false,
+      remarkName: '',
+      hasBlockedTarget: false,
+      isBlockedByTarget: false
+    },
+    roomMeta: {
+      roomId: '',
+      unreadCount: 0,
+      isTop: false,
+      isMuted: false,
+      clearTime: 0,
+      canSend: true,
+      sendDisabledReason: ''
+    },
+    sendDisabled: false,
+    inputPlaceholder: '消息',
     messages: [],
     
     loading: true,
@@ -180,23 +205,27 @@ Page({
   },
 
   async initChat() {
+    this._isInitializing = true
     try {
       await this.getCurrentUser()
       await this.getTargetUser()
       this.createRoomId()
+      await this.loadChatMeta()
+      await this.clearUnread()
       await this.loadMessages(true)
       this.startWatcher()
-      this.clearUnread()
       this.setData({ loading: false })
+      this._didInit = true
       this.scrollToBottom()
     } catch (e) {
       console.error('初始化失败:', e)
       this.setData({ loading: false })
+    } finally {
+      this._isInitializing = false
     }
   },
 
   async getCurrentUser() {
-    const app = getApp()
     let openid = app.globalData?.openid
     let userInfo = app.globalData?.userInfo || {}
 
@@ -204,7 +233,9 @@ Page({
       const res = await wx.cloud.callFunction({ name: 'login_get_openid' })
       openid = res.result?.openid
       if (app.globalData) app.globalData.openid = openid
-      
+    }
+
+    if (openid && (!userInfo || !userInfo.nickname)) {
       const userRes = await db.collection('users').where({ _openid: openid }).limit(1).get()
       userInfo = userRes.data[0] || {}
     }
@@ -213,7 +244,7 @@ Page({
       currentUser: {
         openid,
         nickname: userInfo.nickname || '我',
-        avatar: userInfo.avatar_url || userInfo.avatar || '/images/avatar.png'
+        avatar: userInfo.avatar_url || userInfo.avatar || DEFAULT_AVATAR
       }
     })
   },
@@ -238,10 +269,20 @@ Page({
           _id: user._id,
           openid: user._openid,
           nickname: user.nickname || '用户',
-          avatar: user.avatar_url || '/images/avatar.png'
+          avatar: user.avatar_url || user.avatar || DEFAULT_AVATAR
         }
       })
+      return
     }
+
+    this.setData({
+      targetUser: {
+        _id: '',
+        openid: targetUserId,
+        nickname: '用户',
+        avatar: DEFAULT_AVATAR
+      }
+    })
   },
 
   createRoomId() {
@@ -251,67 +292,136 @@ Page({
     this.setData({ roomId: ids.join('_') })
   },
 
+  async loadChatMeta() {
+    const { roomId, targetUser, targetUserId } = this.data
+    const targetOpenid = targetUser.openid || targetUserId
+    if (!roomId || !targetOpenid) return
+
+    const res = await wx.cloud.callFunction({
+      name: 'manage_chat_session',
+      data: {
+        action: 'get_meta',
+        room_id: roomId,
+        target_user_id: targetOpenid
+      }
+    })
+
+    if (!res.result?.success || !res.result?.data) {
+      throw new Error(res.result?.message || '聊天信息加载失败')
+    }
+
+    this.applyChatMeta(res.result.data)
+  },
+
+  applyChatMeta(meta = {}) {
+    const relation = meta.relation || {}
+    const room = meta.room || {}
+    const target = meta.target_user || {}
+    const targetUser = {
+      ...this.data.targetUser,
+      _id: target._id || this.data.targetUser._id || '',
+      openid: target.openid || this.data.targetUser.openid || this.data.targetUserId,
+      nickname: target.nickname || this.data.targetUser.nickname || '用户',
+      avatar: target.avatar_url || this.data.targetUser.avatar || DEFAULT_AVATAR
+    }
+    const sendDisabled = room.send_disabled_reason === WAIT_TARGET_REPLY
+
+    this.setData({
+      targetUser,
+      displayName: target.display_name || relation.remark_name || targetUser.nickname || '用户',
+      relationMeta: {
+        isFollowing: !!relation.is_following,
+        isFollowedByTarget: !!relation.is_followed_by_target,
+        isMutual: !!relation.is_mutual,
+        remarkName: relation.remark_name || '',
+        hasBlockedTarget: !!relation.has_blocked_target,
+        isBlockedByTarget: !!relation.is_blocked_by_target
+      },
+      roomMeta: {
+        roomId: room.room_id || this.data.roomId,
+        unreadCount: Number(room.unread_count || 0),
+        isTop: !!room.is_top,
+        isMuted: !!room.is_muted,
+        clearTime: Number(room.clear_time || 0),
+        canSend: room.can_send !== false,
+        sendDisabledReason: room.send_disabled_reason || ''
+      },
+      sendDisabled,
+      inputPlaceholder: sendDisabled ? '对方回复后可继续发送' : '消息',
+      roomId: room.room_id || this.data.roomId
+    })
+  },
+
+  getClearDate() {
+    const clearTime = Number(this.data.roomMeta.clearTime || 0)
+    return clearTime > 0 ? new Date(clearTime) : null
+  },
+
+  buildMessageWhere(olderThan) {
+    const conditions = [{ room_id: this.data.roomId }]
+    const clearDate = this.getClearDate()
+
+    if (clearDate) {
+      conditions.push({ send_time: _.gt(clearDate) })
+    }
+    if (olderThan) {
+      conditions.push({ send_time: _.lt(olderThan) })
+    }
+
+    return conditions.length === 1 ? conditions[0] : _.and(conditions)
+  },
+
   async loadMessages(refresh = false) {
     const { roomId, pageSize, oldestMsgTime, loadingMore, noMore } = this.data
+    if (!roomId) return
     if (!refresh && (loadingMore || noMore)) return
-    if (!refresh) this.setData({ loadingMore: true })
+    if (refresh) {
+      this.setData({
+        loadingMore: false,
+        noMore: false
+      })
+    } else {
+      this.setData({ loadingMore: true })
+    }
 
     try {
-      let query = db.collection('chat_messages')
-        .where({ room_id: roomId })
+      const query = db.collection('chat_messages')
+        .where(this.buildMessageWhere(refresh ? null : oldestMsgTime))
         .orderBy('send_time', 'desc')
         .limit(pageSize)
 
-      if (!refresh && oldestMsgTime) {
-        query = db.collection('chat_messages')
-          .where({ room_id: roomId, send_time: _.lt(oldestMsgTime) })
-          .orderBy('send_time', 'desc')
-          .limit(pageSize)
-      }
-
       const res = await query.get()
-      const msgs = res.data.reverse()
-      
-      if (msgs.length < pageSize) this.setData({ noMore: true })
+      const fetched = (res.data || []).reverse()
+      const merged = refresh ? fetched : [...fetched, ...this.data.messages]
+      const decorated = this.decorateMessageList(merged)
 
-      const processed = this.processMsgs(msgs, refresh)
-
-      if (refresh) {
-        this.setData({
-          messages: processed,
-          oldestMsgTime: processed[0]?.send_time_raw || null,
-          loadingMore: false
-        })
-      } else {
-        this.setData({
-          messages: [...processed, ...this.data.messages],
-          oldestMsgTime: processed[0]?.send_time_raw || oldestMsgTime,
-          loadingMore: false
-        })
-      }
+      this.setData({
+        messages: decorated,
+        oldestMsgTime: decorated[0]?.send_time_raw || null,
+        noMore: fetched.length < pageSize,
+        loadingMore: false
+      })
     } catch (e) {
       console.error('加载消息失败:', e)
       this.setData({ loadingMore: false })
     }
   },
 
-  processMsgs(msgs, refresh) {
+  decorateMessageList(msgs = []) {
     let lastTime = 0
-    if (!refresh && this.data.messages.length) {
-      const lastMsg = this.data.messages[this.data.messages.length - 1]
-      lastTime = typeof lastMsg.send_time === 'number' ? lastMsg.send_time : new Date(lastMsg.send_time).getTime()
-    }
 
     return msgs.map((msg, i) => {
-      const time = new Date(msg.send_time).getTime()
-      const showTime = (i === 0 && refresh) || (time - lastTime > 5 * 60 * 1000)
-      lastTime = time
+      const timeRaw = msg.send_time_raw || msg.send_time
+      const time = typeof msg.send_time === 'number' ? msg.send_time : new Date(timeRaw).getTime()
+      const safeTime = Number.isNaN(time) ? 0 : time
+      const showTime = i === 0 || (safeTime - lastTime > 5 * 60 * 1000)
+      lastTime = safeTime
       return {
         ...msg,
-        send_time: time, // 转换为时间戳，便于后续使用
-        send_time_raw: msg.send_time, // 保留原始值用于查询
+        send_time: safeTime,
+        send_time_raw: timeRaw,
         showTime,
-        timeStr: showTime ? this.formatTime(msg.send_time) : '',
+        timeStr: showTime ? this.formatTime(timeRaw) : '',
         status: msg.status || 'sent'
       }
     })
@@ -364,20 +474,25 @@ Page({
     const idx = messages.findIndex(m => m._id === msg._id)
     if (idx > -1) {
       const updated = [...messages]
-      const time = new Date(msg.send_time).getTime()
-      updated[idx] = { 
-        ...updated[idx], 
-        ...msg,
-        send_time: time, // 转换为时间戳
-        send_time_raw: msg.send_time, // 保留原始值
-        showTime: updated[idx].showTime,
-        timeStr: updated[idx].timeStr
+      updated[idx] = {
+        ...updated[idx],
+        ...msg
       }
-      this.setData({ messages: updated })
+      this.setData({
+        messages: this.decorateMessageList(updated)
+      })
     }
   },
 
+  isClearedMessage(msg) {
+    const clearTime = Number(this.data.roomMeta.clearTime || 0)
+    if (!clearTime) return false
+    const sendTime = new Date(msg.send_time_raw || msg.send_time).getTime()
+    return sendTime <= clearTime
+  },
+
   onNewMsg(msg) {
+    if (this.isClearedMessage(msg)) return
     const { messages, currentUser } = this.data
     
     // 1. 检查是否已存在相同 _id 的消息
@@ -405,29 +520,29 @@ Page({
       return false
     })
 
+    let nextMessages = [...messages]
     if (tempIdx > -1) {
       // 找到临时消息，更新它，保留本地的 quote_msg（以防数据库返回延迟）
       const tempMsg = messages[tempIdx]
-      const updated = [...messages]
-      const msgSendTime = new Date(msg.send_time).getTime()
-      updated[tempIdx] = { 
+      nextMessages[tempIdx] = {
         ...msg,
-        send_time: msgSendTime, // 转换为时间戳
-        send_time_raw: msg.send_time, // 保留原始值
         quote_msg: msg.quote_msg || tempMsg.quote_msg, // 优先使用数据库的，否则保留本地的
-        showTime: tempMsg.showTime, 
-        timeStr: tempMsg.timeStr, 
-        status: 'sent' 
+        _tempId: tempMsg._tempId,
+        status: 'sent'
       }
-      this.setData({ messages: updated })
     } else {
       // 对方发送的新消息
-      const processed = this.processMsgs([msg], false)[0]
-      this.setData({ messages: [...messages, processed] })
+      nextMessages.push(msg)
     }
 
+    this.setData({
+      messages: this.decorateMessageList(nextMessages)
+    })
     this.scrollToBottom()
-    if (msg.sender_id !== currentUser.openid) this.clearUnread()
+    if (msg.sender_id !== currentUser.openid) {
+      this.clearUnread()
+      this.loadChatMeta().catch(() => {})
+    }
   },
 
   // ========== 输入相关 ==========
@@ -456,6 +571,10 @@ Page({
   },
 
   toggleEmojiPanel() {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
     const { showEmojiPanel, safeAreaBottom } = this.data
     if (showEmojiPanel) {
       this.setData({
@@ -510,12 +629,28 @@ Page({
   },
 
   insertEmoji(e) {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
     const emoji = e.currentTarget.dataset.e
     this.setData({ inputValue: this.data.inputValue + emoji })
   },
 
+  showWaitReplyToast(message) {
+    wx.showToast({
+      title: message || '由于对方未关注你，需等待对方回复后才能继续发送',
+      icon: 'none'
+    })
+  },
+
   // ========== 发送消息 ==========
   async sendTextMessage() {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
+
     const { inputValue, roomId, currentUser, targetUser, messages, targetUserId, quoteMsg } = this.data
     const content = inputValue.trim()
     if (!content) return
@@ -533,15 +668,13 @@ Page({
       sender_id: currentUser.openid,
       msg_type: 'text',
       content,
-      send_time: nowTime, // 使用时间戳
-      send_time_raw: now.toISOString(), // 保留ISO格式用于发送到服务器
-      showTime: this.shouldShowTime(now),
-      timeStr: this.shouldShowTime(now) ? this.formatTime(now) : '',
+      send_time: nowTime,
+      send_time_raw: now.toISOString(),
       status: 'sending',
-      quote_msg: quoteMsg || null // 携带引用信息
+      quote_msg: quoteMsg || null
     }
 
-    this.setData({ messages: [...messages, tempMsg] })
+    this.setData({ messages: this.decorateMessageList([...messages, tempMsg]) })
     this.scrollToBottom()
 
     try {
@@ -560,17 +693,26 @@ Page({
 
       if (res.result?.success) {
         this.updateMsgStatus(tempId, 'sent', res.result.msgId)
+        this.loadChatMeta().catch(() => {})
       } else {
-        this.updateMsgStatus(tempId, 'failed')
-        wx.showToast({ title: res.result?.message || '发送失败', icon: 'none' })
+        await this.handleSendFailure({
+          tempId,
+          result: res.result,
+          restoreInput: content
+        })
       }
     } catch (e) {
       console.error('发送失败:', e)
       this.updateMsgStatus(tempId, 'failed')
+      wx.showToast({ title: '发送失败', icon: 'none' })
     }
   },
 
   showAttachMenu() {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
     wx.showActionSheet({
       itemList: ['从相册选择', '拍照'],
       success: res => {
@@ -581,6 +723,10 @@ Page({
   },
 
   async chooseImage(source) {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
     try {
       const res = await wx.chooseMedia({
         count: 9,
@@ -605,6 +751,10 @@ Page({
   },
 
   async sendImage(path) {
+    if (this.data.sendDisabled) {
+      this.showWaitReplyToast()
+      return
+    }
     const { roomId, currentUser, targetUser, targetUserId } = this.data
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const now = new Date()
@@ -624,10 +774,8 @@ Page({
       sender_id: currentUser?.openid || '',
       msg_type: 'image',
       content: path,
-      send_time: nowTime, // 使用时间戳
-      send_time_raw: now.toISOString(), // 保留ISO格式
-      showTime: this.shouldShowTime(now),
-      timeStr: this.shouldShowTime(now) ? this.formatTime(now) : '',
+      send_time: nowTime,
+      send_time_raw: now.toISOString(),
       status: 'uploading'
     }
 
@@ -636,9 +784,10 @@ Page({
     const newMessages = [...this.data.messages, tempMsg]
     console.log('[发送图片] 更新消息列表, 长度:', newMessages.length)
     
-    this.setData({ messages: newMessages })
+    this.setData({ messages: this.decorateMessageList(newMessages) })
     this.scrollToBottom()
 
+    let fileID = ''
     try {
       // 上传到云存储
       const cloudPath = `chat/${roomId}/${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${finalExt}`
@@ -652,7 +801,7 @@ Page({
         throw new Error('上传失败：未获取到 fileID')
       }
       
-      const fileID = uploadRes.fileID
+      fileID = uploadRes.fileID
 
       // 调用云函数发送消息
       const res = await wx.cloud.callFunction({
@@ -670,16 +819,56 @@ Page({
       if (res.result?.success) {
         // 使用统一的更新函数，同时更新 content 为云存储 fileID
         this.updateMsgStatus(tempId, 'sent', res.result.msgId, fileID)
+        this.loadChatMeta().catch(() => {})
       } else {
         console.error('发送消息失败:', res.result?.message)
-        this.updateMsgStatus(tempId, 'failed')
-        wx.showToast({ title: res.result?.message || '发送失败', icon: 'none' })
+        await this.handleSendFailure({
+          tempId,
+          result: res.result,
+          uploadedFileId: fileID
+        })
       }
     } catch (e) {
       console.error('图片发送失败:', e)
       this.updateMsgStatus(tempId, 'failed')
       wx.showToast({ title: '图片发送失败', icon: 'none' })
     }
+  },
+
+  async deleteUploadedFile(fileId) {
+    if (!fileId) return
+    try {
+      await wx.cloud.deleteFile({ fileList: [fileId] })
+    } catch (e) {
+      console.warn('清理聊天图片失败:', e)
+    }
+  },
+
+  async handleSendFailure({ tempId, result = {}, restoreInput = '', uploadedFileId = '' }) {
+    if (uploadedFileId) {
+      this.deleteUploadedFile(uploadedFileId)
+    }
+
+    if (result.code === WAIT_TARGET_REPLY) {
+      this.removeMsg(tempId)
+      this.setData({ inputValue: restoreInput })
+      await this.loadChatMeta().catch(() => {})
+      this.showWaitReplyToast(result.message)
+      return
+    }
+
+    if (result.code === BLACKLIST_REJECTED) {
+      this.updateMsgStatus(tempId, 'failed')
+      this.loadChatMeta().catch(() => {})
+      wx.showToast({
+        title: result.message || '消息已发出，但被对方拒收',
+        icon: 'none'
+      })
+      return
+    }
+
+    this.updateMsgStatus(tempId, 'failed')
+    wx.showToast({ title: result.message || '发送失败', icon: 'none' })
   },
 
   updateMsgStatus(tempId, status, realId, newContent) {
@@ -691,7 +880,7 @@ Page({
       }
       return m
     })
-    this.setData({ messages: msgs })
+    this.setData({ messages: this.decorateMessageList(msgs) })
   },
 
   resendMessage(e) {
@@ -715,17 +904,10 @@ Page({
 
   removeMsg(id) {
     this.setData({
-      messages: this.data.messages.filter(m => m._id !== id && m._tempId !== id)
+      messages: this.decorateMessageList(
+        this.data.messages.filter(m => m._id !== id && m._tempId !== id)
+      )
     })
-  },
-
-  shouldShowTime(t) {
-    const { messages } = this.data
-    if (!messages.length) return true
-    const lastMsg = messages[messages.length - 1]
-    const last = typeof lastMsg.send_time === 'number' ? lastMsg.send_time : new Date(lastMsg.send_time).getTime()
-    const current = typeof t === 'number' ? t : new Date(t).getTime()
-    return current - last > 5 * 60 * 1000
   },
 
   scrollToBottom() {
@@ -739,13 +921,17 @@ Page({
   },
 
   async clearUnread() {
-    const { roomId, currentUser } = this.data
-    if (!roomId || !currentUser.openid) return
+    const { roomId } = this.data
+    if (!roomId) return
     try {
-      await db.collection('chat_rooms').doc(roomId).update({
-        data: { [`unread_counts.${currentUser.openid}`]: 0 }
+      await wx.cloud.callFunction({
+        name: 'clear_chat_unread',
+        data: { room_id: roomId }
       })
-    } catch (e) {}
+      app.refreshChatUnreadBadge(this).catch(() => {})
+    } catch (e) {
+      console.warn('清除未读失败:', e)
+    }
   },
 
   previewImage(e) {
@@ -853,12 +1039,12 @@ Page({
 
   // 引用消息
   quoteMessage() {
-    const { menuMsg, targetUser, currentUser } = this.data
+    const { menuMsg, displayName, currentUser } = this.data
     if (!menuMsg) return
     
     const senderName = menuMsg.sender_id === currentUser.openid 
       ? currentUser.nickname 
-      : targetUser.nickname
+      : displayName
     
     const content = menuMsg.msg_type === 'text' 
       ? menuMsg.content.substring(0, 50) + (menuMsg.content.length > 50 ? '...' : '')
@@ -911,7 +1097,7 @@ Page({
           }
           return m
         })
-        this.setData({ messages })
+        this.setData({ messages: this.decorateMessageList(messages) })
         wx.showToast({ title: '已撤回', icon: 'success' })
       } else {
         wx.showToast({ title: res.result?.message || '撤回失败', icon: 'none' })
@@ -935,7 +1121,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           const messages = this.data.messages.filter(m => m._id !== menuMsg._id)
-          this.setData({ messages })
+          this.setData({ messages: this.decorateMessageList(messages) })
           wx.showToast({ title: '已删除', icon: 'success' })
         }
       }
@@ -955,17 +1141,19 @@ Page({
       success: async (res) => {
         if (res.confirm) {
           try {
-            await wx.cloud.callFunction({
+            const reportRes = await wx.cloud.callFunction({
               name: 'report_content',
               data: {
-                type: 'chat_message',
+                target_type: 'chat_message',
                 target_id: menuMsg._id,
                 room_id: roomId,
-                content: menuMsg.content,
                 reason: '违规内容'
               }
             })
-            wx.showToast({ title: '举报成功', icon: 'success' })
+            wx.showToast({
+              title: reportRes.result?.success ? '举报成功' : (reportRes.result?.message || '举报失败'),
+              icon: reportRes.result?.success ? 'success' : 'none'
+            })
           } catch (e) {
             wx.showToast({ title: '举报失败', icon: 'none' })
           }
@@ -978,10 +1166,30 @@ Page({
     wx.navigateBack()
   },
 
+  openManagePage() {
+    const { roomId, targetUser, targetUserId } = this.data
+    const targetOpenid = targetUser.openid || targetUserId
+    if (!targetOpenid) return
+    this._shouldRefreshOnShow = true
+    wx.navigateTo({
+      url: `/pages/chat/manage?roomId=${roomId}&targetUserId=${targetOpenid}`
+    })
+  },
+
   goToUserProfile() {
     const { targetUser, targetUserId } = this.data
     const id = targetUser._id || targetUser.openid || targetUserId
     if (id) wx.navigateTo({ url: `/pages/community/user-profile?userId=${id}` })
+  },
+
+  async onShow() {
+    if (!this._didInit || this._isInitializing) return
+    await this.loadChatMeta().catch(() => {})
+    await this.clearUnread()
+    if (this._shouldRefreshOnShow) {
+      this._shouldRefreshOnShow = false
+      await this.loadMessages(true)
+    }
   },
 
   onUnload() {

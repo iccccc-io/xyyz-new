@@ -117,7 +117,7 @@
           <view class="sku-drawer-inner">
             <view class="sku-drawer-head">
               <text class="sku-drawer-title">快速修改 SKU</text>
-              <text class="sku-drawer-subtitle">支持直接调整现价、原价与库存</text>
+              <text class="sku-drawer-subtitle">库存按调整值提交，保存时会以最新库存为准</text>
             </view>
 
             <view
@@ -129,7 +129,7 @@
             >
               <view class="quick-sku-head">
                 <text class="quick-sku-name">{{sku.sku_name}}</text>
-                <text class="quick-sku-note">直接修改后保存</text>
+                <text class="quick-sku-note">价格直接覆盖，库存增减防并发冲突</text>
               </view>
 
               <view class="quick-sku-grid">
@@ -197,7 +197,7 @@
                     <text class="quick-stock-delta {{sku.stock_delta > 0 ? 'is-plus' : (sku.stock_delta < 0 ? 'is-minus' : 'is-neutral')}}">
                       {{sku.stock_delta > 0 ? '+' : ''}}{{sku.stock_delta}}
                     </text>
-                    <text class="quick-stock-next">预计库存 {{sku.next_stock}} 件</text>
+                    <text class="quick-stock-next">实际保存以最新库存为准</text>
                   </view>
                 </view>
               </view>

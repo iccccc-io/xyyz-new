@@ -1,0 +1,56 @@
+<nav-bar
+  title="查找聊天记录"
+  showTitle="{{true}}"
+  showBack="{{true}}"
+  background="solid"
+  dark="{{true}}"
+  placeholder="{{true}}"
+/>
+
+<view class="page">
+  <view class="search-card">
+    <view class="search-box">
+      <van-icon name="search" size="18px" color="#8a8f97" />
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜索 {{displayName}} 的聊天记录"
+        placeholder-class="search-placeholder"
+        bindinput="onKeywordInput"
+        bindconfirm="searchMessages"
+        confirm-type="search"
+      />
+      <view class="search-clear" wx:if="{{keyword}}" bindtap="clearKeyword">
+        <van-icon name="clear" size="16px" color="#b3b3b3" />
+      </view>
+    </view>
+    <view class="search-btn" bindtap="searchMessages">
+      <text>搜索</text>
+    </view>
+  </view>
+
+  <view class="hint">
+    <text>仅搜索当前会话里清空记录之后的文本消息</text>
+  </view>
+
+  <view class="loading-state" wx:if="{{loading}}">
+    <van-loading size="28px" color="#b63b36" vertical>搜索中...</van-loading>
+  </view>
+
+  <view class="result-list" wx:elif="{{results.length > 0}}">
+    <view class="result-item" wx:for="{{results}}" wx:key="_id">
+      <text class="result-time">{{item.timeStr}}</text>
+      <text class="result-content">{{item.content}}</text>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:elif="{{searched}}">
+    <text class="empty-title">没有找到相关聊天内容</text>
+    <text class="empty-desc">换个关键词试试，比如地名、项目名或人物称呼</text>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text class="empty-title">开始搜索</text>
+    <text class="empty-desc">输入关键词后，可快速查看这段私聊里出现过的文本消息</text>
+  </view>
+</view>

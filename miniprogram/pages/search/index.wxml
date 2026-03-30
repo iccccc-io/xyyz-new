@@ -15,7 +15,7 @@
       <view class="search-bar-wrap">
         <input
           class="search-input"
-          placeholder="搜帖子、非遗、传承人、话题、用户…"
+          placeholder="搜帖子、非遗、传承人、话题、用户、ID…"
           placeholder-class="search-ph"
           value="{{keyword}}"
           confirm-type="search"

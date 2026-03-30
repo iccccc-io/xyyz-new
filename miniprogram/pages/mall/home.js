@@ -1,3 +1,4 @@
+const app = getApp()
 const db = wx.cloud.database()
 const { createProductSummary } = require('../../common/mall-sku')
 
@@ -548,6 +549,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(2)
     }
+    app.refreshChatUnreadBadge(this).catch(() => {})
   },
 
   async onPullDownRefresh() {

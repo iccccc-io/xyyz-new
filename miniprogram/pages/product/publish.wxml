@@ -114,13 +114,17 @@
       </view>
 
       <view class="sku-list">
-        <view class="sku-card" wx:for="{{skus}}" wx:key="index">
+        <view class="sku-card {{item.skuId ? 'sku-card-existing' : 'sku-card-new'}}" wx:for="{{skus}}" wx:key="index">
           <view class="sku-head">
             <view class="sku-title-wrap">
               <text class="sku-index-badge">{{index + 1}}</text>
               <view class="sku-title-copy">
-                <text class="sku-title">{{item.skuName || ('SKU ' + (index + 1))}}</text>
-                <text class="sku-lock-tip" wx:if="{{item.skuId}}">已发布 SKU 不可删除，可将库存改为 0 停售</text>
+                <view class="sku-title-line">
+                  <text class="sku-title">{{item.skuName || ('SKU ' + (index + 1))}}</text>
+                  <text class="sku-mode-badge {{item.skuId ? 'is-existing' : 'is-new'}}">{{item.skuId ? '已发布' : '新建'}}</text>
+                </view>
+                <text class="sku-lock-tip" wx:if="{{item.skuId}}">已发布 SKU 不可删除，库存请填写调整值并以保存时最新库存为准</text>
+                <text class="sku-fresh-tip" wx:else>新加 SKU 这里填写首批库存，发布后库存会切换为调整值模式</text>
               </view>
             </view>
             <view class="sku-remove" wx:if="{{!item.skuId && skus.length > 1}}" data-index="{{index}}" bindtap="removeSku">
@@ -151,7 +155,7 @@
                 <text class="field-unit">元</text>
               </view>
               <input
-                class="field-input"
+                class="field-input field-number-input"
                 data-index="{{index}}"
                 data-field="price"
                 type="digit"
@@ -168,7 +172,7 @@
                 <text class="field-unit">选填</text>
               </view>
               <input
-                class="field-input"
+                class="field-input field-number-input"
                 data-index="{{index}}"
                 data-field="originalPrice"
                 type="digit"
@@ -180,13 +184,14 @@
             </view>
           </view>
 
-          <view class="field-block">
+          <view class="field-block sku-stock-block {{isEditMode && item.skuId ? 'is-existing' : 'is-new'}}">
             <view class="field-head">
-              <text class="field-label"><text class="required-mark">*</text>库存数量</text>
-              <text class="field-unit">件</text>
+              <text class="field-label"><text class="required-mark">*</text>{{isEditMode && item.skuId ? '库存调整' : '库存数量'}}</text>
+              <text class="field-unit">{{isEditMode && item.skuId ? ('当前 ' + item.currentStock + ' 件') : '件'}}</text>
             </view>
             <input
-              class="field-input"
+              wx:if="{{!(isEditMode && item.skuId)}}"
+              class="field-input stock-input"
               data-index="{{index}}"
               data-field="stock"
               type="number"
@@ -195,6 +200,44 @@
               value="{{item.stock}}"
               bindinput="onSkuFieldInput"
             />
+            <view wx:if="{{!(isEditMode && item.skuId)}}" class="initial-stock-tip">
+              <text class="initial-stock-title">首批库存</text>
+              <text class="initial-stock-desc">这里填写首次上架库存，后续编辑会自动切换为调整值模式。</text>
+            </view>
+            <view wx:else class="quick-stock-panel">
+              <view class="quick-stock-head">
+                <text class="quick-field-label">库存调整值</text>
+                <text class="quick-stock-current">当前 {{item.currentStock}} 件</text>
+              </view>
+
+              <view class="quick-stock-body">
+                <view class="quick-stock-actions">
+                  <view class="quick-step-btn is-minus" data-index="{{index}}" data-step="-1" bindtap="onSkuStockAdjust">
+                    <text>-1</text>
+                  </view>
+                  <view class="quick-stock-input-shell">
+                    <text class="quick-stock-input-prefix">{{item.stockChange > 0 ? '+' : ''}}</text>
+                    <input
+                      class="quick-stock-input"
+                      type="text"
+                      value="{{item.stockChange}}"
+                      data-index="{{index}}"
+                      bindinput="onSkuStockDeltaInput"
+                    />
+                  </view>
+                  <view class="quick-step-btn is-plus" data-index="{{index}}" data-step="1" bindtap="onSkuStockAdjust">
+                    <text>+1</text>
+                  </view>
+                </view>
+
+                <view class="quick-stock-preview">
+                  <text class="quick-stock-delta {{item.stockChange > 0 ? 'is-plus' : (item.stockChange < 0 ? 'is-minus' : 'is-neutral')}}">
+                    {{item.stockChange > 0 ? '+' : ''}}{{item.stockChange}}
+                  </text>
+                  <text class="quick-stock-next">实际保存以最新库存为准</text>
+                </view>
+              </view>
+            </view>
           </view>
 
           <view class="field-block">

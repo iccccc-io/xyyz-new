@@ -283,7 +283,7 @@
 .action {
   height: 56rpx;
   border-radius: 14rpx;
-  background: #f3ebe4;
+  background: #ffffff;
   color: #5f5146;
   border: 1rpx solid #eadfd6;
   display: inline-flex;
@@ -292,7 +292,8 @@
   font-size: 22rpx;
   font-weight: 600;
   box-sizing: border-box;
-  transition: transform 160ms ease, opacity 160ms ease;
+  box-shadow: 0 6rpx 14rpx rgba(66, 48, 34, 0.05);
+  transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease;
 }
 
 .action text {
@@ -304,6 +305,7 @@
 
 .action:active {
   transform: scale(0.97);
+  box-shadow: 0 3rpx 8rpx rgba(66, 48, 34, 0.04);
 }
 
 .sku-rail {
@@ -484,6 +486,7 @@
   height: 100%;
   font-size: 26rpx;
   color: #2C231E;
+  text-align: right;
 }
 
 .quick-stock-panel {
@@ -620,8 +623,8 @@
 .quick-stock-next {
   font-size: 22rpx;
   line-height: 1.3;
-  color: #6d5a4d;
-  font-weight: 600;
+  color: #9a8c83;
+  font-weight: 500;
 }
 
 .sku-drawer-actions {

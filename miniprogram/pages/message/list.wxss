@@ -2,57 +2,67 @@
 /* 消息列表页样式 */
 
 page {
-  background-color: #f5f5f5;
+  background: #f6f7f9;
 }
 
 .message-container {
   min-height: 100vh;
+  padding: 16rpx 20rpx 0;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ========== 会话列表 ========== */
 .conversation-list {
-  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
 
 .conversation-item {
   display: flex;
   align-items: center;
-  padding: 28rpx 32rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #f5f5f5;
-  transition: background-color 0.15s ease;
+  padding: 22rpx 22rpx;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1rpx solid #eceff3;
+  border-radius: 28rpx;
+  box-shadow: 0 10rpx 24rpx rgba(148, 163, 184, 0.08);
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .conversation-item:active {
-  background-color: #f8f8f8;
+  background-color: rgba(255, 255, 255, 0.98);
+  transform: scale(0.992);
 }
 
 /* 头像区域 */
 .avatar-wrapper {
   position: relative;
   flex-shrink: 0;
-  margin-right: 24rpx;
+  margin-right: 18rpx;
 }
 
 .avatar {
   display: block;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: 0 6rpx 16rpx rgba(148, 163, 184, 0.12);
 }
 
 /* 未读数角标 */
 .unread-badge {
   position: absolute;
-  top: -8rpx;
+  top: -10rpx;
   right: -8rpx;
-  min-width: 36rpx;
-  height: 36rpx;
+  min-width: 38rpx;
+  height: 38rpx;
   padding: 0 10rpx;
-  background: linear-gradient(135deg, #ff4d4f 0%, #e63946 100%);
-  border-radius: 18rpx;
+  background: linear-gradient(135deg, #ff7a7a 0%, #e25656 100%);
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(230, 57, 70, 0.4);
+  box-shadow: 0 10rpx 20rpx rgba(226, 86, 86, 0.28);
+  border: 4rpx solid rgba(255, 255, 255, 0.92);
 }
 
 .unread-badge text {
@@ -68,47 +78,87 @@ page {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 4rpx;
 }
 
 .info-top {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.title-wrap {
+  min-width: 0;
+  flex: 1;
+  display: flex;
   align-items: center;
+  min-height: 34rpx;
 }
 
 .nickname {
   font-size: 32rpx;
-  font-weight: 500;
-  color: #333333;
-  max-width: 400rpx;
+  font-weight: 600;
+  color: #1f2329;
+  line-height: 1.25;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.time {
-  font-size: 24rpx;
-  color: #bbbbbb;
+.meta-row {
+  margin-top: 4rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.meta-tag {
   flex-shrink: 0;
+  padding: 5rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+
+.meta-tag.top {
+  color: #a64944;
+  background: rgba(182, 59, 54, 0.1);
+}
+
+.meta-tag.mute {
+  color: #607080;
+  background: rgba(105, 117, 134, 0.12);
+}
+
+.time {
+  font-size: 23rpx;
+  color: #a1a8b3;
+  flex-shrink: 0;
+  padding-top: 0;
 }
 
 .info-bottom {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2rpx;
 }
 
 .last-msg {
-  font-size: 28rpx;
-  color: #999999;
+  width: 100%;
+  font-size: 27rpx;
+  color: #7d8793;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 480rpx;
+  line-height: 1.35;
 }
 
 .last-msg.unread {
-  color: #666666;
+  color: #4c5561;
   font-weight: 500;
 }
 

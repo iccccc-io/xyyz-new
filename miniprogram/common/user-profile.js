@@ -137,6 +137,15 @@ function normalizeUserProfile(userInfo = {}) {
   return normalized
 }
 
+function getUserDisplayId(userInfo = {}, fallback = '') {
+  const safeFallback = String(fallback || '')
+  const source = String(
+    (userInfo && (userInfo._id || userInfo._openid || userInfo.user_id || userInfo.userId)) || safeFallback || ''
+  )
+  if (!source) return ''
+  return source.slice(-10)
+}
+
 function getMissingUserProfilePatch(userInfo = {}) {
   const patch = {}
   const source = userInfo || {}
@@ -177,6 +186,7 @@ module.exports = {
   USER_BIO_MAX_LINES,
   createDefaultUserProfile,
   normalizeUserProfile,
+  getUserDisplayId,
   getMissingUserProfilePatch,
   sanitizeUserBio,
   validateUserBio,

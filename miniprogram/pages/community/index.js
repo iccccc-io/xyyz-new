@@ -666,6 +666,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(1)
     }
+    app.refreshChatUnreadBadge(this).catch(() => {})
     if (this.data.activeTab === 'follow') {
       this.setData({ feedSwiperIndex: 1 })
       this.loadFollowPosts()

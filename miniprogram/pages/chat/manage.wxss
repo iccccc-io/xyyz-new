@@ -1,0 +1,225 @@
+page {
+  min-height: 100%;
+  background: #f5f5f5;
+}
+
+.page {
+  padding: 24rpx;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #fff6f1 0%, #ffffff 100%);
+  box-shadow: 0 16rpx 40rpx rgba(182, 59, 54, 0.08);
+}
+
+.avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #f0f0f0;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.profile-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1f2329;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-sub {
+  font-size: 24rpx;
+  color: #7a7f87;
+}
+
+.profile-sub.danger {
+  color: #d84f45;
+}
+
+.follow-btn {
+  flex-shrink: 0;
+  min-width: 136rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #d84f45 0%, #b63b36 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 24rpx rgba(182, 59, 54, 0.18);
+}
+
+.follow-btn.following {
+  background: #f3f4f6;
+  box-shadow: none;
+}
+
+.follow-btn text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.follow-btn.following text {
+  color: #4b5563;
+}
+
+.section {
+  margin-top: 24rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 12rpx 32rpx rgba(15, 23, 42, 0.04);
+}
+
+.section-title {
+  padding: 28rpx 28rpx 12rpx;
+  font-size: 24rpx;
+  color: #8a8f97;
+}
+
+.cell {
+  padding: 26rpx 28rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  border-top: 1rpx solid #f3f4f6;
+}
+
+.cell:first-of-type {
+  border-top: none;
+}
+
+.cell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.cell-title {
+  font-size: 30rpx;
+  color: #1f2329;
+}
+
+.cell-desc {
+  font-size: 24rpx;
+  color: #8a8f97;
+  line-height: 1.5;
+}
+
+.switch-cell {
+  align-items: flex-start;
+}
+
+.danger-cell .cell-title {
+  color: #d84f45;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 240rpx 0;
+}
+
+.remark-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.remark-panel {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  padding: 32rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 24rpx 60rpx rgba(15, 23, 42, 0.18);
+}
+
+.remark-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.remark-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.remark-sub {
+  font-size: 24rpx;
+  color: #8a8f97;
+}
+
+.remark-input {
+  margin-top: 24rpx;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  background: #f7f7f8;
+  font-size: 30rpx;
+  color: #1f2329;
+}
+
+.remark-placeholder {
+  color: #b1b5bd;
+}
+
+.remark-actions {
+  margin-top: 28rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.remark-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remark-btn text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.remark-btn.ghost {
+  background: #f3f4f6;
+}
+
+.remark-btn.ghost text {
+  color: #4b5563;
+}
+
+.remark-btn.solid {
+  background: linear-gradient(135deg, #d84f45 0%, #b63b36 100%);
+}
+
+.remark-btn.solid text {
+  color: #ffffff;
+}

@@ -2,6 +2,7 @@
 const app = getApp()
 const db = wx.cloud.database()
 const _ = db.command
+const { getUserDisplayId } = require('../../common/user-profile')
 
 // Tab 配置
 const TABS = [
@@ -25,6 +26,13 @@ function toMs(t) {
   if (typeof t === 'number') return t
   const d = new Date(t)
   return isNaN(d.getTime()) ? 0 : d.getTime()
+}
+
+function matchesUserDisplayId(user = {}, keyword = '') {
+  const safeKeyword = String(keyword || '').trim().toLowerCase()
+  if (!safeKeyword) return false
+  const displayId = getUserDisplayId(user).toLowerCase()
+  return !!displayId && displayId.includes(safeKeyword)
 }
 
 Page({
@@ -233,7 +241,7 @@ Page({
       this._queryProjects(re, 4),
       this._queryInheritors(re, 4),
       this._queryTopics(keyword, myOpenid, 6),
-      this._queryUsers(re, 4)
+      this._queryUsers(keyword, re, 4)
     ])
 
     this.setData({
@@ -269,7 +277,7 @@ Page({
   },
 
   async _searchUsers(re) {
-    const list = await this._queryUsers(re, 30)
+    const list = await this._queryUsers(this.data.keyword.trim(), re, 30)
     this.setData({ userResults: list })
   },
 
@@ -373,28 +381,60 @@ Page({
       .map(([tag, count]) => ({ tag, count }))
   },
 
-  async _queryUsers(re, limit) {
-    let list = []
+  async _queryUsers(keyword, re, limit) {
+    const map = new Map()
+
+    const mergeUsers = (users = []) => {
+      users.forEach((u) => {
+        if (u && u._id) {
+          map.set(u._id, u)
+        }
+      })
+    }
+
     try {
       const res = await db.collection('users')
         .where(_.or([{ nickname: re }, { certified_title: re }]))
         .limit(limit)
         .get()
-      list = res.data || []
+      mergeUsers(res.data || [])
     } catch {
       const [a, b] = await Promise.allSettled([
         db.collection('users').where({ nickname: re }).limit(limit).get(),
         db.collection('users').where({ certified_title: re }).limit(limit).get()
       ])
-      const map = new Map()
       for (const r of [a, b]) {
-        if (r.status === 'fulfilled') r.value.data.forEach(u => map.set(u._id, u))
+        if (r.status === 'fulfilled') mergeUsers(r.value.data || [])
       }
-      list = Array.from(map.values()).slice(0, limit)
     }
-    return list.map(u => ({
+
+    const safeKeyword = String(keyword || '').trim()
+    if (safeKeyword) {
+      try {
+        const extraRes = await db.collection('users')
+          .field({
+            _id: true,
+            _openid: true,
+            nickname: true,
+            avatar_url: true,
+            is_certified: true,
+            certified_title: true,
+            bio: true
+          })
+          .limit(100)
+          .get()
+
+        const idMatchedUsers = (extraRes.data || []).filter((user) => matchesUserDisplayId(user, safeKeyword))
+        mergeUsers(idMatchedUsers)
+      } catch (err) {
+        console.warn('[search] query user id fallback failed', err)
+      }
+    }
+
+    return Array.from(map.values()).slice(0, limit).map(u => ({
       _id: u._id,
       openid: u._openid,
+      profile_id: getUserDisplayId(u),
       nickname: u.nickname || '用户',
       avatar_url: u.avatar_url || '/images/avatar.png',
       is_certified: !!u.is_certified,

@@ -6,81 +6,77 @@ cloud.init({
 })
 
 const db = cloud.database()
-const _ = db.command
 
-/**
- * 发送聊天消息云函数
- * 
- * @param {Object} event - 请求参数
- * @param {String} event.room_id - 会话房间ID
- * @param {String} event.target_user_id - 目标用户ID（openid）
- * @param {String} event.msg_type - 消息类型：'text' | 'image'
- * @param {String} event.content - 消息内容
- * @param {Object} event.quote_msg - 引用消息信息 {msg_id, sender_name, content}
- * @param {Object} event.user_info - 发送者信息 {nickname, avatar}
- * @param {Object} event.target_user_info - 接收者信息 {nickname, avatar}
- * 
- * @returns {Object} { success: Boolean, message: String, msgId: String }
- */
+const DEFAULT_AVATAR = '/images/avatar.png'
+const CODE_BLACKLIST_REJECTED = 'BLACKLIST_REJECTED'
+const CODE_WAIT_TARGET_REPLY = 'WAIT_TARGET_REPLY'
+
 exports.main = async (event, context) => {
-  const { room_id, target_user_id, msg_type, content, quote_msg, user_info, target_user_info } = event
-  
-  // 获取调用者 openid
+  const {
+    room_id,
+    target_user_id,
+    msg_type,
+    content,
+    quote_msg,
+    user_info,
+    target_user_info
+  } = event || {}
+
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
 
   console.log('[发送消息] 开始处理:', { room_id, msg_type, openid, target_user_id })
 
-  // ========== 1. 参数校验 ==========
-  if (!room_id || !target_user_id || !msg_type || !content) {
-    return {
-      success: false,
-      message: '参数错误：缺少必要参数'
-    }
+  if (!room_id || !target_user_id || !msg_type || typeof content === 'undefined') {
+    return fail('参数错误：缺少必要参数')
   }
 
   if (!['text', 'image'].includes(msg_type)) {
-    return {
-      success: false,
-      message: '参数错误：不支持的消息类型'
-    }
+    return fail('参数错误：不支持的消息类型')
   }
 
-  // 不能给自己发消息
   if (target_user_id === openid) {
-    return {
-      success: false,
-      message: '不能给自己发消息'
-    }
+    return fail('不能给自己发消息')
+  }
+
+  const normalizedContent = normalizeContent(content, msg_type)
+  if (!normalizedContent) {
+    return fail('消息内容不能为空')
   }
 
   try {
-    // ========== 2. 内容安全审核（开发阶段暂时跳过）==========
-    // TODO: 上线前恢复内容安全审核
-    // if (msg_type === 'text') {
-    //   const secCheckResult = await checkTextSecurity(content, openid)
-    //   if (!secCheckResult.pass) {
-    //     console.warn('[安全审核] 文本包含敏感内容:', content.substring(0, 50))
-    //     return {
-    //       success: false,
-    //       message: secCheckResult.message || '消息包含敏感内容，请修改后重试'
-    //     }
-    //   }
-    // }
-    console.log('[安全审核] 开发阶段已跳过')
+    const targetUser = await getUserByIdentity(target_user_id)
+    const targetOpenid = targetUser?.openid || target_user_id
 
-    // ========== 3. 写入消息记录 ==========
+    if (targetOpenid === openid) {
+      return fail('不能给自己发消息')
+    }
+
+    if (await isBlockedByTarget({ senderOpenid: openid, targetUser })) {
+      return fail('消息已发出，但被对方拒收', CODE_BLACKLIST_REJECTED)
+    }
+
+    const relation = await getFollowRelation(openid, targetOpenid)
+    if (!relation.isMutual) {
+      const latestMsg = await getLatestRoomMessage(room_id)
+      if (latestMsg && latestMsg.sender_id === openid) {
+        return fail(
+          '由于对方未关注你，需等待对方回复后才能继续发送',
+          CODE_WAIT_TARGET_REPLY
+        )
+      }
+    }
+
     const now = db.serverDate()
     const messageData = {
-      room_id: room_id,
+      room_id,
       sender_id: openid,
-      msg_type: msg_type,
-      content: content,
+      msg_type,
+      content: normalizedContent,
       send_time: now,
       is_revoked: false
     }
-    
-    // 如果有引用消息，添加引用信息
+
     if (quote_msg && quote_msg.msg_id) {
       messageData.quote_msg = {
         msg_id: quote_msg.msg_id,
@@ -93,157 +89,277 @@ exports.main = async (event, context) => {
       data: messageData
     })
 
-    const msgId = msgResult._id
-    console.log('[发送消息] 消息已写入:', msgId)
-
-    // ========== 4. 更新/创建会话记录 ==========
     await updateChatRoom({
       room_id,
-      openid,
-      target_user_id,
+      senderOpenid: openid,
+      targetOpenid,
       msg_type,
-      content,
+      content: normalizedContent,
       user_info,
       target_user_info,
+      targetUser,
       now
     })
 
     return {
       success: true,
       message: '发送成功',
-      msgId: msgId
+      code: 'OK',
+      msgId: msgResult._id
     }
-
   } catch (err) {
     console.error('[发送消息失败]', err)
-    return {
-      success: false,
-      message: `发送失败: ${err.message || '未知错误'}`
-    }
+    return fail(`发送失败: ${err.message || '未知错误'}`)
   }
 }
 
-/**
- * 文本安全检测
- * @param {String} text - 待检测文本
- * @param {String} openid - 用户openid
- * @returns {Object} { pass: Boolean, message: String }
- */
-async function checkTextSecurity(text, openid) {
+function fail(message, code = '') {
+  return {
+    success: false,
+    message,
+    code
+  }
+}
+
+function normalizeContent(content, msgType) {
+  if (typeof content !== 'string') return ''
+  return msgType === 'text' ? content.trim() : content
+}
+
+function buildRoomId(userA, userB) {
+  return [userA, userB].sort().join('_')
+}
+
+async function getUserByIdentity(identity) {
+  if (!identity) return null
+
   try {
-    // 调用微信内容安全接口
-    const result = await cloud.openapi.security.msgSecCheck({
-      openid: openid,
-      scene: 4, // 4 表示私信场景
-      version: 2,
-      content: text
-    })
-
-    console.log('[安全审核] 结果:', result)
-
-    // result.result.label: 0-正常, 其他-违规
-    if (result.result && result.result.label !== 0) {
-      return {
-        pass: false,
-        message: '消息包含敏感内容'
-      }
+    const docRes = await db.collection('users').doc(identity).get()
+    if (docRes.data) {
+      return normalizeUser(docRes.data)
     }
+  } catch (err) {}
 
-    return { pass: true }
-  } catch (err) {
-    console.error('[安全审核] 调用失败:', err)
-    // 审核失败时，根据策略决定是放行还是拦截
-    // 这里选择放行，但记录日志
-    return { pass: true }
+  const queryRes = await db.collection('users')
+    .where({ _openid: identity })
+    .limit(1)
+    .get()
+
+  if (queryRes.data && queryRes.data.length) {
+    return normalizeUser(queryRes.data[0])
+  }
+
+  return null
+}
+
+function normalizeUser(user = {}) {
+  return {
+    _id: user._id || '',
+    openid: user._openid || user._id || '',
+    nickname: user.nickname || '用户',
+    avatar: user.avatar_url || user.avatar || DEFAULT_AVATAR,
+    blacklist: Array.isArray(user.blacklist) ? user.blacklist : []
   }
 }
 
-/**
- * 更新/创建会话记录
- */
+async function isBlockedByTarget({ senderOpenid, targetUser }) {
+  if (!targetUser) return false
+  const blacklist = Array.isArray(targetUser.blacklist) ? targetUser.blacklist : []
+  return blacklist.includes(senderOpenid)
+}
+
+async function getFollowRelation(openid, targetOpenid) {
+  const [followingRes, followedBackRes] = await Promise.all([
+    db.collection('community_follows')
+      .where({ follower_id: openid, target_id: targetOpenid })
+      .limit(1)
+      .get(),
+    db.collection('community_follows')
+      .where({ follower_id: targetOpenid, target_id: openid })
+      .limit(1)
+      .get()
+  ])
+
+  const isFollowing = !!(followingRes.data && followingRes.data.length)
+  const isFollowedByTarget = !!(followedBackRes.data && followedBackRes.data.length)
+
+  return {
+    isFollowing,
+    isFollowedByTarget,
+    isMutual: isFollowing && isFollowedByTarget
+  }
+}
+
+async function getLatestRoomMessage(roomId) {
+  const res = await db.collection('chat_messages')
+    .where({ room_id: roomId })
+    .orderBy('send_time', 'desc')
+    .limit(1)
+    .get()
+
+  return res.data && res.data.length ? res.data[0] : null
+}
+
+async function getRoom(roomId) {
+  try {
+    const res = await db.collection('chat_rooms').doc(roomId).get()
+    return res.data || null
+  } catch (err) {
+    return null
+  }
+}
+
+function normalizeUserInfo(uid, localInfo, fallbackUser) {
+  return {
+    uid,
+    nickname: localInfo?.nickname || fallbackUser?.nickname || '用户',
+    avatar: localInfo?.avatar || fallbackUser?.avatar || DEFAULT_AVATAR
+  }
+}
+
 async function updateChatRoom(params) {
-  const { room_id, openid, target_user_id, msg_type, content, user_info, target_user_info, now } = params
+  const {
+    room_id,
+    senderOpenid,
+    targetOpenid,
+    msg_type,
+    content,
+    user_info,
+    target_user_info,
+    targetUser,
+    now
+  } = params
 
-  try {
-    // 尝试更新现有会话
-    const updateResult = await db.collection('chat_rooms').doc(room_id).update({
-      data: {
-        last_msg: {
-          content: msg_type === 'text' ? content : '[图片]',
-          time: now,
-          sender_id: openid,
-          msg_type: msg_type
-        },
-        update_time: now,
-        // 接收方未读数 +1
-        [`unread_counts.${target_user_id}`]: _.inc(1)
-      }
-    })
-
-    if (updateResult.stats.updated > 0) {
-      console.log('[会话] 更新成功')
-      return
-    }
-  } catch (err) {
-    // 会话不存在，需要创建
-    console.log('[会话] 不存在，创建新会话')
+  const currentUser = await getUserByIdentity(senderOpenid)
+  const senderProfile = normalizeUser(currentUser || { _openid: senderOpenid })
+  const targetProfile = normalizeUser(targetUser || { _openid: targetOpenid })
+  const roomDoc = await getRoom(room_id)
+  const finalRoomId = room_id || buildRoomId(senderOpenid, targetOpenid)
+  const roomUserInfo = [
+    normalizeUserInfo(senderOpenid, user_info, senderProfile),
+    normalizeUserInfo(targetOpenid, target_user_info, targetProfile)
+  ]
+  const lastMsg = {
+    content: msg_type === 'text' ? content : '[图片]',
+    time: now,
+    sender_id: senderOpenid,
+    msg_type
   }
 
-  // 创建新会话
+  if (roomDoc) {
+    const nextTargetUnread = Number(
+      (roomDoc.unread_counts && roomDoc.unread_counts[targetOpenid]) || 0
+    ) + 1
+
+    const updateData = {
+      user_info: roomUserInfo,
+      last_msg: lastMsg,
+      update_time: now,
+      [`unread_counts.${targetOpenid}`]: nextTargetUnread
+    }
+
+    if (!roomDoc.unread_counts || typeof roomDoc.unread_counts[senderOpenid] === 'undefined') {
+      updateData[`unread_counts.${senderOpenid}`] = 0
+    }
+    if (!roomDoc.is_top || typeof roomDoc.is_top[senderOpenid] === 'undefined') {
+      updateData[`is_top.${senderOpenid}`] = false
+    }
+    if (!roomDoc.is_top || typeof roomDoc.is_top[targetOpenid] === 'undefined') {
+      updateData[`is_top.${targetOpenid}`] = false
+    }
+    if (!roomDoc.is_muted || typeof roomDoc.is_muted[senderOpenid] === 'undefined') {
+      updateData[`is_muted.${senderOpenid}`] = false
+    }
+    if (!roomDoc.is_muted || typeof roomDoc.is_muted[targetOpenid] === 'undefined') {
+      updateData[`is_muted.${targetOpenid}`] = false
+    }
+    if (!roomDoc.clear_time || typeof roomDoc.clear_time[senderOpenid] === 'undefined') {
+      updateData[`clear_time.${senderOpenid}`] = 0
+    }
+    if (!roomDoc.clear_time || typeof roomDoc.clear_time[targetOpenid] === 'undefined') {
+      updateData[`clear_time.${targetOpenid}`] = 0
+    }
+
+    await db.collection('chat_rooms').doc(finalRoomId).update({
+      data: updateData
+    })
+    return
+  }
+
+  const roomData = {
+    _id: finalRoomId,
+    user_ids: [senderOpenid, targetOpenid].sort(),
+    user_info: roomUserInfo,
+    last_msg: lastMsg,
+    unread_counts: {
+      [senderOpenid]: 0,
+      [targetOpenid]: 1
+    },
+    is_top: {
+      [senderOpenid]: false,
+      [targetOpenid]: false
+    },
+    is_muted: {
+      [senderOpenid]: false,
+      [targetOpenid]: false
+    },
+    clear_time: {
+      [senderOpenid]: 0,
+      [targetOpenid]: 0
+    },
+    create_time: now,
+    update_time: now
+  }
+
   try {
-    // 按字母序排列用户ID
-    const sortedIds = [openid, target_user_id].sort()
-    
     await db.collection('chat_rooms').add({
+      data: roomData
+    })
+  } catch (err) {
+    if (err.errCode !== -502005) {
+      throw err
+    }
+
+    const existingRoom = await getRoom(finalRoomId)
+    const nextTargetUnread = Number(
+      (existingRoom?.unread_counts && existingRoom.unread_counts[targetOpenid]) || 0
+    ) + 1
+
+    await db.collection('chat_rooms').doc(finalRoomId).update({
       data: {
-        _id: room_id,
-        user_ids: sortedIds,
-        user_info: [
-          {
-            uid: openid,
-            nickname: user_info?.nickname || '用户',
-            avatar: user_info?.avatar || ''
-          },
-          {
-            uid: target_user_id,
-            nickname: target_user_info?.nickname || '用户',
-            avatar: target_user_info?.avatar || ''
-          }
-        ],
-        last_msg: {
-          content: msg_type === 'text' ? content : '[图片]',
-          time: now,
-          sender_id: openid,
-          msg_type: msg_type
-        },
-        unread_counts: {
-          [openid]: 0,
-          [target_user_id]: 1
-        },
-        create_time: now,
-        update_time: now
+        user_info: roomUserInfo,
+        last_msg: lastMsg,
+        update_time: db.serverDate(),
+        [`unread_counts.${targetOpenid}`]: nextTargetUnread,
+        [`unread_counts.${senderOpenid}`]:
+          typeof existingRoom?.unread_counts?.[senderOpenid] === 'undefined'
+            ? 0
+            : existingRoom.unread_counts[senderOpenid],
+        [`is_top.${senderOpenid}`]:
+          typeof existingRoom?.is_top?.[senderOpenid] === 'undefined'
+            ? false
+            : !!existingRoom.is_top[senderOpenid],
+        [`is_top.${targetOpenid}`]:
+          typeof existingRoom?.is_top?.[targetOpenid] === 'undefined'
+            ? false
+            : !!existingRoom.is_top[targetOpenid],
+        [`is_muted.${senderOpenid}`]:
+          typeof existingRoom?.is_muted?.[senderOpenid] === 'undefined'
+            ? false
+            : !!existingRoom.is_muted[senderOpenid],
+        [`is_muted.${targetOpenid}`]:
+          typeof existingRoom?.is_muted?.[targetOpenid] === 'undefined'
+            ? false
+            : !!existingRoom.is_muted[targetOpenid],
+        [`clear_time.${senderOpenid}`]:
+          typeof existingRoom?.clear_time?.[senderOpenid] === 'undefined'
+            ? 0
+            : Number(existingRoom.clear_time[senderOpenid] || 0),
+        [`clear_time.${targetOpenid}`]:
+          typeof existingRoom?.clear_time?.[targetOpenid] === 'undefined'
+            ? 0
+            : Number(existingRoom.clear_time[targetOpenid] || 0)
       }
     })
-    console.log('[会话] 创建成功:', room_id)
-  } catch (err) {
-    // 可能是并发创建导致的重复，忽略
-    if (err.errCode === -502005) {
-      console.log('[会话] 已存在，更新未读数')
-      await db.collection('chat_rooms').doc(room_id).update({
-        data: {
-          last_msg: {
-            content: msg_type === 'text' ? content : '[图片]',
-            time: db.serverDate(),
-            sender_id: openid,
-            msg_type: msg_type
-          },
-          update_time: db.serverDate(),
-          [`unread_counts.${target_user_id}`]: _.inc(1)
-        }
-      })
-    } else {
-      console.error('[会话] 创建失败:', err)
-    }
   }
 }
-

@@ -1,4 +1,5 @@
 // pages/home/home.js
+const app = getApp();
 const echarts = require('../../components/ec-canvas/echarts');
 const hunanGeoJson = require('./hunan');
 
@@ -103,6 +104,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(0);
     }
+    app.refreshChatUnreadBadge(this).catch(() => {});
     if (!this.data.showCanvas && !this.data.isExpanded) {
       setTimeout(() => this._showAndReinitCanvas(), 400);
     }

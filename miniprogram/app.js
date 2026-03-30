@@ -136,6 +136,46 @@ App({
     })
   },
 
+  async getChatUnreadTotal() {
+    const openid = this.globalData.openid
+    if (!openid || !wx.cloud) return 0
+
+    const db = wx.cloud.database()
+    const countRes = await db.collection('chat_rooms')
+      .where({ user_ids: openid })
+      .count()
+
+    const total = countRes.total || 0
+    if (!total) return 0
+
+    const pageSize = 20
+    const batches = Math.ceil(total / pageSize)
+    let unreadTotal = 0
+
+    for (let index = 0; index < batches; index += 1) {
+      const res = await db.collection('chat_rooms')
+        .where({ user_ids: openid })
+        .field({ unread_counts: true })
+        .skip(index * pageSize)
+        .limit(pageSize)
+        .get()
+
+      unreadTotal += (res.data || []).reduce((sum, item) => (
+        sum + Number((item.unread_counts && item.unread_counts[openid]) || 0)
+      ), 0)
+    }
+
+    return unreadTotal
+  },
+
+  async refreshChatUnreadBadge(page) {
+    const unreadTotal = await this.getChatUnreadTotal().catch(() => 0)
+    if (page && typeof page.getTabBar === 'function' && page.getTabBar()) {
+      page.getTabBar().updateUnreadCount(unreadTotal)
+    }
+    return unreadTotal
+  },
+
   globalData: {
     env: CLOUD_ENV_ID,
     openid: null,

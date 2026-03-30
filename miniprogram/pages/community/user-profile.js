@@ -2,7 +2,10 @@ const app = getApp()
 const db = wx.cloud.database()
 const _ = db.command
 
-const { normalizeUserProfile } = require('../../common/user-profile')
+const {
+  normalizeUserProfile,
+  getUserDisplayId
+} = require('../../common/user-profile')
 
 const DEFAULT_AVATAR = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 const MAX_POST_LIMIT = 50
@@ -256,7 +259,7 @@ Page({
       },
       roleText: buildRoleText(userRes.data),
       bioText: buildHeroBio(userRes.data),
-      profileIdText: (userRes.data._id || userRes.data._openid || userId || '').slice(-10),
+      profileIdText: getUserDisplayId(userRes.data, userId),
       coverImage: normalized.profile_bg_url || avatarUrl || DEFAULT_AVATAR,
       coverIsFallback: !normalized.profile_bg_url,
       collectionsVisible: userRes.data.collections_public !== false,
@@ -703,6 +706,33 @@ Page({
     })
   },
 
+  copyProfileId() {
+    const profileIdText = String(this.data.profileIdText || '').trim()
+    if (!profileIdText) {
+      wx.showToast({
+        title: '暂无可复制的 ID',
+        icon: 'none'
+      })
+      return
+    }
+
+    wx.setClipboardData({
+      data: profileIdText,
+      success: () => {
+        wx.showToast({
+          title: 'ID 已复制',
+          icon: 'success'
+        })
+      },
+      fail: () => {
+        wx.showToast({
+          title: '复制失败，请重试',
+          icon: 'none'
+        })
+      }
+    })
+  },
+
   goToEditProfile() {
     wx.navigateTo({
       url: '/pages/profile/edit',
@@ -720,6 +750,7 @@ Page({
             },
             roleText: buildRoleText(nextUserInfo || {}),
             bioText: buildHeroBio(nextUserInfo || {}),
+            profileIdText: getUserDisplayId(nextUserInfo || {}, this.data.userId),
             coverImage: normalized.profile_bg_url || avatarUrl || DEFAULT_AVATAR,
             coverIsFallback: !normalized.profile_bg_url,
             showWorkshopEntry: Boolean(normalized.workshop_id)

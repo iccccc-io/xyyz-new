@@ -1,0 +1,117 @@
+<nav-bar
+  title="聊天管理"
+  showTitle="{{true}}"
+  showBack="{{true}}"
+  background="solid"
+  dark="{{true}}"
+  placeholder="{{true}}"
+/>
+
+<view class="page" wx:if="{{!loading}}">
+  <view class="profile-card">
+    <image class="avatar" src="{{targetUser.avatar_url || '/images/avatar.png'}}" mode="aspectFill" />
+    <view class="profile-main">
+      <text class="profile-name">{{targetUser.display_name || '用户'}}</text>
+      <text class="profile-sub">{{relationStatusText}}</text>
+      <text class="profile-sub" wx:if="{{relation.remark_name}}">原昵称：{{targetUser.nickname}}</text>
+      <text class="profile-sub danger" wx:if="{{relation.is_blocked_by_target}}">对方已拒收你的消息</text>
+    </view>
+    <view class="follow-btn {{relation.is_following ? 'following' : ''}}" bindtap="toggleFollow">
+      <text>{{followButtonText}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">关系设置</view>
+    <view class="cell" bindtap="openRemarkEditor">
+      <view class="cell-main">
+        <text class="cell-title">设置备注名</text>
+        <text class="cell-desc">{{relation.remark_name || '未设置，聊天列表会显示昵称'}}</text>
+      </view>
+      <van-icon name="arrow" size="16px" color="#b3b3b3" />
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">聊天功能</view>
+    <view class="cell" bindtap="goToSearch">
+      <view class="cell-main">
+        <text class="cell-title">查找聊天记录</text>
+        <text class="cell-desc">按关键词搜索当前会话里的文本消息</text>
+      </view>
+      <van-icon name="search" size="18px" color="#777" />
+    </view>
+
+    <view class="cell switch-cell">
+      <view class="cell-main">
+        <text class="cell-title">置顶聊天</text>
+        <text class="cell-desc">当前账号的会话列表里优先显示这段聊天</text>
+      </view>
+      <switch checked="{{room.is_top}}" color="#b63b36" bindchange="onToggleTop" />
+    </view>
+
+    <view class="cell switch-cell">
+      <view class="cell-main">
+        <text class="cell-title">消息免打扰</text>
+        <text class="cell-desc">保留消息接收，但后续提醒将按静默处理</text>
+      </view>
+      <switch checked="{{room.is_muted}}" color="#b63b36" bindchange="onToggleMuted" />
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">安全与清理</view>
+    <view class="cell danger-cell" bindtap="toggleBlacklist">
+      <view class="cell-main">
+        <text class="cell-title">{{relation.has_blocked_target ? '解除黑名单' : '加入黑名单'}}</text>
+        <text class="cell-desc">{{relation.has_blocked_target ? '对方恢复向你发消息的权限' : '加入后，对方将无法再给你发消息'}}</text>
+      </view>
+      <van-icon name="warning-o" size="18px" color="#d84f45" />
+    </view>
+
+    <view class="cell danger-cell" bindtap="reportChat">
+      <view class="cell-main">
+        <text class="cell-title">举报</text>
+        <text class="cell-desc">系统会自动附带最近 3 条聊天记录</text>
+      </view>
+      <van-icon name="flag-o" size="18px" color="#d84f45" />
+    </view>
+
+    <view class="cell danger-cell" bindtap="clearHistory">
+      <view class="cell-main">
+        <text class="cell-title">清空聊天记录</text>
+        <text class="cell-desc">仅清空你自己的消息视图，不删除云端原始消息</text>
+      </view>
+      <van-icon name="delete-o" size="18px" color="#d84f45" />
+    </view>
+  </view>
+</view>
+
+<view class="loading-state" wx:if="{{loading}}">
+  <van-loading size="28px" color="#b63b36" vertical>加载中...</van-loading>
+</view>
+
+<view class="remark-mask" wx:if="{{showRemarkEditor}}" bindtap="closeRemarkEditor"></view>
+<view class="remark-panel" wx:if="{{showRemarkEditor}}" catchtap="noop">
+  <view class="remark-header">
+    <text class="remark-title">设置备注名</text>
+    <text class="remark-sub">备注名会优先展示在聊天页和消息列表</text>
+  </view>
+  <input
+    class="remark-input"
+    value="{{remarkDraft}}"
+    maxlength="20"
+    placeholder="输入备注名"
+    placeholder-class="remark-placeholder"
+    bindinput="onRemarkInput"
+    focus
+  />
+  <view class="remark-actions">
+    <view class="remark-btn ghost" bindtap="closeRemarkEditor">
+      <text>取消</text>
+    </view>
+    <view class="remark-btn solid" bindtap="submitRemark">
+      <text>保存</text>
+    </view>
+  </view>
+</view>

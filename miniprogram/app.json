@@ -20,6 +20,8 @@
     "pages/community/topic",
     "pages/community/user-profile",
     "pages/chat/room",
+    "pages/chat/manage",
+    "pages/chat/search",
     "pages/mall/detail",
     "pages/mall/category",
     "pages/mall/topic",

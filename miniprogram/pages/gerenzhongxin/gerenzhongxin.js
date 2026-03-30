@@ -434,6 +434,7 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().updateActive(4)
     }
+    app.refreshChatUnreadBadge(this).catch(() => {})
 
     if (this._pageReady) {
       this.refreshPageData({ silent: true })
@@ -867,6 +868,24 @@ Page({
     if (!this.ensureLogin()) return
     wx.navigateTo({
       url: '/pages/community/post'
+    })
+  },
+
+  goToUserProfile() {
+    if (!this.ensureLogin()) return
+
+    const userInfo = this.data.userInfo || {}
+    const userId = userInfo._id || userInfo._openid || app.globalData.openid || ''
+    if (!userId) {
+      wx.showToast({
+        title: '用户信息异常',
+        icon: 'none'
+      })
+      return
+    }
+
+    wx.navigateTo({
+      url: `/pages/community/user-profile?userId=${userId}`
     })
   },
 

@@ -52,6 +52,38 @@ function formatFenToInput(fen) {
   return yuan.toFixed(2).replace(/\.?0+$/, '')
 }
 
+function normalizePriceInput(value) {
+  return String(value || '').replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1')
+}
+
+function normalizeStockInput(value) {
+  return String(value || '').replace(/[^\d]/g, '')
+}
+
+function normalizeStockChangeInput(value) {
+  const raw = String(value || '').replace(/[^\d+-]/g, '')
+  if (!raw) return ''
+
+  const sign = raw[0] === '+' || raw[0] === '-' ? raw[0] : ''
+  const digits = (sign ? raw.slice(1) : raw).replace(/[^\d]/g, '')
+  if (!digits) return sign
+
+  return `${sign}${digits.replace(/^0+(?=\d)/, '')}`
+}
+
+function applySkuStockDelta(item, nextDelta) {
+  const currentStock = Number(item && item.currentStock) || 0
+  const safeDelta = Number.isFinite(Number(nextDelta))
+    ? Math.max(-currentStock, Number(nextDelta))
+    : 0
+
+  return {
+    ...item,
+    stockChange: safeDelta,
+    nextStock: currentStock + safeDelta
+  }
+}
+
 function createEmptySku(defaultName = '默认款式') {
   return {
     skuId: '',
@@ -59,6 +91,9 @@ function createEmptySku(defaultName = '默认款式') {
     price: '',
     originalPrice: '',
     stock: '',
+    stockChange: 0,
+    currentStock: 0,
+    nextStock: 0,
     image: ''
   }
 }
@@ -70,6 +105,9 @@ function normalizeSkuForm(item, index) {
     price: formatFenToInput(item && item.price),
     originalPrice: formatFenToInput(item && (item.original_price || item.price)),
     stock: item && (item.stock || item.stock === 0) ? String(item.stock) : '',
+    stockChange: 0,
+    currentStock: Number(item && item.stock) || 0,
+    nextStock: Number(item && item.stock) || 0,
     image: item && item.image ? String(item.image) : ''
   }
 }
@@ -227,7 +265,43 @@ Page({
 
   onSkuFieldInput(e) {
     const { index, field } = e.currentTarget.dataset
-    this.updateSkuField(Number(index), field, getInputValue(e))
+    let value = getInputValue(e)
+    if (field === 'price' || field === 'originalPrice') {
+      value = normalizePriceInput(value)
+    } else if (field === 'stock') {
+      value = normalizeStockInput(value)
+    }
+    this.updateSkuField(Number(index), field, value)
+  },
+
+  onSkuStockAdjust(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    const step = Number(e.currentTarget.dataset.step)
+    if (Number.isNaN(index) || !Number.isFinite(step) || step === 0) return
+
+    const skus = this.data.skus.slice()
+    const target = skus[index]
+    if (!target || !target.skuId) return
+
+    const currentDelta = Number(target.stockChange || 0)
+    skus[index] = applySkuStockDelta(target, currentDelta + step)
+    this.setData({ skus })
+  },
+
+  onSkuStockDeltaInput(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(index)) return
+
+    const skus = this.data.skus.slice()
+    const target = skus[index]
+    if (!target || !target.skuId) return
+
+    const rawValue = e.detail && typeof e.detail.value !== 'undefined' ? String(e.detail.value) : ''
+    const normalizedValue = rawValue.replace(/[^\d-]/g, '')
+    const parsedDelta = normalizedValue === '' || normalizedValue === '-' ? 0 : Number(normalizedValue)
+
+    skus[index] = applySkuStockDelta(target, parsedDelta)
+    this.setData({ skus })
   },
 
   addSku() {
@@ -247,7 +321,7 @@ Page({
     }
 
     if (target.skuId) {
-      wx.showToast({ title: '已发布 SKU 不允许删除，请将库存改为 0', icon: 'none' })
+      wx.showToast({ title: '已发布 SKU 不允许删除，如需停售请将库存调整到 0', icon: 'none' })
       return
     }
 
@@ -648,7 +722,7 @@ Page({
       const skuName = (item.skuName || '').trim() || (index === 0 ? '默认款式' : '')
       const price = Number(item.price)
       const originalPrice = item.originalPrice ? Number(item.originalPrice) : price
-      const stock = Number(item.stock)
+      const isExistingSku = this.data.isEditMode && !!item.skuId
 
       if (!skuName) {
         wx.showToast({ title: `请填写第 ${index + 1} 个 SKU 名称`, icon: 'none' })
@@ -662,12 +736,26 @@ Page({
         wx.showToast({ title: `第 ${index + 1} 个 SKU 原价不能低于现价`, icon: 'none' })
         return false
       }
-      if (!Number.isInteger(stock) || stock < 0) {
-        wx.showToast({ title: `第 ${index + 1} 个 SKU 库存必须是非负整数`, icon: 'none' })
-        return false
-      }
 
-      totalStock += stock
+      if (isExistingSku) {
+        const stockChange = Number(item.stockChange || 0)
+
+        if (!Number.isInteger(stockChange)) {
+          wx.showToast({ title: `第 ${index + 1} 个 SKU 库存调整值不合法`, icon: 'none' })
+          return false
+        }
+        if ((Number(item.currentStock) || 0) + stockChange < 0) {
+          wx.showToast({ title: `第 ${index + 1} 个 SKU 调整后库存不能小于 0`, icon: 'none' })
+          return false
+        }
+      } else {
+        const stock = Number(item.stock)
+        if (!Number.isInteger(stock) || stock < 0) {
+          wx.showToast({ title: `第 ${index + 1} 个 SKU 库存必须是非负整数`, icon: 'none' })
+          return false
+        }
+        totalStock += stock
+      }
     }
 
     if (!this.data.isEditMode && totalStock <= 0) {
@@ -746,6 +834,18 @@ Page({
       const priceFen = Math.round(Number(item.price) * 100)
       const originalPriceYuan = item.originalPrice ? Number(item.originalPrice) : Number(item.price)
       const originalPriceFen = Math.round(originalPriceYuan * 100)
+      const isExistingSku = this.data.isEditMode && !!item.skuId
+
+      if (isExistingSku) {
+        return {
+          sku_id: item.skuId || '',
+          sku_name: skuName,
+          price: priceFen,
+          original_price: originalPriceFen,
+          stock_change: Number.isInteger(Number(item.stockChange || 0)) ? Number(item.stockChange || 0) : 0,
+          image: item.image || ''
+        }
+      }
 
       return {
         sku_id: item.skuId || '',
@@ -770,7 +870,6 @@ Page({
       await this.syncTopicsToDatabase()
 
       const skus = this.buildSkuPayload()
-      const totalStock = skus.reduce((sum, item) => sum + item.stock, 0)
       const origin = this.data.origin.trim()
       const logistics = {
         method: this.data.deliveryMethod,
@@ -797,7 +896,7 @@ Page({
             origin,
             logistics,
             tags: [...this.data.selectedTags],
-            is_on_sale: totalStock > 0 ? this.data.originalIsOnSale : false
+            is_on_sale: this.data.originalIsOnSale
           }
         }
       })

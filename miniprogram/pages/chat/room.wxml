@@ -6,8 +6,13 @@
       <view class="back-btn" bindtap="goBack">
         <van-icon name="arrow-left" size="18px" color="#333" />
       </view>
-      <text class="nav-nickname" bindtap="goToUserProfile">{{targetUser.nickname || '用户'}}</text>
-      <view class="nav-right"></view>
+      <view class="nav-menu-btn" bindtap="openManagePage">
+        <van-icon name="ellipsis" size="18px" color="#333" />
+      </view>
+      <view class="nav-title-wrap" bindtap="goToUserProfile">
+        <text class="nav-nickname">{{displayName || targetUser.nickname || '用户'}}</text>
+        <text class="nav-subtitle" wx:if="{{relationMeta.remarkName}}">{{targetUser.nickname}}</text>
+      </view>
     </view>
   </view>
 
@@ -97,6 +102,10 @@
 
   <!-- 底部输入区域 (TG 风格) -->
   <view class="input-area {{showEmojiPanel ? 'panel-open' : ''}}" style="transform: translateY(-{{keyboardHeight}}px); padding-bottom: {{safeAreaBottom}}px;">
+    <view class="send-tip" wx:if="{{sendDisabled}}">
+      <text>由于对方未关注你，需等待对方回复后才能继续发送</text>
+    </view>
+
     <!-- 引用预览栏 -->
     <view class="quote-preview" wx:if="{{quoteMsg}}">
       <view class="quote-preview-content">
@@ -114,7 +123,7 @@
     <!-- TG 风格输入框 -->
     <view class="input-capsule">
       <!-- 左侧：表情/键盘切换 -->
-      <view class="capsule-btn left-btn {{showEmojiPanel ? 'active' : ''}}" bindtap="toggleEmojiPanel">
+      <view class="capsule-btn left-btn {{showEmojiPanel ? 'active' : ''}} {{sendDisabled ? 'disabled' : ''}}" bindtap="toggleEmojiPanel">
         <van-icon name="{{showEmojiPanel ? 'keyboard-o' : 'smile-o'}}" size="24px" color="{{showEmojiPanel ? '#007aff' : '#8e8e93'}}" />
       </view>
 
@@ -122,7 +131,7 @@
       <input 
         class="input-field"
         value="{{inputValue}}"
-        placeholder="消息"
+        placeholder="{{inputPlaceholder}}"
         placeholder-class="input-placeholder"
         bindinput="onInput"
         bindfocus="onInputFocus"
@@ -133,17 +142,18 @@
         adjust-position="{{false}}"
         cursor-spacing="10"
         focus="{{inputFocus}}"
+        disabled="{{sendDisabled}}"
       />
 
       <!-- 右侧：附件按钮 -->
-      <view class="capsule-btn right-btn" bindtap="showAttachMenu">
+      <view class="capsule-btn right-btn {{sendDisabled ? 'disabled' : ''}}" bindtap="showAttachMenu">
         <view class="attach-icon">
-          <van-icon name="link-o" size="22px" color="#8e8e93" />
+          <van-icon name="photo-o" size="20px" color="#5d7588" />
         </view>
       </view>
 
       <!-- 发送按钮（有内容时显示） -->
-      <view class="send-btn {{inputValue ? 'show' : ''}}" bindtap="sendTextMessage">
+      <view class="send-btn {{inputValue && !sendDisabled ? 'show' : ''}} {{sendDisabled ? 'disabled' : ''}}" bindtap="sendTextMessage">
         <van-icon name="arrow-up" size="18px" color="#fff" />
       </view>
     </view>

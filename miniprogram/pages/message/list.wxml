@@ -38,16 +38,22 @@
         </view>
       </view>
 
-      <!-- 会话信息 -->
+        <!-- 会话信息 -->
       <view class="conversation-info">
         <view class="info-top">
-          <text class="nickname">{{item.targetUser.nickname || '用户'}}</text>
+          <view class="title-wrap">
+            <text class="nickname">{{item.targetUser.displayName || '用户'}}</text>
+          </view>
           <text class="time">{{item.lastMsgTimeStr}}</text>
         </view>
         <view class="info-bottom">
           <text class="last-msg {{item.unreadCount > 0 ? 'unread' : ''}}">
             {{item.lastMsgPreview}}
           </text>
+          <view class="meta-row" wx:if="{{item.isTop || item.isMuted}}">
+            <text class="meta-tag top" wx:if="{{item.isTop}}">置顶聊天</text>
+            <text class="meta-tag mute" wx:if="{{item.isMuted}}">免打扰</text>
+          </view>
         </view>
       </view>
     </view>

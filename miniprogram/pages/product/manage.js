@@ -288,7 +288,7 @@ Page({
     for (const sku of drafts) {
       const price = Number(sku.price)
       const originalPrice = sku.original_price === '' ? price : Number(sku.original_price)
-      const stock = Number(sku.current_stock || 0) + Number(sku.stock_delta || 0)
+      const stockDelta = Number(sku.stock_delta || 0)
 
       if (!price || price <= 0) {
         wx.showToast({ title: `请检查 ${sku.sku_name} 的现价`, icon: 'none' })
@@ -298,8 +298,12 @@ Page({
         wx.showToast({ title: `请检查 ${sku.sku_name} 的原价`, icon: 'none' })
         return
       }
-      if (!Number.isInteger(stock) || stock < 0) {
-        wx.showToast({ title: `请检查 ${sku.sku_name} 的库存`, icon: 'none' })
+      if (!Number.isInteger(stockDelta)) {
+        wx.showToast({ title: `请检查 ${sku.sku_name} 的库存调整值`, icon: 'none' })
+        return
+      }
+      if ((Number(sku.current_stock) || 0) + stockDelta < 0) {
+        wx.showToast({ title: `${sku.sku_name} 的库存调整后不能小于 0`, icon: 'none' })
         return
       }
 
@@ -307,7 +311,7 @@ Page({
         sku_id: sku.sku_id,
         price: Math.round(price * 100),
         original_price: Math.round(originalPrice * 100),
-        stock
+        stock_change: stockDelta
       })
     }
 
