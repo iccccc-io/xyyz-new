@@ -1,9 +1,7 @@
-/* pages/order/detail.wxss */
-
 .detail-page {
   min-height: 100vh;
-  background: #f6f0e8;
-  padding-bottom: 140rpx;
+  background: linear-gradient(180deg, #faf7f0 0%, #f3ede3 46%, #ebe1d2 100%);
+  padding-bottom: 160rpx;
 }
 
 .loading-wrap {
@@ -13,69 +11,429 @@
   height: 60vh;
 }
 
-/* ===== 状态横幅 ===== */
-.status-banner {
+.status-stage {
+  position: relative;
+  background: #f3ede3;
+  padding: 0 22rpx 38rpx;
+}
+
+.status-ticket {
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+  transition:
+    transform 520ms cubic-bezier(0.2, 0.82, 0.24, 1),
+    opacity 420ms ease,
+    filter 520ms cubic-bezier(0.2, 0.82, 0.24, 1);
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.ticket-entering {
+  opacity: 0;
+  transform: translateY(-56rpx) scale(0.985);
+  filter: saturate(0.94);
+}
+
+.ticket-entered {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: saturate(1);
+}
+
+.ticket-surface,
+.ticket-teeth {
+  position: relative;
+  z-index: 1;
+}
+
+.ticket-surface {
+  overflow: hidden;
+  box-shadow:
+    0 18rpx 34rpx rgba(74, 58, 42, 0.16),
+    0 28rpx 52rpx rgba(74, 58, 42, 0.08);
+}
+
+.status-ticket.banner-10 .ticket-surface {
+  background: #ff5a57;
+}
+
+.status-ticket.banner-20 .ticket-surface {
+  background: #ffac33;
+}
+
+.status-ticket.banner-30 .ticket-surface {
+  background: #3a9fff;
+}
+
+.status-ticket.banner-40 .ticket-surface,
+.status-ticket.banner-refunded .ticket-surface {
+  background: #2fcd97;
+}
+
+.status-ticket.banner-50 .ticket-surface {
+  background: #c5c5c5;
+}
+
+.status-ticket.banner-60 .ticket-surface {
+  background: #9d7a57;
+}
+
+.ticket-upper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 24rpx;
-  padding: 40rpx 32rpx;
+  padding: 30rpx 30rpx 24rpx;
 }
 
-/* 根据状态变色 */
-.banner-10 { background: linear-gradient(135deg, #ee0a24 0%, #ff4d4f 100%); }
-.banner-20 { background: linear-gradient(135deg, #ff9500 0%, #ffb340 100%); }
-.banner-30 { background: linear-gradient(135deg, #1989fa 0%, #4daeff 100%); }
-.banner-40 { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
-.banner-50 { background: linear-gradient(135deg, #aaa 0%, #ccc 100%); }
-.banner-60 { background: linear-gradient(135deg, #8B6F47 0%, #a08060 100%); }
-.banner-refunded { background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important; }
+.ticket-copy {
+  flex: 1;
+  min-width: 0;
+  padding-top: 10rpx;
+}
 
-.status-banner-text {
+.ticket-side {
   display: flex;
-  flex-direction: column;
-  gap: 8rpx;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: 188rpx;
+  padding-top: 10rpx;
 }
 
-.status-main {
-  font-size: 38rpx;
+.ticket-title {
+  display: block;
+  font-size: 40rpx;
+  line-height: 1;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
 }
 
-.status-sub {
+.ticket-desc {
+  display: block;
+  margin-top: 10rpx;
   font-size: 24rpx;
-  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ticket-amount-block {
+  position: relative;
+  padding-top: 24rpx;
+  text-align: right;
+}
+
+.ticket-amount-label {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 22rpx;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 2rpx;
+}
+
+.ticket-amount-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  margin-top: 10rpx;
+}
+
+.ticket-amount-currency {
+  font-size: 26rpx;
+  line-height: 1;
+  color: #ffffff;
+  font-weight: 700;
+  margin-right: 4rpx;
+}
+
+.ticket-amount-value {
+  display: block;
+  font-size: 48rpx;
+  line-height: 1;
+  color: #ffffff;
+  font-weight: 700;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
 .countdown-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  margin-top: 4rpx;
+  margin-top: 14rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .countdown-text {
-  font-size: 26rpx;
-  color: rgba(255,255,255,0.95);
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
 }
 
 .countdown-row.expired .countdown-text {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.78);
 }
 
-/* ===== 步骤条 ===== */
-.steps-card {
-  margin: 20rpx 24rpx 0;
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 28rpx 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+.ticket-seam {
+  position: relative;
+  height: 34rpx;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.ticket-seam::before,
+.ticket-seam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50%;
+  background: #f3ede3;
+  z-index: 2;
+}
+
+.ticket-seam::before {
+  left: -17rpx;
+}
+
+.ticket-seam::after {
+  right: -17rpx;
+}
+
+.ticket-dash {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 4rpx;
+  margin: 0 18rpx;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.88) 0 18rpx,
+    rgba(255, 255, 255, 0) 18rpx 34rpx
+  );
+  opacity: 0.95;
+}
+
+.ticket-notch {
+  display: none;
+}
+
+.ticket-lower {
+  padding: 6rpx 30rpx 14rpx;
+  text-align: center;
+}
+
+.ticket-order-caption {
+  display: block;
+  font-size: 20rpx;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+}
+
+.ticket-order-id {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  word-break: break-all;
+}
+
+.ticket-teeth {
+  display: flex;
+  align-items: flex-start;
+  height: 22rpx;
+  margin-top: -1rpx;
+  padding: 0 2rpx;
+  overflow: hidden;
+  line-height: 0;
+  font-size: 0;
+}
+
+.ticket-tooth {
+  flex: 1 1 0;
+  height: 22rpx;
+  margin-left: -1rpx;
+  -webkit-clip-path: polygon(0 0, 100% 0, 50% 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.ticket-tooth:first-child {
+  margin-left: 0;
+}
+
+.status-ticket.banner-10 .ticket-tooth {
+  background: #ff5a57;
+}
+
+.status-ticket.banner-20 .ticket-tooth {
+  background: #ffac33;
+}
+
+.status-ticket.banner-30 .ticket-tooth {
+  background: #3a9fff;
+}
+
+.status-ticket.banner-40 .ticket-tooth,
+.status-ticket.banner-refunded .ticket-tooth {
+  background: #2fcd97;
+}
+
+.status-ticket.banner-50 .ticket-tooth {
+  background: #c5c5c5;
+}
+
+.status-ticket.banner-60 .ticket-tooth {
+  background: #9d7a57;
+}
+
+.content-wrap {
+  margin-top: 0;
+  padding: 0 20rpx;
+}
+
+.spotlight-card,
+.steps-card,
+.info-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 30rpx rgba(92, 79, 66, 0.08);
+}
+
+.spotlight-card,
+.steps-card,
+.info-card {
+  padding: 22rpx;
+}
+
+.spotlight-head,
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.spotlight-title,
+.card-title {
+  font-size: 28rpx;
+  color: #3d3530;
+  font-weight: 700;
+}
+
+.spotlight-link,
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 22rpx;
+  color: #8b6f47;
+}
+
+.spotlight-body {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.spotlight-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 18rpx;
+  background: #f0e6da;
+  flex-shrink: 0;
+}
+
+.spotlight-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.spotlight-name {
+  font-size: 28rpx;
+  line-height: 1.45;
+  color: #2d2621;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotlight-sku {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #94877b;
+}
+
+.spotlight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.spotlight-tag {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f4efe8;
+  font-size: 20rpx;
+  line-height: 1;
+  color: #7c7066;
+}
+
+.spotlight-tag-brand {
+  background: #fff3f2;
+  color: #b63b36;
+}
+
+.spotlight-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.spotlight-price {
+  font-size: 34rpx;
+  line-height: 1;
+  color: #9f2b24;
+  font-weight: 700;
+}
+
+.spotlight-count {
+  font-size: 22rpx;
+  color: #9f9489;
+}
+
+.steps-card,
+.info-card {
+  margin-top: 18rpx;
+}
+
+.card-title-main {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .steps-row {
   display: flex;
   align-items: flex-start;
+  margin-top: 18rpx;
 }
 
 .step-item {
@@ -98,8 +456,8 @@
 }
 
 .dot-active {
-  background: #8B2E2A;
-  box-shadow: 0 0 0 6rpx rgba(139,46,42,0.2);
+  background: #8b2e2a;
+  box-shadow: 0 0 0 6rpx rgba(139, 46, 42, 0.15);
 }
 
 .dot-done {
@@ -114,7 +472,7 @@
 
 .step-label {
   font-size: 22rpx;
-  color: #333;
+  color: #333333;
   text-align: center;
   white-space: nowrap;
 }
@@ -132,53 +490,17 @@
   background: #e0d6c8;
   margin-top: 16rpx;
   border-radius: 2rpx;
-  transition: background 0.3s;
 }
 
 .line-done {
   background: #10b981;
 }
 
-/* ===== 通用信息卡片 ===== */
-.info-card {
-  margin: 20rpx 24rpx 0;
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 1rpx solid #f5f0e8;
-}
-
-/* ===== 物流卡片 ===== */
-.logistics-card .card-title {
-  border-bottom: 1rpx solid #e8f4ff;
-}
-
-.logistics-query-btn {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  color: #8B6F47;
-  font-size: 24rpx;
-  font-weight: normal;
-}
-
 .logistics-info-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
+  margin-top: 18rpx;
   margin-bottom: 10rpx;
 }
 
@@ -193,147 +515,227 @@
 }
 
 .logistics-no {
-  font-size: 28rpx;
-  color: #333;
-  font-family: monospace;
   flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: #333333;
+  font-family: monospace;
 }
 
 .logistics-sub {
   font-size: 24rpx;
-  color: #999;
+  color: #999999;
 }
 
-/* ===== 地址 ===== */
+.address-card {
+  margin-top: 18rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: #faf7f2;
+}
+
 .address-user-row {
   display: flex;
   align-items: center;
   gap: 20rpx;
-  margin-bottom: 10rpx;
 }
 
-.address-name { font-size: 30rpx; font-weight: 700; color: #333; }
-.address-tel { font-size: 26rpx; color: #666; }
-.address-detail { font-size: 26rpx; color: #888; line-height: 1.6; }
-
-/* ===== 商品行 ===== */
-.product-row {
-  display: flex;
-  gap: 20rpx;
+.address-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333333;
 }
 
-.product-img {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 12rpx;
-  flex-shrink: 0;
+.address-tel {
+  font-size: 26rpx;
+  color: #666666;
 }
 
-.product-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+.address-detail {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.65;
+  color: #7f7369;
 }
 
-.product-title {
-  font-size: 28rpx;
-  color: #333;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx 14rpx;
+  margin-top: 18rpx;
 }
 
-.product-tag-row { display: flex; }
-.product-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-.product-price { font-size: 32rpx; font-weight: 700; color: #8B2E2A; }
-.product-qty { font-size: 26rpx; color: #999; }
-
-/* ===== 订单信息列表 ===== */
-.info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14rpx 0;
-  border-bottom: 1rpx solid #f9f5ef;
+.info-grid-item {
+  padding: 18rpx 18rpx 16rpx;
+  border-radius: 18rpx;
+  background: #faf7f2;
 }
 
-.info-row:last-child { border-bottom: none; }
+.grid-span-full {
+  grid-column: 1 / -1;
+}
 
-.info-label { font-size: 26rpx; color: #999; }
-.info-val { font-size: 26rpx; color: #333; }
+.grid-label {
+  display: block;
+  font-size: 22rpx;
+  color: #9c8f82;
+}
 
-.info-val-row {
+.grid-value {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.55;
+  color: #342d28;
+  font-weight: 600;
+}
+
+.grid-value-row {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  max-width: 360rpx;
+  margin-top: 12rpx;
+}
+
+.price-val {
+  color: #9f2b24;
 }
 
 .order-id-text {
-  font-size: 22rpx;
-  color: #aaa;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 320rpx;
 }
 
-.total-row-info { border-top: 2rpx solid #f5f0e8; padding-top: 16rpx; }
-.total-val { font-size: 36rpx; font-weight: 700; color: #8B2E2A; }
-
-/* 售后日志卡片 */
-.aftersale-log-card .card-title { display: flex; align-items: center; gap: 8rpx; }
-.as-log-row { display: flex; align-items: flex-start; padding: 8rpx 0; }
-.as-log-label { font-size: 24rpx; color: #999; width: 140rpx; flex-shrink: 0; }
-.as-log-val { font-size: 24rpx; color: #333; flex: 1; }
-.as-log-price { color: #8B2E2A; font-weight: 600; }
 .as-log-timeline {
-  margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #f5f0e8;
-}
-.as-log-tl {
-  display: flex; gap: 12rpx; padding: 10rpx 0;
-}
-.as-tl-dot { width: 12rpx; height: 12rpx; border-radius: 50%; background: #1989fa; flex-shrink: 0; margin-top: 8rpx; }
-.as-tl-dot.dot-red { background: #8B2E2A; }
-.as-tl-dot.dot-orange { background: #ff9500; }
-.as-tl-content { flex: 1; }
-.as-tl-role { font-size: 20rpx; font-weight: 600; color: #8B6F47; margin-right: 8rpx; }
-.as-tl-text { font-size: 22rpx; color: #666; line-height: 1.5; display: block; }
-.as-tl-time { font-size: 20rpx; color: #bbb; display: block; margin-top: 4rpx; }
-.as-log-link {
-  display: flex; align-items: center; justify-content: center; gap: 8rpx;
-  margin-top: 16rpx; padding: 16rpx; background: #f9f5ef; border-radius: 12rpx;
-  font-size: 26rpx; color: #8B6F47;
+  margin-top: 18rpx;
 }
 
-/* 售后提示卡片 */
+.as-log-tl {
+  display: flex;
+  gap: 12rpx;
+  padding: 12rpx 0;
+}
+
+.as-tl-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #1989fa;
+  flex-shrink: 0;
+  margin-top: 10rpx;
+}
+
+.as-tl-dot.dot-red {
+  background: #8b2e2a;
+}
+
+.as-tl-dot.dot-orange {
+  background: #ff9500;
+}
+
+.as-tl-content {
+  flex: 1;
+}
+
+.as-tl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.as-tl-role {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #8b6f47;
+}
+
+.as-tl-time {
+  font-size: 20rpx;
+  color: #bbb;
+}
+
+.as-tl-text {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #666666;
+}
+
+.link-block {
+  justify-content: center;
+  width: 100%;
+  margin-top: 16rpx;
+  padding: 16rpx;
+  border-radius: 14rpx;
+  background: #f9f5ef;
+  box-sizing: border-box;
+}
+
 .aftersale-hint-card {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  margin: 20rpx 24rpx 0;
-  padding: 16rpx 24rpx;
+  margin-top: 18rpx;
+  padding: 18rpx 22rpx;
   background: #fff8f0;
   border: 1rpx solid #ffe8cc;
-  border-radius: 12rpx;
+  border-radius: 18rpx;
 }
-.as-hint-text { font-size: 24rpx; color: #ff9500; }
 
-/* ===== 底部操作栏 ===== */
+.as-hint-text {
+  font-size: 24rpx;
+  color: #ff9500;
+}
+
 .detail-footer {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 20rpx;
-  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
+  gap: 16rpx;
+  padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -6rpx 24rpx rgba(92, 79, 66, 0.08);
+}
+
+.footer-btn {
+  min-width: 180rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border-radius: 36rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.footer-btn-secondary {
+  color: #2f2a26;
+  background: #ffffff;
+  border: 1rpx solid rgba(61, 53, 48, 0.16);
+}
+
+.footer-btn-primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #b3342f 0%, #cf4a41 100%);
+  box-shadow: 0 10rpx 22rpx rgba(179, 52, 47, 0.22);
+}
+
+.footer-btn-warning {
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff9500 0%, #ffb340 100%);
+  box-shadow: 0 10rpx 22rpx rgba(255, 149, 0, 0.18);
 }

@@ -7,8 +7,15 @@ const {
 
 const DEFAULT_AVATAR = '/images/icons/avatar.png'
 
-function isTempFilePath(value = '') {
-  return /^(wxfile:\/\/|http:\/\/tmp|https:\/\/tmp|file:\/\/)/.test(String(value || ''))
+function getFileExtension(path) {
+  const match = String(path || '').match(/(\.[a-zA-Z0-9]+)(?:$|\?)/)
+  return match ? match[1].toLowerCase() : '.jpg'
+}
+
+function createUploadList(url = '', name = '') {
+  return url
+    ? [{ url, name: name || `file_${Date.now()}` }]
+    : []
 }
 
 Page({
@@ -19,9 +26,10 @@ Page({
     submitting: false,
     form: createDefaultUserProfile(),
     originalUser: createDefaultUserProfile(),
-    defaultAvatar: DEFAULT_AVATAR,
     bioLength: 0,
-    avatarPreviewUrl: DEFAULT_AVATAR,
+    nicknameLength: 0,
+    avatarFiles: [],
+    coverFiles: [],
     saveButtonText: '保存',
     saveButtonClass: ''
   },
@@ -51,7 +59,9 @@ Page({
         form: normalized,
         originalUser: normalized,
         bioLength: (normalized.bio || '').length,
-        avatarPreviewUrl: normalized.avatar_url || DEFAULT_AVATAR
+        nicknameLength: (normalized.nickname || '').length,
+        avatarFiles: createUploadList(normalized.avatar_url || DEFAULT_AVATAR, 'avatar'),
+        coverFiles: createUploadList(normalized.profile_bg_url, 'cover')
       })
     } catch (err) {
       console.error('加载用户资料失败:', err)
@@ -61,7 +71,9 @@ Page({
         form: fallbackUser,
         originalUser: fallbackUser,
         bioLength: (fallbackUser.bio || '').length,
-        avatarPreviewUrl: fallbackUser.avatar_url || DEFAULT_AVATAR
+        nicknameLength: (fallbackUser.nickname || '').length,
+        avatarFiles: createUploadList(fallbackUser.avatar_url || DEFAULT_AVATAR, 'avatar'),
+        coverFiles: createUploadList(fallbackUser.profile_bg_url, 'cover')
       })
       wx.showToast({
         title: '资料加载失败',
@@ -75,8 +87,10 @@ Page({
   },
 
   onNicknameInput(e) {
+    const nickname = e.detail.value || ''
     this.setData({
-      'form.nickname': e.detail.value
+      'form.nickname': nickname,
+      nicknameLength: nickname.length
     })
   },
 
@@ -88,71 +102,80 @@ Page({
     })
   },
 
-  async chooseAvatar() {
-    const file = await this.chooseSingleImage()
-    if (!file) return
-    this.setData({
-      'form.avatar_url': file,
-      'form.avatar_file_id': file,
-      'form.avatar': file,
-      avatarPreviewUrl: file
-    })
+  async chooseAndUploadImage(folder, stateKey) {
+    try {
+      const chooseRes = await wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed']
+      })
+      const file = chooseRes.tempFiles && chooseRes.tempFiles[0]
+      if (!file || !file.tempFilePath) return
+
+      const openid = app.globalData.openid || (app.globalData.userInfo && app.globalData.userInfo._openid) || ''
+      if (!openid) {
+        throw new Error('missing openid')
+      }
+
+      wx.showLoading({ title: '上传中...', mask: true })
+      const ext = getFileExtension(file.tempFilePath)
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath: `${folder}/${openid}_${Date.now()}${ext}`,
+        filePath: file.tempFilePath
+      })
+
+      this.setData({
+        [stateKey]: [{
+          url: uploadRes.fileID,
+          name: `${folder}_${Date.now()}`
+        }]
+      })
+      wx.hideLoading()
+      wx.showToast({ title: '上传成功', icon: 'success' })
+    } catch (err) {
+      wx.hideLoading()
+      if (err && err.errMsg && err.errMsg.indexOf('cancel') > -1) return
+      console.error('上传图片失败:', err)
+      wx.showToast({
+        title: '上传失败',
+        icon: 'none'
+      })
+    }
   },
 
-  async chooseProfileBg() {
-    const file = await this.chooseSingleImage()
-    if (!file) return
+  chooseAvatar() {
+    this.chooseAndUploadImage('avatars', 'avatarFiles')
+  },
+
+  chooseProfileBg() {
+    this.chooseAndUploadImage('profile-backgrounds', 'coverFiles')
+  },
+
+  removeAvatar() {
     this.setData({
-      'form.profile_bg_url': file
+      avatarFiles: []
     })
   },
 
   clearProfileBg() {
     this.setData({
-      'form.profile_bg_url': ''
+      coverFiles: []
     })
   },
 
-  chooseSingleImage() {
-    return new Promise((resolve) => {
-      wx.chooseMedia({
-        count: 1,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        success: (res) => {
-          const file = res.tempFiles && res.tempFiles[0]
-          resolve(file && file.tempFilePath ? file.tempFilePath : '')
-        },
-        fail: (err) => {
-          if (err && err.errMsg !== 'chooseMedia:fail cancel') {
-            wx.showToast({
-              title: '选择图片失败',
-              icon: 'none'
-            })
-          }
-          resolve('')
-        }
-      })
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url
+    if (!url) return
+    wx.previewImage({
+      urls: [url],
+      current: url
     })
-  },
-
-  async uploadIfNeeded(filePath, folder) {
-    if (!filePath || !isTempFilePath(filePath)) return filePath
-    const openid = app.globalData.openid || (app.globalData.userInfo && app.globalData.userInfo._openid) || ''
-    if (!openid) {
-      throw new Error('missing openid')
-    }
-    const ext = /\.png$/i.test(filePath) ? 'png' : 'jpg'
-    const uploadRes = await wx.cloud.uploadFile({
-      cloudPath: `${folder}/${openid}_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`,
-      filePath
-    })
-    return uploadRes.fileID
   },
 
   validateForm() {
     const nickname = (this.data.form.nickname || '').trim()
+    const avatarUrl = this.data.avatarFiles[0] && this.data.avatarFiles[0].url
     if (!nickname) {
       wx.showToast({
         title: '请输入昵称',
@@ -163,6 +186,13 @@ Page({
     if (nickname.length > 20) {
       wx.showToast({
         title: '昵称最多20字',
+        icon: 'none'
+      })
+      return false
+    }
+    if (!avatarUrl) {
+      wx.showToast({
+        title: '请上传个人头像',
         icon: 'none'
       })
       return false
@@ -188,8 +218,8 @@ Page({
     })
 
     try {
-      const avatarUrl = await this.uploadIfNeeded(form.avatar_url, 'avatars')
-      const backgroundUrl = await this.uploadIfNeeded(form.profile_bg_url, 'profile-backgrounds')
+      const avatarUrl = this.data.avatarFiles[0] ? this.data.avatarFiles[0].url : ''
+      const backgroundUrl = this.data.coverFiles[0] ? this.data.coverFiles[0].url : ''
       const now = new Date()
 
       const patch = {
@@ -215,7 +245,9 @@ Page({
         originalUser: nextUserInfo,
         form: nextUserInfo,
         bioLength: (nextUserInfo.bio || '').length,
-        avatarPreviewUrl: nextUserInfo.avatar_url || DEFAULT_AVATAR
+        nicknameLength: (nextUserInfo.nickname || '').length,
+        avatarFiles: createUploadList(nextUserInfo.avatar_url || DEFAULT_AVATAR, 'avatar'),
+        coverFiles: createUploadList(nextUserInfo.profile_bg_url, 'cover')
       })
 
       const eventChannel = this.getOpenerEventChannel()

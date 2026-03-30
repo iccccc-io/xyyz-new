@@ -11,6 +11,8 @@ const STATUS_MAP = {
   60: { text: '售后处理', icon: 'service-o', desc: '加载售后详情中...' }
 }
 
+const TICKET_TEETH = Array.from({ length: 16 }, (_, index) => index)
+
 
 function formatFen(fen) {
   if (!fen && fen !== 0) return '0.00'
@@ -42,6 +44,8 @@ Page({
   data: {
     loading: true,
     order: null,
+    ticketEntered: false,
+    ticketTeeth: TICKET_TEETH,
     // 支付倒计时（秒）
     countdown: 0,
     countdownDisplay: '',
@@ -56,6 +60,7 @@ Page({
   },
 
   _timer: null,
+  _ticketTimer: null,
 
   onLoad(options) {
     if (options.id) {
@@ -68,6 +73,7 @@ Page({
 
   onUnload() {
     this._clearTimer()
+    this._clearTicketTimer()
   },
 
   _clearTimer() {
@@ -77,10 +83,19 @@ Page({
     }
   },
 
+  _clearTicketTimer() {
+    if (this._ticketTimer) {
+      clearTimeout(this._ticketTimer)
+      this._ticketTimer = null
+    }
+  },
+
   async loadOrder(id) {
     try {
+      this._clearTicketTimer()
       this.setData({
         loading: true,
+        ticketEntered: false,
         canApplyAftersale: false,
         aftersaleDeadlineDisplay: '',
         activeAftersaleId: '',
@@ -111,6 +126,10 @@ Page({
       }
 
       this.setData({ order, loading: false })
+      this._ticketTimer = setTimeout(() => {
+        this.setData({ ticketEntered: true })
+        this._ticketTimer = null
+      }, 40)
 
       // 待付款订单：启动 30 分钟倒计时
       if (raw.status === 10 && raw.create_time) {

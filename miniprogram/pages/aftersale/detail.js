@@ -12,6 +12,8 @@ const STATUS_MAP = {
   '-2': { text: '售后关闭', icon: 'info-o', desc: '售后已关闭' }
 }
 
+const TICKET_TEETH = Array.from({ length: 16 }, (_, index) => index)
+
 const CARRIERS = [
   { code: 'SF', name: '顺丰' }, { code: 'YTO', name: '圆通' },
   { code: 'ZTO', name: '中通' }, { code: 'STO', name: '申通' },
@@ -31,6 +33,8 @@ Page({
   data: {
     loading: true,
     role: 'visitor',    // 'buyer' | 'seller' | 'visitor' — 由云函数返回
+    ticketEntered: false,
+    ticketTeeth: TICKET_TEETH,
     detail: null,
     order: null,
     statusInfo: {},
@@ -52,6 +56,8 @@ Page({
     approveSubmitting: false
   },
 
+  _ticketTimer: null,
+
   onLoad(options) {
     this._asId = options.id || ''
     this._orderId = options.orderId || ''
@@ -63,9 +69,21 @@ Page({
     if (this._asId || this._orderId) this._loadData()
   },
 
+  onUnload() {
+    this._clearTicketTimer()
+  },
+
+  _clearTicketTimer() {
+    if (this._ticketTimer) {
+      clearTimeout(this._ticketTimer)
+      this._ticketTimer = null
+    }
+  },
+
   /** 通过云函数加载（管理员权限，买卖双方均可读） */
   async _loadData() {
-    this.setData({ loading: true })
+    this._clearTicketTimer()
+    this.setData({ loading: true, ticketEntered: false })
     try {
       const res = await wx.cloud.callFunction({
         name: 'manage_aftersale',
@@ -105,6 +123,7 @@ Page({
 
       this.setData({
         loading: false,
+        ticketEntered: false,
         role: r.role,       // 由云函数严格判定
         detail,
         order,
@@ -112,6 +131,11 @@ Page({
         orderTotalDisplay,
         operationLogs
       })
+
+      this._ticketTimer = setTimeout(() => {
+        this.setData({ ticketEntered: true })
+        this._ticketTimer = null
+      }, 40)
     } catch (err) {
       console.error('加载售后详情失败:', err)
       this.setData({ loading: false })

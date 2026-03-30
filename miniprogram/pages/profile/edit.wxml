@@ -1,93 +1,34 @@
 <view class="page">
-  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
-    <view class="nav-inner">
-      <view class="nav-back" bindtap="goBack">
-        <van-icon name="arrow-left" size="20" color="#ffffff" />
-      </view>
-      <text class="nav-title">编辑资料</text>
-      <view class="nav-placeholder"></view>
-    </view>
+  <nav-bar
+    title="编辑资料"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="page-loading" wx:if="{{loading}}">
+    <van-loading size="26px" color="#b63b36" vertical>加载中...</van-loading>
   </view>
 
-  <scroll-view
-    class="page-scroll"
-    scroll-y
-    enhanced
-    show-scrollbar="{{false}}"
-    style="padding-bottom: {{safeAreaBottom + 180}}px;"
-  >
-    <view class="content" wx:if="{{!loading}}">
-      <view class="panel panel-media">
-        <view class="panel-head">
-          <view class="panel-title-wrap">
-            <text class="panel-index">01</text>
-            <view class="panel-copy">
-              <text class="panel-title">顶部背景</text>
-              <text class="panel-desc">展示在个人中心头图区域</text>
-            </view>
+  <view class="content" wx:else>
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">01</text>
+          <view class="panel-copy">
+            <text class="panel-title">昵称</text>
           </view>
-        </view>
-
-        <view class="cover-preview" bindtap="chooseProfileBg">
-          <image
-            wx:if="{{form.profile_bg_url}}"
-            class="cover-image"
-            src="{{form.profile_bg_url}}"
-            mode="aspectFill"
-          />
-          <view wx:else class="cover-empty">
-            <van-icon name="photo-o" size="24" color="#A79A8D" />
-            <text class="cover-empty-title">点击更换背景图</text>
-            <text class="cover-empty-desc">建议使用横向图片</text>
-          </view>
-        </view>
-
-        <view class="inline-action-row">
-          <view class="mini-action-btn" bindtap="chooseProfileBg">更换背景</view>
-          <view class="mini-action-btn ghost" wx:if="{{form.profile_bg_url}}" bindtap="clearProfileBg">恢复默认</view>
         </view>
       </view>
 
-      <view class="panel">
-        <view class="panel-head">
-          <view class="panel-title-wrap">
-            <text class="panel-index">02</text>
-            <view class="panel-copy">
-              <text class="panel-title">头像</text>
-              <text class="panel-desc">修改后会同步到社区与个人中心</text>
-            </view>
-          </view>
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>用户昵称</text>
+          <text class="field-counter">{{nicknameLength}}/20</text>
         </view>
-
-        <view class="avatar-editor-row">
-          <image
-            class="avatar-preview"
-            src="{{avatarPreviewUrl}}"
-            mode="aspectFill"
-          />
-          <view class="avatar-editor-copy">
-            <text class="avatar-editor-title">当前头像</text>
-            <text class="avatar-editor-desc">建议使用清晰的正方形图片</text>
-          </view>
-          <view class="mini-action-btn" bindtap="chooseAvatar">更换头像</view>
-        </view>
-      </view>
-
-      <view class="panel">
-        <view class="panel-head">
-          <view class="panel-title-wrap">
-            <text class="panel-index">03</text>
-            <view class="panel-copy">
-              <text class="panel-title">基本资料</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="field-block">
-          <view class="field-head">
-            <text class="field-label">昵称</text>
-            <text class="field-counter">{{nicknameLength}}/20</text>
-          </view>
+        <view class="field-input-shell">
           <input
             class="field-input"
             maxlength="20"
@@ -97,32 +38,91 @@
             bindinput="onNicknameInput"
           />
         </view>
+      </view>
+    </view>
 
-        <view class="field-block">
-          <view class="field-head">
-            <text class="field-label">个人简介</text>
-            <text class="field-counter">{{bioLength}}/80</text>
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">02</text>
+          <view class="panel-copy">
+            <text class="panel-title">头像与背景</text>
           </view>
-          <textarea
-            class="field-textarea compact"
-            maxlength="80"
-            placeholder="介绍一下自己吧"
-            placeholder-class="field-placeholder"
-            value="{{form.bio}}"
-            bindinput="onBioInput"
-          />
+        </view>
+      </view>
+
+      <view class="media-group">
+        <view class="media-label-row">
+          <text class="field-label"><text class="required-mark">*</text>个人头像</text>
+        </view>
+        <view class="single-upload">
+          <view class="image-preview logo-preview" wx:if="{{avatarFiles.length > 0}}">
+            <image class="preview-image" src="{{avatarFiles[0].url}}" mode="aspectFill" bindtap="previewImage" data-url="{{avatarFiles[0].url}}" />
+            <view class="delete-btn" catchtap="removeAvatar">×</view>
+          </view>
+          <view class="upload-btn logo-upload" wx:else bindtap="chooseAvatar">
+            <van-icon name="edit" size="22" color="#9D938A" />
+            <text class="upload-title">更换头像</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="media-group">
+        <view class="media-label-row">
+          <text class="field-label">个人背景图</text>
+          <text class="field-unit">选填</text>
+        </view>
+        <view class="single-upload">
+          <view class="image-preview cover-preview" wx:if="{{coverFiles.length > 0}}">
+            <image class="preview-image" src="{{coverFiles[0].url}}" mode="aspectFill" bindtap="previewImage" data-url="{{coverFiles[0].url}}" />
+            <view class="delete-btn" catchtap="clearProfileBg">×</view>
+          </view>
+          <view class="upload-btn cover-upload" wx:else bindtap="chooseProfileBg">
+            <van-icon name="photo-o" size="24" color="#9D938A" />
+            <text class="upload-title">上传背景图</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <view class="page-loading" wx:else>
-      <text>资料加载中...</text>
-    </view>
-  </scroll-view>
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">03</text>
+          <view class="panel-copy">
+            <text class="panel-title">个人简介</text>
+          </view>
+        </view>
+      </view>
 
-  <view class="submit-bar" style="padding-bottom: {{safeAreaBottom + 20}}px;">
-    <view class="submit-btn {{saveButtonClass}}" bindtap="onSave">
-      {{saveButtonText}}
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label">简介内容</text>
+          <text class="field-counter">{{bioLength}}/80</text>
+        </view>
+        <textarea
+          class="field-textarea profile-textarea"
+          maxlength="80"
+          placeholder="介绍一下自己吧"
+          placeholder-class="field-placeholder"
+          value="{{form.bio}}"
+          bindinput="onBioInput"
+        />
+      </view>
     </view>
+  </view>
+
+  <view class="footer" wx:if="{{!loading}}">
+    <van-button
+      type="primary"
+      block
+      round
+      color="#b63b36"
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bind:click="onSave"
+    >
+      {{saveButtonText}}
+    </van-button>
   </view>
 </view>

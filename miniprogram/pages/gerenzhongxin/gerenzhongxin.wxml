@@ -21,7 +21,7 @@
             class="hero-menu-btn"
             bindtap="onHeroMenuTap"
           >
-            <van-icon name="wap-nav" size="20" color="#fff" />
+            <van-icon name="edit" size="18" color="#ffffff" />
           </view>
           <view class="hero-top-spacer"></view>
         </view>

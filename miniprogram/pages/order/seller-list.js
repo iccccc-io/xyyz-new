@@ -7,6 +7,12 @@ const STATUS_MAP = {
   40: { text: '已完成', style: 'status-done' }
 }
 
+const SELLER_TABS = [
+  { name: '20', label: '待发货' },
+  { name: '30', label: '已发货' },
+  { name: '40', label: '已完成' }
+]
+
 const CARRIERS = [
   { code: 'SF',   name: '顺丰速运' },
   { code: 'YTO',  name: '圆通快递' },
@@ -23,6 +29,18 @@ function formatFen(fen) {
   return (fen / 100).toFixed(2)
 }
 
+function getStickyTopPx() {
+  try {
+    const systemInfo = wx.getSystemInfoSync()
+    const statusBarHeight = systemInfo.statusBarHeight || 20
+    const menuButton = wx.getMenuButtonBoundingClientRect()
+    const navHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    return statusBarHeight + (navHeight || 44)
+  } catch (err) {
+    return 64
+  }
+}
+
 function formatTime(val) {
   if (!val) return ''
   const d = val instanceof Date ? val : new Date(val)
@@ -32,23 +50,35 @@ function formatTime(val) {
 }
 
 function enrichOrder(order) {
+  const snapshot = order.product_snapshot || {}
+  const address = order.delivery_address || {}
   const info = STATUS_MAP[order.status] || { text: '未知', style: '' }
   return {
     ...order,
+    shopName: snapshot.workshop_name || '湘韵遗珍工坊',
+    categoryText: snapshot.category || '文创好物',
+    projectName: snapshot.related_project_name || '',
+    skuName: snapshot.sku_name || '',
+    addressLine: address.userName
+      ? `${address.userName} ${address.telNumber} | ${address.provinceName || ''}${address.cityName || ''}${address.countyName || ''} ${address.detailInfo || ''}`
+      : '',
     statusText: info.text,
     statusStyle: info.style,
     totalDisplay: formatFen(order.total_price),
     productPriceDisplay: formatFen(
-      order.product_snapshot ? order.product_snapshot.price : 0
+      snapshot.price || 0
     ),
-    shipTimeDisplay: formatTime(order.ship_time)
+    shipTimeDisplay: formatTime(order.ship_time),
+    cardDelay: 0
   }
 }
 
 Page({
   data: {
     loading: true,
+    stickyTopPx: 64,
     activeTab: '20',
+    sellerTabs: SELLER_TABS,
     orders: [],
     hasMore: false,
     carriers: CARRIERS,
@@ -66,6 +96,7 @@ Page({
   },
 
   onLoad() {
+    this.setData({ stickyTopPx: getStickyTopPx() })
     this._skip = 0
     this.loadOrders(true)
   },
@@ -81,7 +112,8 @@ Page({
   },
 
   onTabChange(e) {
-    const tab = e.detail.name
+    const tab = (e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.name) || (e.detail && e.detail.name)
+    if (!tab || tab === this.data.activeTab) return
     this.setData({ activeTab: tab, orders: [] })
     this._skip = 0
     this.loadOrders(true)
@@ -115,7 +147,10 @@ Page({
         return
       }
 
-      const newOrders = (result.data || []).map(enrichOrder)
+      const newOrders = (result.data || []).map((item, index) => ({
+        ...enrichOrder(item),
+        cardDelay: index * 60
+      }))
 
       this.setData({
         orders: reset ? newOrders : [...this.data.orders, ...newOrders],
@@ -208,5 +243,11 @@ Page({
   viewLogistics(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/order/logistics?orderId=${id}` })
+  },
+
+  goDetail(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    wx.navigateTo({ url: `/pages/order/detail?id=${id}` })
   }
 })

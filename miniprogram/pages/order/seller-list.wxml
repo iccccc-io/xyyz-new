@@ -1,4 +1,3 @@
-<!--pages/order/seller-list.wxml-->
 <view class="seller-list-page">
   <nav-bar
     title="销售订单管理"
@@ -9,107 +8,127 @@
     placeholder="{{true}}"
   />
 
-  <!-- Tab -->
-  <van-tabs
-    active="{{activeTab}}"
-    color="#8B2E2A"
-    title-active-color="#8B2E2A"
-    bind:click="onTabChange"
-    sticky
-    offset-top="{{navBarHeight}}"
-  >
-    <van-tab title="待发货" name="20" />
-    <van-tab title="已发货" name="30" />
-    <van-tab title="已完成" name="40" />
-  </van-tabs>
+  <view class="order-top-shell" style="top: {{stickyTopPx}}px;">
+    <view class="seller-head">
+      <view class="seller-head-copy">
+        <text class="seller-head-eyebrow">工坊工作台</text>
+        <text class="seller-head-title">按履约阶段管理销售订单</text>
+      </view>
+      <view class="seller-head-badge">{{orders.length}}</view>
+    </view>
 
-  <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{loading}}">
-    <van-loading size="24px" color="#8B2E2A">加载中...</van-loading>
+    <view class="tabs-sticky">
+      <scroll-view class="tabs-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="tabs-row">
+          <view
+            wx:for="{{sellerTabs}}"
+            wx:key="name"
+            class="tab-item {{activeTab === item.name ? 'tab-active' : ''}}"
+            data-name="{{item.name}}"
+            bindtap="onTabChange"
+          >
+            <text class="tab-text">{{item.label}}</text>
+            <view class="tab-ink" wx:if="{{activeTab === item.name}}"></view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 
-  <!-- 空状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#A12D27">加载中...</van-loading>
+  </view>
+
   <van-empty
     wx:elif="{{!loading && orders.length === 0}}"
     image="order"
-    description="暂无相关订单"
+    description="当前阶段暂无订单"
   />
 
-  <!-- 订单列表 -->
   <view class="orders-wrap" wx:else>
-    <view class="order-card" wx:for="{{orders}}" wx:key="_id">
-
-      <!-- 卡片头部 -->
-      <view class="card-header">
-        <view class="order-no">
-          <text class="order-no-label">订单号：</text>
-          <text class="order-no-val">{{item._id}}</text>
+    <view class="order-card" wx:for="{{orders}}" wx:key="_id" style="animation-delay: {{item.cardDelay}}ms;">
+      <view class="card-head">
+        <view class="shop-block">
+          <van-icon name="shop-o" size="14" color="#999999" />
+          <text class="shop-name">{{item.shopName}}</text>
+          <text class="shop-arrow">></text>
         </view>
-        <text class="order-status-text {{item.statusStyle}}">{{item.statusText}}</text>
+        <text class="status-text {{item.statusStyle}}">{{item.statusText}}</text>
       </view>
 
-      <!-- 商品信息行 -->
-      <view class="product-row">
+      <view class="order-no-row">
+        <text class="order-no-label">订单号</text>
+        <text class="order-no-value">{{item._id}}</text>
+      </view>
+
+      <view class="product-panel" bindtap="goDetail" data-id="{{item._id}}">
         <image class="product-img" src="{{item.product_snapshot.sku_image || item.product_snapshot.cover_img}}" mode="aspectFill" />
-        <view class="product-info">
+
+        <view class="product-main">
           <text class="product-title">{{item.product_snapshot.title}}</text>
-          <text class="product-title" wx:if="{{item.product_snapshot.sku_name}}">款式：{{item.product_snapshot.sku_name}}</text>
-          <view class="product-meta">
-            <text class="product-price">¥{{item.productPriceDisplay}}</text>
-            <text class="product-qty">× {{item.quantity}}</text>
+          <text class="product-desc" wx:if="{{item.skuName}}">款式：{{item.skuName}}</text>
+
+          <view class="product-tags">
+            <text class="mini-tag heritage" wx:if="{{item.projectName}}">{{item.projectName}}</text>
+            <text class="mini-tag neutral">{{item.categoryText}}</text>
           </view>
         </view>
+
+        <view class="product-side">
+          <view class="product-side-price-group">
+            <text class="side-symbol">¥</text>
+            <text class="product-price">{{item.productPriceDisplay}}</text>
+          </view>
+          <text class="product-qty">x {{item.quantity}}</text>
+        </view>
       </view>
 
-      <!-- 收货信息 -->
-      <view class="address-row" wx:if="{{item.delivery_address}}">
-        <van-icon name="location-o" size="15" color="#8B6F47" />
-        <text class="address-text">
-          {{item.delivery_address.userName}} {{item.delivery_address.telNumber}} | {{item.delivery_address.provinceName}}{{item.delivery_address.cityName}}{{item.delivery_address.countyName}} {{item.delivery_address.detailInfo}}
-        </text>
+      <view class="address-strip" wx:if="{{item.addressLine}}">
+        <van-icon name="location-o" size="14" color="#B08B6F" />
+        <text class="address-text">{{item.addressLine}}</text>
       </view>
 
-      <!-- 物流（已发货后显示） -->
-      <view class="logistics-row" wx:if="{{item.status >= 30 && item.tracking_number}}">
-        <van-icon name="logistics" size="15" color="#1989fa" />
+      <view class="logistics-strip" wx:if="{{item.status >= 30 && item.tracking_number}}">
+        <van-icon name="logistics" size="14" color="#1989fa" />
         <text class="logistics-text">{{item.carrier_code}} {{item.tracking_number}}</text>
         <text class="ship-time">{{item.shipTimeDisplay}}</text>
       </view>
 
-      <!-- 总价 -->
-      <view class="total-row">
-        <text class="total-label">共 {{item.quantity}} 件，买家实付：</text>
-        <text class="total-price">¥{{item.totalDisplay}}</text>
+      <view class="summary-bar">
+        <text class="summary-text">共 {{item.quantity}} 件</text>
+        <text class="summary-text">买家实付</text>
+        <view class="summary-price-group">
+          <text class="summary-symbol">¥</text>
+          <text class="summary-price">{{item.totalDisplay}}</text>
+        </view>
       </view>
 
-      <!-- 操作 -->
       <view class="card-actions">
         <block wx:if="{{item.status === 20}}">
-          <van-button size="small" round color="#8B2E2A" bind:click="openShipDialog" data-id="{{item._id}}" data-idx="{{index}}">
-            去发货
-          </van-button>
+          <view class="action-note">订单已支付，待你填写发货信息</view>
+          <view class="action-btn subtle" bindtap="goDetail" data-id="{{item._id}}">订单详情</view>
+          <view class="action-btn primary strong" bindtap="openShipDialog" data-id="{{item._id}}" data-idx="{{index}}">去发货</view>
         </block>
+
         <block wx:elif="{{item.status === 30}}">
-          <van-button size="small" round plain color="#1989fa" bind:click="viewLogistics" data-id="{{item._id}}">
-            查看物流
-          </van-button>
-          <text class="waiting-hint">等待买家确认收货</text>
+          <view class="action-note">包裹运输中，等待买家确认收货</view>
+          <view class="action-btn subtle" bindtap="goDetail" data-id="{{item._id}}">订单详情</view>
+          <view class="action-btn primary" bindtap="viewLogistics" data-id="{{item._id}}">查看物流</view>
         </block>
-        <block wx:elif="{{item.status === 40}}">
-          <van-button size="small" round plain color="#8B6F47" bind:click="viewLogistics" data-id="{{item._id}}">
-            查看物流
-          </van-button>
-          <text class="done-hint">交易完成</text>
+
+        <block wx:else>
+          <view class="action-note">本笔交易已完成，可回看物流与订单信息</view>
+          <view class="action-btn subtle" bindtap="goDetail" data-id="{{item._id}}">订单详情</view>
+          <view class="action-btn primary" bindtap="viewLogistics" data-id="{{item._id}}">查看物流</view>
         </block>
       </view>
     </view>
 
-    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">加载更多</view>
-    <view class="no-more" wx:elif="{{orders.length > 0 && !hasMore}}">— 没有更多了 —</view>
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">加载更多订单</view>
+    <view class="no-more" wx:elif="{{orders.length > 0 && !hasMore}}">没有更多订单了</view>
   </view>
 </view>
 
-<!-- ===== 发货弹窗 ===== -->
 <van-popup
   show="{{showShipDialog}}"
   position="bottom"
@@ -119,8 +138,8 @@
   <view class="ship-panel">
     <view class="ship-panel-handle"></view>
     <view class="ship-panel-title">填写发货信息</view>
+    <text class="ship-panel-subtitle">确认物流公司与运单号后，订单会自动进入“已发货”阶段。</text>
 
-    <!-- 快递公司选择 -->
     <view class="ship-field-label">快递公司</view>
     <view class="carrier-grid">
       <view
@@ -135,21 +154,22 @@
       </view>
     </view>
 
-    <!-- 快递单号 -->
     <view class="ship-field-label">快递单号</view>
     <van-field
       value="{{shipForm.tracking_number}}"
       placeholder="请输入快递单号"
-      border
+      border="{{false}}"
       clearable
+      custom-class="ship-field"
       bind:change="onTrackingInput"
     />
 
     <view class="ship-actions">
-      <van-button block round plain color="#999" bind:click="closeShipDialog">取消</van-button>
-      <van-button block round color="#8B2E2A" loading="{{shipping}}" bind:click="submitShip">
-        确认发货
-      </van-button>
+      <view class="ship-btn ship-btn-secondary" bindtap="closeShipDialog">取消</view>
+      <view class="ship-btn ship-btn-primary" bindtap="submitShip">
+        <text wx:if="{{!shipping}}">确认发货</text>
+        <text wx:else>提交中...</text>
+      </view>
     </view>
   </view>
 </van-popup>

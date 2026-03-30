@@ -6,7 +6,7 @@ const { decorateReview, formatScoreValue } = require('../../common/review')
 
 const DEFAULT_WORKSHOP_COVER = '/images/default-goods-image.png'
 const WORKSHOP_TABS = [
-  { key: 'products', label: '全部作品' },
+  { key: 'products', label: '全部商品' },
   { key: 'notes', label: '匠心动态' },
   { key: 'reviews', label: '客户评价' }
 ]
@@ -519,11 +519,11 @@ Page({
 
   async loadProducts() {
     try {
-      const whereCondition = { workshop_id: this.data.workshopId }
-      if (!this.data.isOwner) {
-        whereCondition.status = 1
-        whereCondition.total_stock = _.gt(0)
-        whereCondition.is_on_sale = true
+      const whereCondition = {
+        workshop_id: this.data.workshopId,
+        status: 1,
+        total_stock: _.gt(0),
+        is_on_sale: true
       }
 
       const productRes = await db.collection('shopping_products')

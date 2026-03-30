@@ -24,8 +24,11 @@
       </view>
 
       <view class="rename-tip">
-        <text>30 天内仅可修改一次</text>
-        <text wx:if="{{lastRenameTimeText}}">上次修改：{{lastRenameTimeText}}</text>
+        <view class="rename-tip-icon">!</view>
+        <view class="rename-tip-copy">
+          <text>30 天内仅可修改一次</text>
+          <text wx:if="{{lastRenameTimeText}}">上次修改：{{lastRenameTimeText}}</text>
+        </view>
       </view>
 
       <view class="field-block">
@@ -108,7 +111,6 @@
         <textarea
           class="field-textarea"
           maxlength="300"
-          auto-height
           placeholder="例如：愿每一件作品，都能把湖南手艺的温度带进你的生活。"
           placeholder-class="field-placeholder"
           value="{{workshopDesc}}"

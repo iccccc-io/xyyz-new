@@ -65,7 +65,7 @@
     </view>
 
     <view class="content-shell">
-      <view class="sticky-tabs" style="top: {{navSolid ? navBarHeight : 0}}px;">
+      <view class="sticky-tabs">
         <view class="tabs-row">
           <view
             wx:for="{{tabList}}"
@@ -132,7 +132,7 @@
             </view>
 
             <view class="pane-empty" wx:else>
-              <van-empty description="这间工坊暂时还没有公开作品" />
+              <van-empty description="这间工坊暂时还没有公开商品" />
             </view>
           </view>
         </swiper-item>
