@@ -5,7 +5,7 @@
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",
     "van-field": "@vant/weapp/field/index",
-    "van-uploader": "@vant/weapp/uploader/index",
+    "van-icon": "@vant/weapp/icon/index",
     "van-action-sheet": "@vant/weapp/action-sheet/index"
   },
   "navigationStyle": "custom"

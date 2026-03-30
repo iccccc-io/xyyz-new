@@ -90,6 +90,41 @@ function getOrderReviewState(order) {
   }
 }
 
+function getWorkshopOwnerOpenid(workshop) {
+  return getSafeString(workshop && (workshop.owner_openid || workshop.owner_id))
+}
+
+function calcSlidingAverage(currentAvg, currentCount, nextScore) {
+  const count = Math.max(0, Math.floor(getSafeNumber(currentCount, 0)))
+  if (count <= 0) {
+    return Number(getSafeNumber(nextScore, 0).toFixed(1))
+  }
+  return Number((((getSafeNumber(currentAvg, 0) * count) + getSafeNumber(nextScore, 0)) / (count + 1)).toFixed(1))
+}
+
+function normalizeWorkshopRatingDetails(details, reviewCount = 0) {
+  const count = Math.max(0, Math.floor(getSafeNumber(reviewCount, 0)))
+  const normalized = {
+    service: getSafeNumber(details && details.service, 0),
+    logistics: getSafeNumber(details && details.logistics, 0),
+    quality: getSafeNumber(details && details.quality, 0)
+  }
+
+  if (count <= 0) {
+    return {
+      service: 0,
+      logistics: 0,
+      quality: 0
+    }
+  }
+
+  return {
+    service: Number(normalized.service.toFixed(1)),
+    logistics: Number(normalized.logistics.toFixed(1)),
+    quality: Number(normalized.quality.toFixed(1))
+  }
+}
+
 function maskUserInfo(userInfo, isAnonymous) {
   if (isAnonymous) {
     return {
@@ -217,6 +252,65 @@ async function computeReviewStats(whereCondition) {
   }
 }
 
+async function computeWorkshopRatingSummary(workshopId) {
+  let skip = 0
+  let reviewCount = 0
+  let scoreSum = 0
+  let serviceSum = 0
+  let logisticsSum = 0
+  let qualitySum = 0
+
+  while (true) {
+    const res = await db.collection('shopping_reviews')
+      .where({ workshop_id: workshopId })
+      .field({
+        avg_score: true,
+        rating: true
+      })
+      .skip(skip)
+      .limit(SKU_FETCH_BATCH_SIZE)
+      .get()
+
+    const list = res.data || []
+    list.forEach((item) => {
+      const rating = item && item.rating ? item.rating : {}
+      reviewCount += 1
+      scoreSum += getSafeNumber(item.avg_score, 0)
+      serviceSum += getSafeNumber(rating.service, 0)
+      logisticsSum += getSafeNumber(rating.logis, 0)
+      qualitySum += getSafeNumber(rating.product, 0)
+    })
+
+    if (list.length < SKU_FETCH_BATCH_SIZE) {
+      break
+    }
+
+    skip += list.length
+  }
+
+  if (reviewCount <= 0) {
+    return {
+      review_count: 0,
+      shop_rating: 0,
+      rating_details: {
+        service: 0,
+        logistics: 0,
+        quality: 0
+      }
+    }
+  }
+
+  return {
+    review_count: reviewCount,
+    shop_rating: Number((scoreSum / reviewCount).toFixed(1)),
+    rating_details: {
+      service: Number((serviceSum / reviewCount).toFixed(1)),
+      logistics: Number((logisticsSum / reviewCount).toFixed(1)),
+      quality: Number((qualitySum / reviewCount).toFixed(1))
+    }
+  }
+}
+
 async function createReviewByOrder(params) {
   const {
     orderId,
@@ -340,11 +434,17 @@ async function createReviewByOrder(params) {
 
     const productReviewCount = Math.max(0, Math.floor(getSafeNumber(product.review_count, 0)))
     const productRatingAvg = getSafeNumber(product.rating_avg, 0)
-    const nextProductRating = Number((((productRatingAvg * productReviewCount) + avgScore) / (productReviewCount + 1)).toFixed(1))
+    const nextProductRating = calcSlidingAverage(productRatingAvg, productReviewCount, avgScore)
 
     const workshopReviewCount = Math.max(0, Math.floor(getSafeNumber(workshop.shop_review_count, 0)))
     const workshopRatingAvg = getSafeNumber(workshop.shop_rating, getSafeNumber(workshop.rating, 0))
-    const nextWorkshopRating = Number((((workshopRatingAvg * workshopReviewCount) + avgScore) / (workshopReviewCount + 1)).toFixed(1))
+    const nextWorkshopRating = calcSlidingAverage(workshopRatingAvg, workshopReviewCount, avgScore)
+    const workshopRatingDetails = normalizeWorkshopRatingDetails(workshop.rating_details, workshopReviewCount)
+    const nextWorkshopRatingDetails = {
+      service: calcSlidingAverage(workshopRatingDetails.service, workshopReviewCount, normalizedRating.service),
+      logistics: calcSlidingAverage(workshopRatingDetails.logistics, workshopReviewCount, normalizedRating.logis),
+      quality: calcSlidingAverage(workshopRatingDetails.quality, workshopReviewCount, normalizedRating.product)
+    }
 
     await Promise.all([
       transaction.collection('shopping_orders').doc(order._id).update({
@@ -366,6 +466,7 @@ async function createReviewByOrder(params) {
           shop_rating: nextWorkshopRating,
           shop_review_count: _.inc(1),
           rating: nextWorkshopRating,
+          rating_details: nextWorkshopRatingDetails,
           update_time: db.serverDate()
         }
       })
@@ -466,7 +567,7 @@ async function getDetail(event, openid) {
   if (openid && getSafeString(review.workshop_id)) {
     try {
       const workshopRes = await db.collection('shopping_workshops').doc(review.workshop_id).get()
-      isWorkshopOwner = Boolean(workshopRes.data && workshopRes.data.owner_id === openid)
+      isWorkshopOwner = Boolean(workshopRes.data && getWorkshopOwnerOpenid(workshopRes.data) === openid)
     } catch (err) {}
   }
 
@@ -593,7 +694,7 @@ async function listWorkshop(event, openid) {
     throw new Error('工坊不存在')
   }
 
-  const isWorkshopOwner = Boolean(openid && workshop.owner_id === openid)
+  const isWorkshopOwner = Boolean(openid && getWorkshopOwnerOpenid(workshop) === openid)
   const [countRes, listRes] = await Promise.all([
     db.collection('shopping_reviews').where({ workshop_id: workshopId }).count(),
     db.collection('shopping_reviews')
@@ -604,6 +705,21 @@ async function listWorkshop(event, openid) {
       .get()
   ])
 
+  let reviewCount = Math.max(0, Math.floor(getSafeNumber(workshop.shop_review_count, countRes.total || 0)))
+  let shopRating = getSafeNumber(workshop.shop_rating, getSafeNumber(workshop.rating, 0))
+  let ratingDetails = normalizeWorkshopRatingDetails(workshop.rating_details, reviewCount)
+  const needsAggregateFallback = reviewCount > 0 && (
+    shopRating <= 0 ||
+    (!ratingDetails.service && !ratingDetails.logistics && !ratingDetails.quality)
+  )
+
+  if (needsAggregateFallback) {
+    const summary = await computeWorkshopRatingSummary(workshopId)
+    reviewCount = summary.review_count
+    shopRating = summary.shop_rating
+    ratingDetails = summary.rating_details
+  }
+
   return {
     success: true,
     list: (listRes.data || []).map((item) => sanitizeReviewDoc(item, {
@@ -613,7 +729,12 @@ async function listWorkshop(event, openid) {
     page,
     page_size: pageSize,
     has_more: skip + (listRes.data || []).length < (countRes.total || 0),
-    is_workshop_owner: isWorkshopOwner
+    is_workshop_owner: isWorkshopOwner,
+    summary: {
+      review_count: reviewCount,
+      shop_rating: reviewCount > 0 ? Number(shopRating.toFixed(1)) : 0,
+      rating_details: ratingDetails
+    }
   }
 }
 
@@ -644,7 +765,7 @@ async function replyOnce(event, openid) {
       throw new Error('工坊不存在')
     }
 
-    if (workshop.owner_id !== openid) {
+    if (getWorkshopOwnerOpenid(workshop) !== openid) {
       throw new Error('仅工坊主可回复评价')
     }
 

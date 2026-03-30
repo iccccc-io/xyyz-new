@@ -99,7 +99,7 @@ exports.main = async (event, context) => {
         const wsRes = await db.collection('shopping_workshops').doc(product.workshop_id).get()
         if (wsRes.data) {
           workshop_name = wsRes.data.name || ''
-          seller_openid = wsRes.data.owner_id || ''
+          seller_openid = wsRes.data.owner_openid || wsRes.data.owner_id || ''
         }
       } catch (e) {
         console.warn('[create_order] 查询工坊失败:', e.message)

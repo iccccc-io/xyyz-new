@@ -1,6 +1,11 @@
 // pages/login/login.js
 const app = getApp()
 const db = wx.cloud.database()
+const {
+  createDefaultUserProfile,
+  normalizeUserProfile,
+  getMissingUserProfilePatch
+} = require('../../common/user-profile')
 
 // 默认头像
 const defaultAvatarUrl = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
@@ -72,8 +77,18 @@ Page({
 
       if (userQuery.data && userQuery.data.length > 0) {
         // 用户已存在，直接自动登录
-        const existUser = userQuery.data[0]
-        app.globalData.userInfo = existUser
+        const rawUser = userQuery.data[0]
+        const patch = getMissingUserProfilePatch(rawUser)
+        if (Object.keys(patch).length) {
+          await db.collection('users').doc(rawUser._id).update({
+            data: patch
+          })
+        }
+        const existUser = normalizeUserProfile({
+          ...rawUser,
+          ...patch
+        })
+        app.setUserInfo(existUser)
         
         console.log('用户已注册，自动登录成功:', existUser.nickname)
         
@@ -219,21 +234,24 @@ Page({
       
       // 3. 创建新用户记录
       const now = new Date()
+      const userPayload = normalizeUserProfile({
+        ...createDefaultUserProfile(),
+        nickname: nickname.trim(),
+        avatar_url: avatarFileId,
+        avatar_file_id: avatarFileId,
+        avatar: avatarFileId,
+        bio: '',
+        profile_bg_url: '',
+        is_certified: false,
+        real_name: '',
+        ich_category: '',
+        workshop_id: '',
+        draft_count: 0,
+        create_time: now,
+        update_time: now
+      })
       const addRes = await db.collection('users').add({
-        data: {
-          nickname: nickname.trim(),
-          avatar_url: avatarFileId,
-          profile_bg_url: '',
-          is_certified: false,
-          create_time: now,
-          update_time: now,
-          stats: {
-            following: 0,
-            followers: 0,
-            likes: 0,
-            views: 0
-          }
-        }
+        data: userPayload
       })
 
       // 4. 初始化虚拟钱包（10000 分 = ¥100 测试金）
@@ -264,32 +282,17 @@ Page({
         console.warn('钱包初始化失败（不影响注册）:', walletErr)
       }
 
-      const userInfo = {
+      const userInfo = normalizeUserProfile({
         _id: addRes._id,
         _openid: openid,
-        nickname: nickname.trim(),
-        avatar_url: avatarFileId,
-        profile_bg_url: '',
-        is_certified: false,
-        create_time: now,
-        update_time: now,
-        stats: {
-          following: 0,
-          followers: 0,
-          likes: 0,
-          views: 0
-        }
-      }
+        ...userPayload
+      })
       console.log('新用户注册成功')
       
       // 4. 保存到全局状态
-      app.globalData.userInfo = userInfo
+      app.setUserInfo(userInfo)
       
       // 5. 触发回调（如果有页面在监听）
-      if (app.userInfoReadyCallback) {
-        app.userInfoReadyCallback(userInfo)
-      }
-      
       wx.hideLoading()
       wx.showToast({
         title: '注册成功',

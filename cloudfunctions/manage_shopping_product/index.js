@@ -210,10 +210,17 @@ async function createProduct(payload) {
     await checkTextSecurity(sku.sku_name, '商品款式名称包含敏感信息，请修改后重试')
   }
 
+  const workshopRes = await db.collection('shopping_workshops')
+    .doc(user.workshop_id)
+    .get()
+    .catch(() => ({ data: null }))
+  const workshopName = getSafeString(workshopRes.data && workshopRes.data.name) || '非遗工坊'
+
   const productData = {
     ...parsed,
     author_id: openid,
     workshop_id: user.workshop_id,
+    workshop_name: workshopName,
     sales: 0,
     view_count: 0,
     rating_avg: 0,
@@ -266,9 +273,18 @@ async function updateProduct(productId, payload) {
     ? (typeof payload.is_on_sale === 'boolean' ? payload.is_on_sale : product.is_on_sale !== false)
     : false
 
+  const workshopRes = product.workshop_id
+    ? await db.collection('shopping_workshops')
+      .doc(product.workshop_id)
+      .get()
+      .catch(() => ({ data: null }))
+    : { data: null }
+  const workshopName = getSafeString(workshopRes.data && workshopRes.data.name) || getSafeString(product.workshop_name) || '非遗工坊'
+
   await db.collection('shopping_products').doc(productId).update({
     data: {
       ...parsed,
+      workshop_name: workshopName,
       is_on_sale: nextIsOnSale,
       update_time: db.serverDate()
     }

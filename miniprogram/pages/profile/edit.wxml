@@ -1,0 +1,128 @@
+<view class="page">
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner">
+      <view class="nav-back" bindtap="goBack">
+        <van-icon name="arrow-left" size="20" color="#ffffff" />
+      </view>
+      <text class="nav-title">编辑资料</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view
+    class="page-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    style="padding-bottom: {{safeAreaBottom + 180}}px;"
+  >
+    <view class="content" wx:if="{{!loading}}">
+      <view class="panel panel-media">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">01</text>
+            <view class="panel-copy">
+              <text class="panel-title">顶部背景</text>
+              <text class="panel-desc">展示在个人中心头图区域</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="cover-preview" bindtap="chooseProfileBg">
+          <image
+            wx:if="{{form.profile_bg_url}}"
+            class="cover-image"
+            src="{{form.profile_bg_url}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="cover-empty">
+            <van-icon name="photo-o" size="24" color="#A79A8D" />
+            <text class="cover-empty-title">点击更换背景图</text>
+            <text class="cover-empty-desc">建议使用横向图片</text>
+          </view>
+        </view>
+
+        <view class="inline-action-row">
+          <view class="mini-action-btn" bindtap="chooseProfileBg">更换背景</view>
+          <view class="mini-action-btn ghost" wx:if="{{form.profile_bg_url}}" bindtap="clearProfileBg">恢复默认</view>
+        </view>
+      </view>
+
+      <view class="panel">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">02</text>
+            <view class="panel-copy">
+              <text class="panel-title">头像</text>
+              <text class="panel-desc">修改后会同步到社区与个人中心</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="avatar-editor-row">
+          <image
+            class="avatar-preview"
+            src="{{avatarPreviewUrl}}"
+            mode="aspectFill"
+          />
+          <view class="avatar-editor-copy">
+            <text class="avatar-editor-title">当前头像</text>
+            <text class="avatar-editor-desc">建议使用清晰的正方形图片</text>
+          </view>
+          <view class="mini-action-btn" bindtap="chooseAvatar">更换头像</view>
+        </view>
+      </view>
+
+      <view class="panel">
+        <view class="panel-head">
+          <view class="panel-title-wrap">
+            <text class="panel-index">03</text>
+            <view class="panel-copy">
+              <text class="panel-title">基本资料</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="field-block">
+          <view class="field-head">
+            <text class="field-label">昵称</text>
+            <text class="field-counter">{{nicknameLength}}/20</text>
+          </view>
+          <input
+            class="field-input"
+            maxlength="20"
+            placeholder="请输入昵称"
+            placeholder-class="field-placeholder"
+            value="{{form.nickname}}"
+            bindinput="onNicknameInput"
+          />
+        </view>
+
+        <view class="field-block">
+          <view class="field-head">
+            <text class="field-label">个人简介</text>
+            <text class="field-counter">{{bioLength}}/80</text>
+          </view>
+          <textarea
+            class="field-textarea compact"
+            maxlength="80"
+            placeholder="介绍一下自己吧"
+            placeholder-class="field-placeholder"
+            value="{{form.bio}}"
+            bindinput="onBioInput"
+          />
+        </view>
+      </view>
+    </view>
+
+    <view class="page-loading" wx:else>
+      <text>资料加载中...</text>
+    </view>
+  </scroll-view>
+
+  <view class="submit-bar" style="padding-bottom: {{safeAreaBottom + 20}}px;">
+    <view class="submit-btn {{saveButtonClass}}" bindtap="onSave">
+      {{saveButtonText}}
+    </view>
+  </view>
+</view>

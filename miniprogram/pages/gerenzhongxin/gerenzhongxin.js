@@ -1,6 +1,7 @@
 const app = getApp()
 const db = wx.cloud.database()
 const _ = db.command
+const { createDefaultUserProfile } = require('../../common/user-profile')
 
 const DEFAULT_AVATAR = '/images/icons/avatar.png'
 const CONTENT_TABS = [
@@ -48,22 +49,8 @@ const UPGRADE_BENEFITS = [
 
 function createDefaultUserInfo() {
   return {
-    nickname: '',
-    avatar_url: '',
-    avatar_file_id: '',
-    avatar: '',
-    profile_bg_url: '',
-    bio: '',
-    is_certified: false,
-    certified_title: '',
-    ich_category: '',
-    workshop_id: '',
-    stats: {
-      following: 0,
-      followers: 0,
-      likes: 0,
-      views: 0
-    }
+    ...createDefaultUserProfile(),
+    certified_title: ''
   }
 }
 
@@ -828,9 +815,21 @@ Page({
   },
 
   onHeroMenuTap() {
-    wx.showToast({
-      title: '功能规划中',
-      icon: 'none'
+    if (!this.ensureLogin()) return
+    wx.navigateTo({
+      url: '/pages/profile/edit',
+      events: {
+        profileUpdated: (nextUserInfo) => {
+          this.setData({
+            userInfo: {
+              ...createDefaultUserInfo(),
+              ...(nextUserInfo || {})
+            }
+          }, () => {
+            this.refreshViewModel()
+          })
+        }
+      }
     })
   },
 
@@ -922,6 +921,18 @@ Page({
     }
     wx.navigateTo({
       url: `/pages/workshop/index?id=${userInfo.workshop_id}`
+    })
+  },
+
+  goToWorkshopEdit() {
+    const { userInfo } = this.data
+    if (!this.ensureLogin()) return
+    if (!userInfo.is_certified || !userInfo.workshop_id) {
+      wx.showToast({ title: '工坊信息异常', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/workshop/edit-info?id=${userInfo.workshop_id}`
     })
   },
 

@@ -1,180 +1,287 @@
-<view class="workshop-container">
-  <nav-bar
-    title="非遗工坊"
-    showTitle="{{true}}"
-    showBack="{{true}}"
-    background="solid"
-    dark="{{true}}"
-    placeholder="{{true}}"
-  />
+<view class="workshop-page">
+  <view class="custom-nav {{navSolid ? 'is-solid' : ''}}" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-inner">
+      <view class="nav-left">
+        <view class="nav-back" bindtap="goBack">
+          <van-icon name="arrow-left" size="20" color="{{navSolid ? '#2B211B' : '#FFFFFF'}}" />
+        </view>
+        <view class="nav-edit" wx:if="{{isOwner}}" bindtap="goToWorkshopEdit">
+          <van-icon name="edit" size="18" color="{{navSolid ? '#2B211B' : '#FFFFFF'}}" />
+        </view>
+      </view>
+      <text class="nav-title {{navSolid ? 'is-show' : ''}}">{{workshopInfo ? workshopInfo.name : '非遗工坊'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
 
-  <view wx:if="{{!loading && workshopInfo}}">
-    <view class="workshop-header">
-      <image class="workshop-bg" src="{{workshopInfo.logo || '/images/default-goods-image.png'}}" mode="aspectFill" />
-      <view class="workshop-info">
-        <view class="info-top">
-          <image class="workshop-logo" src="{{workshopInfo.logo || '/images/default-goods-image.png'}}" mode="aspectFill" />
-          <view class="info-content">
-            <view class="workshop-name">{{workshopInfo.name}}</view>
-            <view class="workshop-category">
-              <van-tag type="danger" size="medium">{{workshopInfo.ich_category}}</van-tag>
-              <van-tag plain type="primary" size="medium" wx:if="{{isOwner}}">工坊主</van-tag>
-            </view>
+  <block wx:if="{{!pageLoading && workshopInfo}}">
+    <view class="hero-section">
+      <image class="hero-cover hero-cover-blur {{workshopInfo.coverIsFallback ? 'is-fallback' : ''}}" src="{{workshopInfo.coverImage}}" mode="aspectFill" />
+      <image class="hero-cover hero-cover-main {{workshopInfo.coverIsFallback ? 'is-fallback' : ''}}" src="{{workshopInfo.coverImage}}" mode="aspectFill" />
+      <view class="hero-overlay"></view>
+
+      <view class="hero-body" style="padding-top: {{navBarHeight + 56}}px;">
+        <view class="identity-main hero-identity" bindtap="goToOwnerProfile">
+          <image class="owner-avatar" src="{{workshopInfo.owner_avatar}}" mode="aspectFill" />
+          <view class="identity-copy">
+            <text class="workshop-name">{{workshopInfo.name}}</text>
+            <text class="owner-name">主理人：{{workshopInfo.owner_name}}</text>
           </view>
         </view>
 
-        <view class="workshop-stats">
+        <view class="hero-intro">
+          <text class="intro-title">主理人寄语</text>
+          <text class="intro-text">{{workshopInfo.descDisplay}}</text>
+        </view>
+
+        <view class="hero-actions" wx:if="{{workshopInfo.owner_openid}}">
+          <view class="glass-btn" bindtap="toggleFollow">
+            <van-icon name="{{isFollowing ? 'success' : 'plus'}}" size="14" color="#FFFFFF" />
+            <text>{{isFollowing ? '已关注' : '关注'}}</text>
+          </view>
+          <view class="glass-btn" bindtap="goToChat">
+            <van-icon name="chat-o" size="15" color="#FFFFFF" />
+            <text>私聊咨询</text>
+          </view>
+        </view>
+
+        <view class="stats-bar hero-stats">
           <view class="stat-item">
-            <text class="stat-num">{{workshopInfo.product_count || 0}}</text>
-            <text class="stat-label">商品</text>
+            <text class="stat-value">{{workshopInfo.followCountText}}</text>
+            <text class="stat-label">关注</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-item">
-            <text class="stat-num">{{workshopInfo.total_sales || 0}}</text>
-            <text class="stat-label">销量</text>
+            <text class="stat-value">{{workshopInfo.likeCountText}}</text>
+            <text class="stat-label">获赞</text>
           </view>
           <view class="stat-divider"></view>
           <view class="stat-item">
-            <text class="stat-num">{{workshopInfo.ratingDisplay}}</text>
-            <text class="stat-label">{{workshopInfo.shop_review_count > 0 ? (workshopInfo.shop_review_count + ' 条评价') : '暂无评分'}}</text>
+            <text class="stat-value">{{workshopInfo.ratingValueText}}</text>
+            <text class="stat-label">综合评分</text>
           </view>
         </view>
       </view>
     </view>
 
-    <view class="section-card">
-      <view class="section-title">
-        <view class="title-line"></view>
-        <text>工坊简介</text>
-      </view>
-      <text class="workshop-desc">{{workshopInfo.desc || '暂无简介'}}</text>
-    </view>
-
-    <view class="action-bar" wx:if="{{isOwner}}">
-      <van-button
-        icon="plus"
-        type="primary"
-        round
-        block
-        bind:click="navigateToPublish"
-        color="#b63b36"
-      >
-        发布商品
-      </van-button>
-    </view>
-
-    <view class="section-card">
-      <view class="section-title">
-        <view class="title-line"></view>
-        <text>工坊商品</text>
-        <text class="title-count">({{products.length}})</text>
-      </view>
-
-      <view class="empty-state" wx:if="{{products.length === 0}}">
-        <van-empty description="暂无商品" />
-        <view class="empty-tip" wx:if="{{isOwner}}">
-          <text>快去发布您的第一件非遗商品吧</text>
-        </view>
-      </view>
-
-      <view class="product-grid" wx:else>
-        <view
-          class="product-item"
-          wx:for="{{products}}"
-          wx:key="_id"
-          bindtap="navigateToProductDetail"
-          data-id="{{item._id}}"
-        >
-          <image class="product-image" src="{{item.cover_img}}" mode="aspectFill" />
-          <view class="status-badge status-on" wx:if="{{isOwner && item.status === 1 && item.is_on_sale !== false && item.total_stock > 0}}">上架</view>
-          <view class="status-badge status-off" wx:if="{{isOwner && item.total_stock <= 0}}">售罄</view>
-          <view class="status-badge status-off" wx:if="{{isOwner && !(item.status === 1 && item.is_on_sale !== false) && item.total_stock > 0}}">下架</view>
-          <view class="product-info">
-            <text class="product-name">{{item.title}}</text>
-            <view class="product-footer">
-              <text class="product-price">¥{{item.priceDisplay}}</text>
-              <text class="product-sales">已售{{item.sales || 0}}</text>
-            </view>
-            <view class="stock-tip" wx:if="{{isOwner && item.total_stock <= 5}}">
-              <text class="stock-warn">总库存仅剩 {{item.total_stock}} 件</text>
-            </view>
+    <view class="content-shell">
+      <view class="sticky-tabs" style="top: {{navSolid ? navBarHeight : 0}}px;">
+        <view class="tabs-row">
+          <view
+            wx:for="{{tabList}}"
+            wx:key="key"
+            class="tab-item {{activeTab === index ? 'is-active' : ''}}"
+            data-index="{{index}}"
+            bindtap="onTabTap"
+          >
+            <text class="tab-text">{{item.label}}</text>
+          </view>
+          <view class="tab-indicator" style="transform: translateX({{activeTab * 100}}%);">
+            <view class="tab-indicator-bar"></view>
           </view>
         </view>
       </view>
-    </view>
 
-    <view class="section-card">
-      <view class="section-title">
-        <view class="title-line"></view>
-        <text>匠心评价</text>
-        <text class="title-count">({{workshopInfo.shop_review_count || 0}})</text>
-      </view>
+      <swiper class="tab-swiper" current="{{activeTab}}" bindchange="onSwiperChange" duration="280" style="height: {{swiperHeight}}px;">
+        <swiper-item>
+          <view class="pane-body">
+            <view class="waterfall-container" wx:if="{{leftProducts.length > 0 || rightProducts.length > 0}}">
+              <view class="waterfall-column">
+                <view class="product-card" wx:for="{{leftProducts}}" wx:key="_id" bindtap="navigateToProductDetail" data-id="{{item._id}}">
+                  <view class="product-media" style="height: {{item.mediaHeight}}rpx;">
+                    <image class="product-image" src="{{item.cover_img}}" mode="aspectFill" />
+                  </view>
+                  <view class="product-body">
+                    <text class="product-title">{{item.title}}</text>
+                    <view class="product-meta">
+                      <text class="product-origin">{{item.origin || '湖南'}}</text>
+                      <text class="product-sales">已售 {{item.displaySales}}</text>
+                    </view>
+                    <view class="product-footer">
+                      <view class="price-box">
+                        <text class="price-symbol">¥</text>
+                        <text class="price-value">{{item.priceDisplay}}</text>
+                        <text class="price-suffix" wx:if="{{item.priceSuffix}}">{{item.priceSuffix}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </view>
 
-      <view class="empty-state" wx:if="{{!reviewLoading && reviews.length === 0}}">
-        <van-empty description="暂无评价" />
-      </view>
-
-      <view class="review-loading" wx:elif="{{reviewLoading && reviews.length === 0}}">
-        <van-loading size="24px" vertical color="#b63b36">加载评价中...</van-loading>
-      </view>
-
-      <view class="review-list" wx:else>
-        <view class="review-card" wx:for="{{reviews}}" wx:key="_id">
-          <view class="review-head">
-            <view class="review-user">
-              <image class="review-avatar" src="{{item.user_info.avatar}}" mode="aspectFill" />
-              <view class="review-meta">
-                <text class="review-name">{{item.user_info.nickname}}</text>
-                <text class="review-time" wx:if="{{item.buy_time_text}}">购买于 {{item.buy_time_text}}</text>
+              <view class="waterfall-column">
+                <view class="product-card" wx:for="{{rightProducts}}" wx:key="_id" bindtap="navigateToProductDetail" data-id="{{item._id}}">
+                  <view class="product-media" style="height: {{item.mediaHeight}}rpx;">
+                    <image class="product-image" src="{{item.cover_img}}" mode="aspectFill" />
+                  </view>
+                  <view class="product-body">
+                    <text class="product-title">{{item.title}}</text>
+                    <view class="product-meta">
+                      <text class="product-origin">{{item.origin || '湖南'}}</text>
+                      <text class="product-sales">已售 {{item.displaySales}}</text>
+                    </view>
+                    <view class="product-footer">
+                      <view class="price-box">
+                        <text class="price-symbol">¥</text>
+                        <text class="price-value">{{item.priceDisplay}}</text>
+                        <text class="price-suffix" wx:if="{{item.priceSuffix}}">{{item.priceSuffix}}</text>
+                      </view>
+                    </view>
+                  </view>
+                </view>
               </view>
             </view>
-            <text class="review-score">{{item.avg_score_text}} 分</text>
+
+            <view class="pane-empty" wx:else>
+              <van-empty description="这间工坊暂时还没有公开作品" />
+            </view>
           </view>
+        </swiper-item>
 
-          <text class="review-product-title">{{item.product_snapshot.title}}</text>
-          <text class="review-content" wx:if="{{item.content}}">{{item.content}}</text>
+        <swiper-item>
+          <view class="pane-body">
+            <view class="notes-head">
+              <text class="notes-kicker">匠心动态</text>
+              <text class="notes-subtitle">从主理人的生活片段、制作过程与灵感记录里，认识这间工坊。</text>
+            </view>
 
-          <view class="review-images" wx:if="{{item.images && item.images.length > 0}}">
-            <image
-              wx:for="{{item.images}}"
-              wx:for-item="image"
-              wx:key="*this"
-              class="review-image"
-              src="{{image}}"
-              mode="aspectFill"
-              data-index="{{index}}"
-              data-urls="{{item.images}}"
-              bindtap="previewReviewImages"
-            />
+            <view class="waterfall-container" wx:if="{{leftNotes.length > 0 || rightNotes.length > 0}}">
+              <view class="waterfall-column">
+                <view class="note-card" wx:for="{{leftNotes}}" wx:key="_id" bindtap="goToNoteDetail" data-id="{{item._id}}">
+                  <view class="note-media" wx:if="{{item.cover}}" style="height: {{item.mediaHeight}}rpx;">
+                    <image class="note-image" src="{{item.cover}}" mode="aspectFill" />
+                  </view>
+                  <view class="note-body {{item.cover ? '' : 'is-text-only'}}">
+                    <text class="note-title">{{item.title}}</text>
+                    <text class="note-excerpt">{{item.excerpt}}</text>
+                    <view class="note-footer">
+                      <text class="note-time">{{item.timeText}}</text>
+                      <view class="note-stats">
+                        <view class="note-stat">
+                          <van-icon name="good-job-o" size="14" color="#8B6F47" />
+                          <text>{{item.likesText}}</text>
+                        </view>
+                        <view class="note-stat">
+                          <van-icon name="comment-o" size="14" color="#8B6F47" />
+                          <text>{{item.commentsText}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="waterfall-column">
+                <view class="note-card" wx:for="{{rightNotes}}" wx:key="_id" bindtap="goToNoteDetail" data-id="{{item._id}}">
+                  <view class="note-media" wx:if="{{item.cover}}" style="height: {{item.mediaHeight}}rpx;">
+                    <image class="note-image" src="{{item.cover}}" mode="aspectFill" />
+                  </view>
+                  <view class="note-body {{item.cover ? '' : 'is-text-only'}}">
+                    <text class="note-title">{{item.title}}</text>
+                    <text class="note-excerpt">{{item.excerpt}}</text>
+                    <view class="note-footer">
+                      <text class="note-time">{{item.timeText}}</text>
+                      <view class="note-stats">
+                        <view class="note-stat">
+                          <van-icon name="good-job-o" size="14" color="#8B6F47" />
+                          <text>{{item.likesText}}</text>
+                        </view>
+                        <view class="note-stat">
+                          <van-icon name="comment-o" size="14" color="#8B6F47" />
+                          <text>{{item.commentsText}}</text>
+                        </view>
+                      </view>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view class="pane-empty" wx:else>
+              <van-empty description="主理人还没有发布公开动态" />
+            </view>
           </view>
+        </swiper-item>
 
-          <view class="seller-reply" wx:if="{{item.seller_reply}}">
-            <text class="seller-reply-title">{{item.seller_reply.seller_name}}</text>
-            <text class="seller-reply-content">{{item.seller_reply.content}}</text>
-            <text class="seller-reply-time" wx:if="{{item.seller_reply.reply_time_text}}">{{item.seller_reply.reply_time_text}}</text>
+        <swiper-item>
+          <view class="pane-body">
+            <view class="review-summary-strip">
+              <text>{{workshopInfo.reviewCountText}} 条真实评价</text>
+              <text>{{workshopInfo.reviewSummaryText}}</text>
+            </view>
+
+            <view class="metric-board">
+              <view class="metric-card" wx:for="{{workshopInfo.reviewMetricList}}" wx:key="key">
+                <text class="metric-value">{{item.valueText}}</text>
+                <text class="metric-label">{{item.label}}</text>
+              </view>
+            </view>
+
+            <view class="pane-loading" wx:if="{{reviewLoading && reviews.length === 0}}">
+              <van-loading size="24px" color="#B63B36">加载评价中...</van-loading>
+            </view>
+
+            <view class="pane-empty" wx:elif="{{reviews.length === 0}}">
+              <van-empty description="这间工坊还没有收到评价" />
+            </view>
+
+            <view class="review-list" wx:else>
+              <view class="review-card" wx:for="{{reviews}}" wx:key="_id">
+                <view class="review-head">
+                  <view class="review-user">
+                    <image class="review-avatar" src="{{item.user_info.avatar}}" mode="aspectFill" />
+                    <view class="review-meta">
+                      <text class="review-name">{{item.user_info.nickname}}</text>
+                      <text class="review-time" wx:if="{{item.buy_time_text}}">购买于 {{item.buy_time_text}}</text>
+                    </view>
+                  </view>
+                  <text class="review-score">{{item.avg_score_text}} 分</text>
+                </view>
+
+                <text class="review-product-title">{{item.product_snapshot.title}}</text>
+                <text class="review-content" wx:if="{{item.content}}">{{item.content}}</text>
+
+                <view class="review-images" wx:if="{{item.images && item.images.length > 0}}">
+                  <image
+                    wx:for="{{item.images}}"
+                    wx:for-item="image"
+                    wx:key="*this"
+                    class="review-image"
+                    src="{{image}}"
+                    mode="aspectFill"
+                    data-index="{{index}}"
+                    data-urls="{{item.images}}"
+                    bindtap="previewReviewImages"
+                  />
+                </view>
+
+                <view class="seller-reply" wx:if="{{item.seller_reply}}">
+                  <text class="seller-reply-title">{{item.seller_reply.seller_name}}</text>
+                  <text class="seller-reply-content">{{item.seller_reply.content}}</text>
+                  <text class="seller-reply-time" wx:if="{{item.seller_reply.reply_time_text}}">{{item.seller_reply.reply_time_text}}</text>
+                </view>
+
+                <view class="reply-row" wx:if="{{isOwner && item.can_reply}}">
+                  <view class="reply-btn" bindtap="openReplyPopup" data-id="{{item._id}}">回复评价</view>
+                </view>
+              </view>
+
+              <view class="review-more" wx:if="{{reviewHasMore}}" bindtap="loadMoreReviews">
+                <text>{{reviewLoading ? '加载中...' : '查看更多评价'}}</text>
+              </view>
+            </view>
           </view>
-
-          <view class="review-action-row" wx:if="{{isOwner && item.can_reply}}">
-            <view class="reply-btn" bindtap="openReplyPopup" data-id="{{item._id}}">回复评价</view>
-          </view>
-        </view>
-
-        <view class="review-more" wx:if="{{reviewHasMore}}" bindtap="loadMoreReviews">
-          <text>{{reviewLoading ? '加载中...' : '查看更多评价'}}</text>
-        </view>
-      </view>
+        </swiper-item>
+      </swiper>
     </view>
+  </block>
+
+  <view class="page-loading" wx:if="{{pageLoading}}">
+    <van-loading size="26px" color="#B63B36" vertical>加载中...</van-loading>
   </view>
 
-  <view class="loading-wrapper" wx:if="{{loading}}">
-    <van-loading size="24px" vertical>加载中...</van-loading>
-  </view>
-
-  <view class="error-wrapper" wx:if="{{!loading && !workshopInfo}}">
+  <view class="page-error" wx:if="{{!pageLoading && !workshopInfo}}">
     <van-empty description="工坊不存在或已被删除" />
-    <van-button round type="primary" size="small" bind:click="goBack" color="#b63b36">
-      返回
-    </van-button>
+    <view class="error-back-btn" bindtap="goBack">返回上一页</view>
   </view>
 
   <van-popup

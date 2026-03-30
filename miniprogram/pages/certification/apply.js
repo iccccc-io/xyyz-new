@@ -13,23 +13,36 @@ const CATEGORY_OPTIONS = [
   '其他'
 ]
 
+function getInputValue(e) {
+  if (!e) return ''
+  if (e.detail && typeof e.detail.value !== 'undefined') return e.detail.value
+  if (typeof e.detail !== 'undefined') return e.detail
+  return ''
+}
+
 Page({
   data: {
     realName: '',
     ichCategory: '',
-    bio: '',
+    workshopName: '',
+    workshopDesc: '',
     certFiles: [],
+    logoFiles: [],
     showCategorySheet: false,
     categoryActions: CATEGORY_OPTIONS.map((name) => ({ name })),
     submitting: false
   },
 
   onRealNameInput(e) {
-    this.setData({ realName: e.detail })
+    this.setData({ realName: getInputValue(e) })
   },
 
-  onBioInput(e) {
-    this.setData({ bio: e.detail })
+  onWorkshopNameInput(e) {
+    this.setData({ workshopName: getInputValue(e) })
+  },
+
+  onWorkshopDescInput(e) {
+    this.setData({ workshopDesc: getInputValue(e) })
   },
 
   openCategorySheet() {
@@ -49,7 +62,6 @@ Page({
     })
   },
 
-  // 选择证书图片
   chooseCertImages() {
     const maxCount = 3 - this.data.certFiles.length
     if (maxCount <= 0) {
@@ -63,85 +75,100 @@ Page({
       sourceType: ['album', 'camera'],
       sizeType: ['compressed'],
       success: (res) => {
-        const files = res.tempFiles.map(f => ({ tempFilePath: f.tempFilePath }))
-        this.uploadCertImages(files)
+        const files = (res.tempFiles || []).map((item) => ({ tempFilePath: item.tempFilePath }))
+        this.uploadImages(files, 'certificates', 'certFiles')
       }
     })
   },
 
-  // 上传证书图片
-  async uploadCertImages(files) {
+  chooseLogoImage() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: (res) => {
+        const file = res.tempFiles && res.tempFiles[0]
+        if (!file || !file.tempFilePath) return
+        this.uploadImages([{ tempFilePath: file.tempFilePath }], 'workshop-logos', 'logoFiles', { replace: true })
+      }
+    })
+  },
+
+  async uploadImages(files, folder, stateKey, { replace = false } = {}) {
     if (!files.length) return
 
     wx.showLoading({ title: '上传中...', mask: true })
     try {
-      const tasks = files.map((file) => {
-        const filePath = file.tempFilePath
-        const cloudPath = `certificates/${Date.now()}_${Math.floor(Math.random() * 10000)}.jpg`
-        return wx.cloud.uploadFile({ cloudPath, filePath })
+      const tasks = files.map((file, index) => {
+        const cloudPath = `${folder}/${Date.now()}_${index}_${Math.floor(Math.random() * 10000)}.jpg`
+        return wx.cloud.uploadFile({
+          cloudPath,
+          filePath: file.tempFilePath
+        })
       })
+
       const results = await Promise.all(tasks)
-      const newFiles = results.map((item, index) => ({
+      const uploaded = results.map((item, index) => ({
         url: item.fileID,
-        name: `cert_${Date.now()}_${index}`
+        name: `${folder}_${Date.now()}_${index}`
       }))
+
+      const currentList = replace ? [] : this.data[stateKey]
       this.setData({
-        certFiles: this.data.certFiles.concat(newFiles)
+        [stateKey]: currentList.concat(uploaded)
       })
+
       wx.showToast({ title: '上传成功', icon: 'success' })
     } catch (err) {
-      console.error('证书上传失败:', err)
+      console.error('图片上传失败:', err)
       wx.showToast({ title: '上传失败', icon: 'none' })
     } finally {
       wx.hideLoading()
     }
   },
 
-  // 自定义删除证书
   handleDeleteCert(e) {
-    const index = e.currentTarget.dataset.index
-    if (typeof index === 'number' && index >= 0 && index < this.data.certFiles.length) {
-      const certFiles = this.data.certFiles.slice()
-      certFiles.splice(index, 1)
-      this.setData({ certFiles })
-      wx.showToast({ title: '已删除', icon: 'success', duration: 1000 })
-    }
+    const index = Number(e.currentTarget.dataset.index)
+    if (Number.isNaN(index)) return
+
+    const certFiles = this.data.certFiles.slice()
+    certFiles.splice(index, 1)
+    this.setData({ certFiles })
   },
 
-  // van-uploader 备用
-  async afterReadCert(e) {
-    const files = Array.isArray(e.detail.file) ? e.detail.file : [e.detail.file]
-    if (!files.length) return
-    const mapped = files.map(f => ({ tempFilePath: f.url || f.tempFilePath || f.path }))
-    this.uploadCertImages(mapped)
-  },
-
-  onDeleteCert(e) {
-    const { index } = e.detail || {}
-    if (typeof index === 'number' && index >= 0) {
-      this.handleDeleteCert({ currentTarget: { dataset: { index } } })
-    }
+  handleDeleteLogo() {
+    this.setData({ logoFiles: [] })
   },
 
   validateForm() {
-    const realName = (this.data.realName || '').trim()
-    const ichCategory = (this.data.ichCategory || '').trim()
-    const bio = (this.data.bio || '').trim()
+    const realName = this.data.realName.trim()
+    const ichCategory = this.data.ichCategory.trim()
+    const workshopName = this.data.workshopName.trim()
+    const workshopDesc = this.data.workshopDesc.trim()
 
     if (realName.length < 2) {
-      wx.showToast({ title: '请输入真实姓名（至少2个字）', icon: 'none' })
+      wx.showToast({ title: '请输入真实姓名', icon: 'none' })
       return false
     }
     if (!ichCategory) {
       wx.showToast({ title: '请选择非遗类别', icon: 'none' })
       return false
     }
+    if (workshopName.length < 2) {
+      wx.showToast({ title: '请输入工坊名称', icon: 'none' })
+      return false
+    }
+    if (!this.data.logoFiles.length) {
+      wx.showToast({ title: '请上传工坊 Logo', icon: 'none' })
+      return false
+    }
     if (this.data.certFiles.length === 0) {
       wx.showToast({ title: '请至少上传一张证书', icon: 'none' })
       return false
     }
-    if (bio.length < 50) {
-      wx.showToast({ title: '工坊简介至少50字', icon: 'none' })
+    if (workshopDesc.length < 10) {
+      wx.showToast({ title: '主理人寄语至少10字', icon: 'none' })
       return false
     }
     return true
@@ -160,8 +187,10 @@ Page({
         data: {
           real_name: this.data.realName.trim(),
           ich_category: this.data.ichCategory,
-          certificates: this.data.certFiles.map((file) => file.url),
-          bio: this.data.bio.trim()
+          workshop_name: this.data.workshopName.trim(),
+          workshop_logo: this.data.logoFiles[0].url,
+          workshop_desc: this.data.workshopDesc.trim(),
+          certificates: this.data.certFiles.map((file) => file.url)
         }
       })
 
@@ -169,16 +198,18 @@ Page({
 
       if (result.result && result.result.success) {
         if (app.globalData.userInfo) {
-          app.globalData.userInfo.is_certified = true
-          app.globalData.userInfo.workshop_id = result.result.workshop_id
-          app.globalData.userInfo.real_name = this.data.realName.trim()
-          app.globalData.userInfo.ich_category = this.data.ichCategory
-          app.globalData.userInfo.bio = this.data.bio.trim()
+          app.setUserInfo({
+            ...app.globalData.userInfo,
+            is_certified: true,
+            workshop_id: result.result.workshop_id,
+            real_name: this.data.realName.trim(),
+            ich_category: this.data.ichCategory
+          })
         }
 
         wx.showModal({
           title: '认证成功',
-          content: '系统已为您初始化工坊，可进入工坊查看。',
+          content: '工坊已创建完成，后续可继续编辑工坊资料。',
           confirmText: '进入工坊',
           confirmColor: '#b63b36',
           showCancel: false,
@@ -210,4 +241,3 @@ Page({
     }
   }
 })
-

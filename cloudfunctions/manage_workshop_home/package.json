@@ -1,0 +1,9 @@
+{
+  "name": "manage_workshop_home",
+  "version": "1.0.0",
+  "description": "工坊主页封面等轻量管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

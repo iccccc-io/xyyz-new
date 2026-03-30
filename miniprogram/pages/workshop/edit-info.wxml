@@ -1,0 +1,146 @@
+<view class="page">
+  <nav-bar
+    title="编辑工坊信息"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="page-loading" wx:if="{{loading}}">
+    <van-loading size="26px" color="#b63b36" vertical>加载中...</van-loading>
+  </view>
+
+  <view class="content" wx:else>
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">01</text>
+          <view class="panel-copy">
+            <text class="panel-title">工坊名称</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="rename-tip">
+        <text>30 天内仅可修改一次</text>
+        <text wx:if="{{lastRenameTimeText}}">上次修改：{{lastRenameTimeText}}</text>
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>工坊名称</text>
+          <text class="field-counter">{{workshopName.length}}/20</text>
+        </view>
+        <view class="field-input-shell">
+          <input
+            class="field-input"
+            maxlength="20"
+            placeholder="请输入唯一工坊名称"
+            placeholder-class="field-placeholder"
+            value="{{workshopName}}"
+            bindinput="onWorkshopNameInput"
+          />
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">02</text>
+          <view class="panel-copy">
+            <text class="panel-title">工坊视觉</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="media-group">
+        <view class="media-label-row">
+          <text class="field-label"><text class="required-mark">*</text>工坊 Logo</text>
+        </view>
+        <view class="single-upload">
+          <view class="image-preview logo-preview" wx:if="{{logoFiles.length > 0}}">
+            <image class="preview-image" src="{{logoFiles[0].url}}" mode="aspectFill" bindtap="previewImage" data-url="{{logoFiles[0].url}}" />
+            <view class="delete-btn" catchtap="removeLogo">×</view>
+          </view>
+          <view class="upload-btn logo-upload" wx:else bindtap="chooseLogo">
+            <van-icon name="plus" size="24" color="#9D938A" />
+            <text class="upload-title">上传 Logo</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="media-group">
+        <view class="media-label-row">
+          <text class="field-label">工坊背景图</text>
+          <text class="field-unit">选填</text>
+        </view>
+        <view class="single-upload">
+          <view class="image-preview cover-preview" wx:if="{{coverFiles.length > 0}}">
+            <image class="preview-image" src="{{coverFiles[0].url}}" mode="aspectFill" bindtap="previewImage" data-url="{{coverFiles[0].url}}" />
+            <view class="delete-btn" catchtap="removeCover">×</view>
+          </view>
+          <view class="upload-btn cover-upload" wx:else bindtap="chooseCover">
+            <van-icon name="photo-o" size="24" color="#9D938A" />
+            <text class="upload-title">上传背景图</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">03</text>
+          <view class="panel-copy">
+            <text class="panel-title">主理人寄语</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="field-block">
+        <view class="field-head">
+          <text class="field-label"><text class="required-mark">*</text>工坊寄语</text>
+          <text class="field-counter">{{workshopDesc.length}}/300</text>
+        </view>
+        <textarea
+          class="field-textarea"
+          maxlength="300"
+          auto-height
+          placeholder="例如：愿每一件作品，都能把湖南手艺的温度带进你的生活。"
+          placeholder-class="field-placeholder"
+          value="{{workshopDesc}}"
+          bindinput="onWorkshopDescInput"
+        />
+      </view>
+    </view>
+
+    <view class="panel tip-panel">
+      <view class="panel-head">
+        <view class="panel-title-wrap">
+          <text class="panel-index">04</text>
+          <view class="panel-copy">
+            <text class="panel-title">保存提醒</text>
+            <text class="panel-desc">保存后，商品和订单中的工坊名称会同步更新。</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer" wx:if="{{!loading}}">
+    <van-button
+      type="primary"
+      block
+      round
+      color="#b63b36"
+      loading="{{saving}}"
+      disabled="{{saving}}"
+      bind:click="submit"
+    >
+      {{saving ? '保存中...' : '保存工坊信息'}}
+    </van-button>
+  </view>
+</view>

@@ -61,7 +61,18 @@ Page({
       const res = await db.collection('shopping_products').doc(productId).get()
       if (!res.data) throw new Error('商品不存在')
 
-      const product = createProductSelectionView(res.data, skuId)
+      const rawProduct = { ...res.data }
+      if (!rawProduct.workshop_name && rawProduct.workshop_id) {
+        const workshopRes = await db.collection('shopping_workshops')
+          .doc(rawProduct.workshop_id)
+          .get()
+          .catch(() => ({ data: null }))
+        if (workshopRes.data && workshopRes.data.name) {
+          rawProduct.workshop_name = workshopRes.data.name
+        }
+      }
+
+      const product = createProductSelectionView(rawProduct, skuId)
       const selectedSku = product.selectedSku
 
       if (!selectedSku) {

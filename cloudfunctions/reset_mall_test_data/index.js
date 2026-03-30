@@ -9,6 +9,7 @@ const db = cloud.database()
 const CLEAR_COLLECTIONS = [
   'shopping_products',
   'shopping_orders',
+  'shopping_reviews',
   'shopping_aftersales',
   'shopping_pay_records',
   'shopping_ledger'
@@ -81,7 +82,17 @@ exports.main = async () => {
     }
 
     summary.workshopsReset = await resetCollectionFields('shopping_workshops', {
-      product_count: 0
+      product_count: 0,
+      total_sales: 0,
+      rating: 0,
+      shop_rating: 0,
+      shop_review_count: 0,
+      last_rename_time: null,
+      rating_details: {
+        service: 0,
+        logistics: 0,
+        quality: 0
+      }
     })
 
     summary.walletsReset = await resetCollectionFields('shopping_wallets', {

@@ -116,6 +116,7 @@ Page({
     
     roomId: '',
     targetUserId: '',
+    sourceScene: '',
     targetUser: {},
     currentUser: {},
     messages: [],
@@ -152,6 +153,8 @@ Page({
 
   onLoad(options) {
     const targetUserId = options.targetUserId || options.userId
+    const presetRoomId = options.room_id || ''
+    const sourceScene = options.source_scene || ''
     if (!targetUserId) {
       wx.showToast({ title: '参数错误', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 1000)
@@ -165,6 +168,8 @@ Page({
 
     this.setData({
       targetUserId,
+      roomId: presetRoomId,
+      sourceScene,
       statusBarHeight,
       navBarHeight,
       safeAreaBottom,
@@ -240,6 +245,7 @@ Page({
   },
 
   createRoomId() {
+    if (this.data.roomId) return
     const { currentUser, targetUser, targetUserId } = this.data
     const ids = [currentUser.openid, targetUser.openid || targetUserId].sort()
     this.setData({ roomId: ids.join('_') })

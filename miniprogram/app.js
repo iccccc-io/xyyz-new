@@ -1,6 +1,10 @@
 // app.js
 // 1. 将环境ID定义在最外面，确保百分百能读到
 const CLOUD_ENV_ID = "xiangyunyizhen-dev-1d02h7036c82a";
+const {
+  normalizeUserProfile,
+  getMissingUserProfilePatch
+} = require('./common/user-profile')
 
 App({
   onLaunch: function () {
@@ -17,6 +21,58 @@ App({
       // 静默登录检查
       this.silentLogin()
     }
+  },
+
+  setUserInfo(userInfo, { notify = true } = {}) {
+    if (!userInfo) {
+      this.globalData.userInfo = null
+      this.globalData.userInfoVersion = Date.now()
+      return null
+    }
+
+    const normalized = normalizeUserProfile(userInfo)
+    this.globalData.userInfo = normalized
+    this.globalData.userInfoVersion = Date.now()
+
+    if (notify && this.userInfoReadyCallback) {
+      this.userInfoReadyCallback(normalized)
+    }
+
+    return normalized
+  },
+
+  async refreshUserInfo({ syncDefaults = true, notify = true } = {}) {
+    const openid = this.globalData.openid
+    if (!openid) {
+      this.setUserInfo(null, { notify })
+      return null
+    }
+
+    const db = wx.cloud.database()
+    const userRes = await db.collection('users')
+      .where({ _openid: openid })
+      .limit(1)
+      .get()
+
+    if (!userRes.data || !userRes.data.length) {
+      this.setUserInfo(null, { notify })
+      return null
+    }
+
+    const rawUser = userRes.data[0]
+    const patch = syncDefaults ? getMissingUserProfilePatch(rawUser) : {}
+    if (syncDefaults && Object.keys(patch).length) {
+      await db.collection('users').doc(rawUser._id).update({
+        data: patch
+      })
+    }
+
+    const nextUser = normalizeUserProfile({
+      ...rawUser,
+      ...patch
+    })
+
+    return this.setUserInfo(nextUser, { notify })
   },
 
   /**
@@ -42,29 +98,15 @@ App({
       this.globalData.openid = openid
       console.log('当前用户 OpenID:', openid)
       
-      // 查询数据库
-      const db = wx.cloud.database()
-      const userRes = await db.collection('users')
-        .where({
-          _openid: openid
-        })
-        .get()
-      
-      if (userRes.data && userRes.data.length > 0) {
-        const userInfo = userRes.data[0]
-        this.globalData.userInfo = userInfo
+      const userInfo = await this.refreshUserInfo({ syncDefaults: true, notify: true })
+      if (userInfo) {
         console.log('自动登录成功:', userInfo.nickname)
-        
-        if (this.userInfoReadyCallback) {
-          this.userInfoReadyCallback(userInfo)
-        }
       } else {
-        this.globalData.userInfo = null
         console.log('用户未注册，保持游客状态')
       }
     } catch (err) {
       console.error('静默登录检查失败，详细错误:', err)
-      this.globalData.userInfo = null
+      this.setUserInfo(null, { notify: false })
     }
   },
 
@@ -87,7 +129,7 @@ App({
   },
 
   logout: function() {
-    this.globalData.userInfo = null
+    this.setUserInfo(null, { notify: false })
     wx.showToast({
       title: '已退出登录',
       icon: 'success'
@@ -97,6 +139,7 @@ App({
   globalData: {
     env: CLOUD_ENV_ID,
     openid: null,
-    userInfo: null
+    userInfo: null,
+    userInfoVersion: 0
   }
 });
