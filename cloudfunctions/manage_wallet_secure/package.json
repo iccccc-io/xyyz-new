@@ -1,0 +1,9 @@
+{
+  "name": "manage_wallet_secure",
+  "version": "1.0.0",
+  "description": "安全钱包与工坊财务中心读写接口",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

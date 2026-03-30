@@ -58,14 +58,22 @@
   letter-spacing: -2rpx;
 }
 
-.frozen-row {
+.wallet-meta-row {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  flex-wrap: wrap;
+  gap: 12rpx;
   margin-bottom: 32rpx;
 }
 
-.frozen-text {
+.wallet-meta-pill {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255,255,255,0.16);
+  border: 2rpx solid rgba(255,255,255,0.2);
+}
+
+.wallet-meta-pill text {
   font-size: 24rpx;
   color: rgba(255,255,255,0.65);
 }
@@ -73,6 +81,7 @@
 .balance-actions {
   display: flex;
   gap: 20rpx;
+  flex-wrap: wrap;
 }
 
 .balance-btn {
@@ -84,16 +93,17 @@
   font-size: 26rpx;
 }
 
-.recharge-btn {
-  background: #fff;
-  color: #8B2E2A;
-  font-weight: 600;
-}
-
 .pwd-btn {
   background: rgba(255,255,255,0.2);
   color: rgba(255,255,255,0.9);
   border: 2rpx solid rgba(255,255,255,0.3);
+}
+
+.finance-btn {
+  background: #fff7ef;
+  color: #8B2E2A;
+  border: 2rpx solid rgba(255,255,255,0.2);
+  font-weight: 600;
 }
 
 /* ===== 加载 / 初始化 ===== */
@@ -175,7 +185,7 @@
 
 .icon-pay      { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .icon-in       { background: linear-gradient(135deg, #10b981, #059669); }
-.icon-recharge { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.icon-out      { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .icon-other    { background: linear-gradient(135deg, #6b7280, #4b5563); }
 
 .ledger-info {

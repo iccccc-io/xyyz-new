@@ -6,6 +6,7 @@ const db = cloud.database()
 const _ = db.command
 const BATCH = 50
 const INTERNAL_AUTO_REVIEW_TOKEN = 'xyyz_review_auto_v1'
+const INTERNAL_AUTO_CONFIRM_TOKEN = 'xyyz_confirm_auto_v1'
 
 function getSafeString(value) {
   return typeof value === 'string' ? value.trim() : ''
@@ -125,36 +126,29 @@ async function task2AutoConfirmReceipt(stats) {
   try {
     const res = await db.collection('shopping_orders')
       .where({ status: 30, ship_time: _.lt(cutoff) })
-      .field({ _id: true, total_price: true, seller_openid: true, 'product_snapshot.title': true })
+      .field({ _id: true })
       .limit(BATCH)
       .get()
 
     for (const order of (res.data || [])) {
       try {
-        const settleDeadline = new Date(Date.now() + 7 * 24 * 3600 * 1000)
-
-        await db.collection('shopping_orders').doc(order._id).update({
+        const cfRes = await cloud.callFunction({
+          name: 'confirm_receipt',
           data: {
-            status: 40,
-            complete_time: db.serverDate(),
-            settle_deadline: settleDeadline,
-            settled: false,
-            update_time: db.serverDate()
+            order_id: order._id,
+            _internal_token: INTERNAL_AUTO_CONFIRM_TOKEN
           }
         })
 
-        if (order.seller_openid && order.total_price > 0) {
-          await db.collection('shopping_wallets')
-            .where({ _openid: order.seller_openid })
-            .update({
-              data: {
-                settling_balance: _.inc(order.total_price),
-                update_time: db.serverDate()
-              }
-            })
+        if (cfRes.result && cfRes.result.success) {
+          stats.autoConfirmed += 1
+        } else {
+          stats.errors.push({
+            task: 'autoConfirm',
+            orderId: order._id,
+            error: (cfRes.result && cfRes.result.message) || 'unknown'
+          })
         }
-
-        stats.autoConfirmed += 1
       } catch (err) {
         stats.errors.push({ task: 'autoConfirm', orderId: order._id, error: err.message })
       }
@@ -219,75 +213,28 @@ async function task25AutoReview(stats) {
 }
 
 async function task3AutoSettle(stats) {
-  const now = new Date()
-
   try {
-    const res = await db.collection('shopping_orders')
-      .where({
-        status: 40,
-        settled: false,
-        has_aftersale: _.neq(true),
-        settle_deadline: _.lt(now)
-      })
-      .field({ _id: true, total_price: true, seller_openid: true, 'product_snapshot.title': true })
-      .limit(BATCH)
-      .get()
+    const cfRes = await cloud.callFunction({
+      name: 'auto_settlement',
+      data: {}
+    })
 
-    for (const order of (res.data || [])) {
-      let transaction = null
-      try {
-        const sellerOpenid = order.seller_openid
-        const amount = Number(order.total_price) || 0
-        if (!sellerOpenid || !amount) continue
-
-        transaction = await db.startTransaction()
-
-        const walletRes = await db.collection('shopping_wallets')
-          .where({ _openid: sellerOpenid })
-          .limit(1)
-          .get()
-
-        if (walletRes.data && walletRes.data.length > 0) {
-          const walletId = walletRes.data[0]._id
-          await transaction.collection('shopping_wallets').doc(walletId).update({
-            data: {
-              settling_balance: _.inc(-amount),
-              balance: _.inc(amount),
-              update_time: db.serverDate()
-            }
-          })
-        }
-
-        await transaction.collection('shopping_orders').doc(order._id).update({
-          data: {
-            settled: true,
-            update_time: db.serverDate()
-          }
+    if (cfRes.result && cfRes.result.success) {
+      stats.autoSettled += Number(cfRes.result.settled_count) || 0
+      ;(cfRes.result.errors || []).forEach((item) => {
+        stats.errors.push({
+          task: 'autoSettle',
+          ...(item || {})
         })
-
-        await transaction.commit()
-
-        await db.collection('shopping_ledger').add({
-          data: {
-            order_id: order._id,
-            user_id: sellerOpenid,
-            type: 'SETTLEMENT',
-            amount,
-            description: `售后窗口到期自动结算：${(order.product_snapshot && order.product_snapshot.title) || ''}`,
-            create_time: db.serverDate()
-          }
-        }).catch(() => {})
-
-        stats.autoSettled += 1
-      } catch (err) {
-        if (transaction) {
-          await transaction.rollback().catch(() => {})
-        }
-        stats.errors.push({ task: 'autoSettle', orderId: order._id, error: err.message })
-      }
+      })
+    } else {
+      stats.errors.push({
+        task: 'autoSettle',
+        error: (cfRes.result && cfRes.result.message) || 'unknown'
+      })
     }
   } catch (err) {
-    stats.errors.push({ task: 'autoSettle_query', error: err.message })
+    stats.errors.push({ task: 'autoSettle', error: err.message })
   }
 }
 

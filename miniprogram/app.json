@@ -30,6 +30,7 @@
     "pages/user/relations",
     "pages/certification/apply",
     "pages/workshop/index",
+    "pages/workshop/finance/index",
     "pages/workshop/edit-info",
     "pages/product/publish",
     "pages/wallet/index",

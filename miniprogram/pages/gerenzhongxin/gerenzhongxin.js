@@ -258,6 +258,14 @@ function buildCreatorActions(pendingOrders) {
       icon: 'service-o',
       action: 'goToAftersaleCenter',
       tone: 'tone-emerald'
+    },
+    {
+      key: 'finance',
+      title: '工坊财务',
+      desc: '余额、账单与提现',
+      icon: 'gold-coin-o',
+      action: 'goToFinanceCenter',
+      tone: 'tone-red'
     }
   ]
 }
@@ -997,6 +1005,17 @@ Page({
     }
     wx.navigateTo({
       url: '/pages/aftersale/seller-list'
+    })
+  },
+
+  goToFinanceCenter() {
+    if (!this.ensureLogin()) return
+    if (!this.data.userInfo.is_certified) {
+      this.goToCertify()
+      return
+    }
+    wx.navigateTo({
+      url: '/pages/workshop/finance/index'
     })
   },
 

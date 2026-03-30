@@ -1,0 +1,188 @@
+<view class="finance-page">
+  <nav-bar
+    title="工坊财务中心"
+    showTitle="{{true}}"
+    showBack="{{true}}"
+    background="solid"
+    dark="{{true}}"
+    placeholder="{{true}}"
+  />
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="24px" color="#b63b36">加载财务数据中...</van-loading>
+  </view>
+
+  <view class="empty-wrap" wx:elif="{{!isCreator}}">
+    <van-empty description="仅认证传承人可进入工坊财务中心" />
+  </view>
+
+  <scroll-view class="finance-scroll" wx:else scroll-y enable-flex>
+    <view class="hero-card">
+      <view class="hero-copy">
+        <text class="hero-eyebrow">工坊资金看板</text>
+        <text class="hero-title">当前可用余额</text>
+        <view class="hero-balance-row">
+          <text class="hero-balance-symbol">¥</text>
+          <text class="hero-balance-value">{{wallet.balanceDisplay}}</text>
+        </view>
+      </view>
+
+      <view class="hero-stats">
+        <view class="hero-stat">
+          <text class="hero-stat-label">待结算</text>
+          <text class="hero-stat-value">¥{{wallet.settlingDisplay}}</text>
+        </view>
+        <view class="hero-stat">
+          <text class="hero-stat-label">累计总收入</text>
+          <text class="hero-stat-value">¥{{wallet.totalIncomeDisplay}}</text>
+        </view>
+        <view class="hero-stat">
+          <text class="hero-stat-label">累计已提现</text>
+          <text class="hero-stat-value">¥{{wallet.totalWithdrawnDisplay}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel-card withdraw-card">
+      <view class="section-head">
+        <view class="section-copy">
+          <text class="section-title">发起提现</text>
+          <text class="section-desc">输入本次提现金额，提交后会先进入处理中状态。</text>
+        </view>
+        <view class="section-link" bindtap="goToWallet">
+          <text>{{wallet.has_pay_password ? '管理密码' : '先设密码'}}</text>
+          <van-icon name="arrow" size="14" color="#8b6f47" />
+        </view>
+      </view>
+
+      <view class="withdraw-main">
+        <view class="withdraw-input-shell">
+          <text class="withdraw-prefix">¥</text>
+          <input
+            class="withdraw-input"
+            type="digit"
+            placeholder="请输入提现金额"
+            value="{{withdrawAmountInput}}"
+            bindinput="onWithdrawAmountInput"
+          />
+        </view>
+        <view class="withdraw-tips">
+          <text>可提现金额：¥{{wallet.balanceDisplay}}</text>
+          <text>待结算金额需在 7 天维权期结束后自动解冻。</text>
+        </view>
+        <view class="line-btn line-btn-primary" bindtap="startWithdraw">提交提现申请</view>
+      </view>
+    </view>
+
+    <view class="panel-card account-card">
+      <view class="section-head">
+        <view class="section-copy">
+          <text class="section-title">收款账户设置</text>
+          <text class="section-desc">提现时会自动快照当前账户信息，请保持真实准确。</text>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">收款方式</text>
+        <view class="picker-row" bindtap="chooseAccountType">
+          <text class="picker-value">{{accountForm.type === 'wechat' ? '微信收款' : '支付宝'}}</text>
+          <van-icon name="arrow" size="14" color="#9b938c" />
+        </view>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">收款账号</text>
+        <input
+          class="form-input"
+          placeholder="请输入支付宝或微信账号"
+          value="{{accountForm.account}}"
+          data-field="account"
+          bindinput="onAccountInput"
+        />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">真实姓名</text>
+        <input
+          class="form-input"
+          placeholder="请输入收款人真实姓名"
+          value="{{accountForm.name}}"
+          data-field="name"
+          bindinput="onAccountInput"
+        />
+      </view>
+
+      <view class="line-btn" bindtap="saveAccountInfo">
+        {{savingAccount ? '保存中...' : '保存收款账户'}}
+      </view>
+    </view>
+
+    <view class="panel-card">
+      <view class="section-head">
+        <view class="section-copy">
+          <text class="section-title">账单明细</text>
+          <text class="section-desc">所有资金变动都会进入账本，金额统一按分存储后再换算展示。</text>
+        </view>
+      </view>
+
+      <view class="ledger-list" wx:if="{{ledgerList.length}}">
+        <view class="ledger-item" wx:for="{{ledgerList}}" wx:key="_id">
+          <view class="ledger-main">
+            <view class="ledger-badge badge-{{item.tone}}">
+              <text>{{item.badge}}</text>
+            </view>
+            <view class="ledger-copy">
+              <text class="ledger-desc">{{item.description}}</text>
+              <text class="ledger-time">{{item.timeDisplay}}</text>
+            </view>
+          </view>
+          <text class="ledger-amount amount-{{item.tone}}">
+            {{item.amount > 0 ? '+' : ''}}¥{{item.amountDisplay}}
+          </text>
+        </view>
+        <view class="more-btn" wx:if="{{ledgerHasMore}}" bindtap="loadMoreLedger">
+          {{ledgerLoading ? '加载中...' : '加载更多账单'}}
+        </view>
+      </view>
+      <van-empty wx:else image="search" description="暂无账单流水" />
+    </view>
+
+    <view class="panel-card">
+      <view class="section-head">
+        <view class="section-copy">
+          <text class="section-title">提现记录</text>
+          <text class="section-desc">当前阶段支持模拟审批打款，便于开发联调整条资金链路。</text>
+        </view>
+      </view>
+
+      <view class="withdraw-records" wx:if="{{withdrawals.length}}">
+        <view class="withdraw-record" wx:for="{{withdrawals}}" wx:key="_id">
+          <view class="withdraw-record-head">
+            <text class="withdraw-record-amount">¥{{item.amountDisplay}}</text>
+            <text class="withdraw-record-status status-{{item.statusTone}}">{{item.statusText}}</text>
+          </view>
+          <text class="withdraw-record-line">申请时间：{{item.applyTimeDisplay}}</text>
+          <text class="withdraw-record-line">收款账户：{{item.account_info.type === 'wechat' ? '微信收款' : '支付宝'}} / {{item.account_info.masked_account || item.account_info.account}}</text>
+          <text class="withdraw-record-line" wx:if="{{item.auditTimeDisplay}}">处理时间：{{item.auditTimeDisplay}}</text>
+          <view class="record-actions" wx:if="{{item.status === 0}}">
+            <view class="line-btn line-btn-small" data-id="{{item._id}}" bindtap="mockApproveWithdrawal">模拟打款</view>
+          </view>
+        </view>
+        <view class="more-btn" wx:if="{{withdrawalsHasMore}}" bindtap="loadMoreWithdrawals">
+          {{withdrawalsLoading ? '加载中...' : '加载更多提现记录'}}
+        </view>
+      </view>
+      <van-empty wx:else image="search" description="暂无提现记录" />
+    </view>
+  </scroll-view>
+
+  <pay-keyboard
+    id="withdrawKeyboard"
+    show="{{showWithdrawKeyboard}}"
+    title="请输入提现密码"
+    amountDisplay="{{pendingWithdrawDisplay}}"
+    loading="{{withdrawing}}"
+    bind:confirm="onWithdrawConfirm"
+    bind:close="onWithdrawKeyboardClose"
+  />
+</view>

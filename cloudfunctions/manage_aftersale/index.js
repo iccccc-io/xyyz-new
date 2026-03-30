@@ -35,6 +35,26 @@ function getSafeString(value) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function toIntAmount(value, fallback = 0) {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.round(num) : fallback
+}
+
+function createWalletPayload(openid) {
+  return {
+    _openid: openid,
+    balance: 0,
+    settling_balance: 0,
+    frozen_balance: 0,
+    total_income: 0,
+    total_withdrawn: 0,
+    pay_password: '',
+    status: 1,
+    create_time: db.serverDate(),
+    update_time: db.serverDate()
+  }
+}
+
 function findSkuIndex(product, skuId) {
   const skus = Array.isArray(product && product.skus) ? product.skus : []
   return skus.findIndex((item) => getSafeString(item && item.sku_id) === getSafeString(skuId))
@@ -43,6 +63,20 @@ function findSkuIndex(product, skuId) {
 function isPickupOrder(order = {}) {
   const logistics = (order.product_snapshot && order.product_snapshot.logistics) || {}
   return logistics.method === 'pickup' || order.carrier_code === 'pickup'
+}
+
+function isOrderSettled(order = {}) {
+  return order.is_settled === true || order.settled === true
+}
+
+function pickRefundSourceField(wallet = {}, order = {}) {
+  if (!isOrderSettled(order)) {
+    return 'settling_balance'
+  }
+  if (toIntAmount(wallet.frozen_balance) > 0) {
+    return 'frozen_balance'
+  }
+  return 'balance'
 }
 
 exports.main = async (event, context) => {
@@ -220,7 +254,7 @@ async function applyAftersale(openid, event) {
   if (!order) return { success: false, message: '订单不存在' }
   if (order._openid !== openid) return { success: false, message: '无权操作此订单' }
   if (order.status !== 40) return { success: false, message: '当前订单状态不支持售后' }
-  if (order.settled === true) return { success: false, message: '订单已结算，超出售后窗口期' }
+  if (isOrderSettled(order)) return { success: false, message: '订单已结算，超出售后窗口期' }
 
   // 售后窗口期校验
   if (order.complete_time) {
@@ -575,10 +609,14 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
   const order = await getDoc('shopping_orders', order_id)
   if (!order) return { success: false, message: '关联订单不存在' }
 
-  const sellerWalletRes = await db.collection('shopping_wallets')
+  let sellerWalletRes = await db.collection('shopping_wallets')
     .where({ _openid: seller_id }).limit(1).get()
   if (!sellerWalletRes.data || sellerWalletRes.data.length === 0) {
-    return { success: false, message: '卖家钱包不存在' }
+    await db.collection('shopping_wallets').add({
+      data: createWalletPayload(seller_id)
+    })
+    sellerWalletRes = await db.collection('shopping_wallets')
+      .where({ _openid: seller_id }).limit(1).get()
   }
   const sellerWallet = sellerWalletRes.data[0]
 
@@ -586,11 +624,7 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
     .where({ _openid: buyer_id }).limit(1).get()
   if (!buyerWalletRes.data || buyerWalletRes.data.length === 0) {
     await db.collection('shopping_wallets').add({
-      data: {
-        _openid: buyer_id, balance: 0, frozen_balance: 0,
-        settling_balance: 0, pay_password: '', status: 1,
-        create_time: db.serverDate(), update_time: db.serverDate()
-      }
+      data: createWalletPayload(buyer_id)
     })
     buyerWalletRes = await db.collection('shopping_wallets')
       .where({ _openid: buyer_id }).limit(1).get()
@@ -600,14 +634,25 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
   const productId = order.product_snapshot && order.product_snapshot.product_id
   const skuId = order.product_snapshot && order.product_snapshot.sku_id
   const quantity = order.quantity || 1
+  const productTitle = (order.product_snapshot && order.product_snapshot.title) || '未知商品'
+  const amountFen = toIntAmount(refund_fee)
 
   const transaction = await db.startTransaction()
   try {
+    const sellerWalletTxRes = await transaction.collection('shopping_wallets').doc(sellerWallet._id).get()
+    const sellerWalletTx = sellerWalletTxRes.data || {}
+    const sellerSourceField = pickRefundSourceField(sellerWalletTx, order)
+    const sellerSourceBalance = toIntAmount(sellerWalletTx[sellerSourceField])
+
+    if (sellerSourceBalance < amountFen) {
+      throw new Error('卖家可退款余额不足，退款失败')
+    }
+
     await transaction.collection('shopping_wallets').doc(sellerWallet._id).update({
-      data: { settling_balance: _.inc(-refund_fee), update_time: db.serverDate() }
+      data: { [sellerSourceField]: _.inc(-amountFen), update_time: db.serverDate() }
     })
     await transaction.collection('shopping_wallets').doc(buyerWallet._id).update({
-      data: { balance: _.inc(refund_fee), update_time: db.serverDate() }
+      data: { balance: _.inc(amountFen), update_time: db.serverDate() }
     })
     await transaction.collection('shopping_aftersales').doc(aftersale_id).update({
       data: {
@@ -616,13 +661,20 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
         operation_logs: _.push({
           operator: 'system', action: 'refund_success',
           time: new Date().toISOString(),
-          content: `退款成功，¥${(refund_fee / 100).toFixed(2)} 已退回买家钱包（${triggerDesc}）`
+          content: `退款成功，¥${(amountFen / 100).toFixed(2)} 已退回买家钱包（${triggerDesc}）`
         }),
         update_time: db.serverDate()
       }
     })
     await transaction.collection('shopping_orders').doc(order_id).update({
-      data: { status: 60, settled: true, has_aftersale: false, aftersale_result: 'refunded', update_time: db.serverDate() }
+      data: {
+        status: 60,
+        settled: true,
+        is_settled: true,
+        has_aftersale: false,
+        aftersale_result: 'refunded',
+        update_time: db.serverDate()
+      }
     })
 
     if (productId && quantity > 0) {
@@ -642,26 +694,35 @@ async function executeRefund(as, aftersale_id, triggerDesc) {
       })
     }
 
+    await transaction.collection('shopping_ledger').add({
+      data: {
+        order_id,
+        user_id: buyer_id,
+        type: 'REFUND',
+        amount: amountFen,
+        description: `售后退款到账：${productTitle}`,
+        create_time: db.serverDate()
+      }
+    })
+
+    await transaction.collection('shopping_ledger').add({
+      data: {
+        order_id,
+        user_id: seller_id,
+        type: 'REFUND',
+        amount: -amountFen,
+        description: `售后退款扣除：${productTitle}`,
+        create_time: db.serverDate()
+      }
+    })
+
     await transaction.commit()
-    console.log(`[退款] 成功: 售后=${aftersale_id}, 退款=${refund_fee}分`)
+    console.log(`[退款] 成功: 售后=${aftersale_id}, 退款=${amountFen}分`)
   } catch (txErr) {
     await transaction.rollback()
     console.error('[退款] 事务回滚:', txErr)
     return { success: false, message: '退款处理失败，请稍后重试' }
   }
-
-  // 事务外：库存回滚 + 账本
-  const productTitle = (order.product_snapshot && order.product_snapshot.title) || '未知商品'
-  await Promise.all([
-    db.collection('shopping_ledger').add({ data: {
-      order_id, user_id: buyer_id, type: 'REFUND_IN', amount: refund_fee,
-      description: `售后退款到账：${productTitle}`, create_time: db.serverDate()
-    }}),
-    db.collection('shopping_ledger').add({ data: {
-      order_id, user_id: seller_id, type: 'REFUND_OUT', amount: -refund_fee,
-      description: `售后退款扣除：${productTitle}`, create_time: db.serverDate()
-    }})
-  ]).catch(e => console.warn('[退款] 账本写入失败:', e))
 
   return { success: true, message: '退款成功' }
 }
