@@ -40,34 +40,6 @@
   padding: 10rpx;
 }
 
-/* 分享对象区（预留） */
-.share-section {
-  padding: 30rpx;
-  min-height: 120rpx;
-}
-
-.section-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100rpx;
-  background: #fafafa;
-  border-radius: 12rpx;
-  border: 2rpx dashed #e0e0e0;
-}
-
-.placeholder-text {
-  font-size: 26rpx;
-  color: #bbb;
-}
-
-/* 分隔线 */
-.section-divider {
-  height: 1rpx;
-  background: #f0f0f0;
-  margin: 0 30rpx;
-}
-
 /* 功能区 */
 .function-section {
   width: 100%;

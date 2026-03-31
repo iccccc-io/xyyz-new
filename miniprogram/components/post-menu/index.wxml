@@ -19,16 +19,6 @@
         </view>
       </view>
 
-      <!-- 分享对象区（预留区域，后续开发私聊功能） -->
-      <view class="share-section">
-        <view class="section-placeholder">
-          <text class="placeholder-text">分享给好友（功能开发中）</text>
-        </view>
-      </view>
-
-      <!-- 分隔线 -->
-      <view class="section-divider"></view>
-
       <!-- 功能区 - 访客菜单 -->
       <scroll-view class="function-section" scroll-x enable-flex enhanced show-scrollbar="{{false}}" wx:if="{{!isAuthor}}">
         <view class="function-list">
